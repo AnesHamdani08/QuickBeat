@@ -1,0 +1,34 @@
+﻿<hc:Window x:Class="QScript.SettingsBrowser"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:local="clr-namespace:QuickBeat"
+        xmlns:cnv="clr-namespace:QuickBeat.Converters"
+        mc:Ignorable="d"
+        Height="600" Width="800" WindowStartupLocation="CenterOwner" Title="{DynamicResource LOC_APPNAME}">
+    <hc:Window.NonClientAreaContent>
+        <Button x:Name="TitleBar_Refresh" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" HorizontalAlignment="Right" />
+    </hc:Window.NonClientAreaContent>
+    <hc:Window.Resources>
+        <cnv:VisibilityToBooleanConverter x:Key="v2b"/>
+    </hc:Window.Resources>
+    <!--<ScrollViewer Margin="0">-->
+    <Grid>
+        <ListView x:Name="Main_SettingsView" Background="{x:Null}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="#" DisplayMemberBinding="{Binding Num}"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}"/>
+                    <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Grid x:Name="Loading_Container" Background="#7F000000" Visibility="Collapsed">
+            <hc:LoadingIndicator Style="{DynamicResource LoadingIndicatorWaveStyle}" IsActive="{Binding Visibility, Converter={StaticResource v2b}, ElementName=Loading_Container}"/>
+        </Grid>
+    </Grid>
+    <!--</ScrollViewer>-->
+</hc:Window>

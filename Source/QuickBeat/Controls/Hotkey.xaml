@@ -1,0 +1,33 @@
+﻿<UserControl x:Class="Controls.Hotkey" x:Name="Me"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:QuickBeat"
+             xmlns:col="clr-namespace:QuickBeat.Utilities.Collections"
+             mc:Ignorable="d" Width="150" Height="13">
+    <UserControl.Resources>
+        <RoutedUICommand x:Key="Commands.Focus" Text="Focus"/>
+        <col:MessagesReadOnlyObservableCollection x:Key="MessagesItemsSource"/>
+    </UserControl.Resources>
+    <UserControl.CommandBindings>
+        <CommandBinding Command="{StaticResource Commands.Focus}" CanExecute="FocusCommand_CanExecute" Executed="FocusCommand_Executed"/>
+    </UserControl.CommandBindings>
+    <Viewbox>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Label Content="{Binding ElementName=Me,Path=Hotkey.ModifierString,Mode=OneWay}" Margin="0,0,10,0"/>
+            <Label Content="+" Grid.Column="1" Margin="0,0,10,0"/>
+            <Label Content="{Binding ElementName=Me,Path=Hotkey.Key,Mode=OneWay}" Grid.Column="2" Margin="0,0,10,0"/>
+            <ComboBox SelectedItem="{Binding ElementName=Me,Path=Hotkey.Message,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Grid.Column="3" ItemsSource="{StaticResource MessagesItemsSource}" Margin="0,0,10,0"/>
+            <ToggleButton Command="{StaticResource Commands.Focus}" IsChecked="{Binding RelativeSource={RelativeSource Mode=Self}, Path=IsFocused,Mode=OneWay}" Style="{StaticResource ToggleButtonSwitch}" Grid.Column="4"/>
+        </Grid>
+    </Viewbox>
+</UserControl>

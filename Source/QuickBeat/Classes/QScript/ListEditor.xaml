@@ -1,0 +1,29 @@
+﻿<hc:Window x:Class="QScript.ListEditor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:ctl="clr-namespace:QuickBeat.Controls"
+        xmlns:local="clr-namespace:QuickBeat"
+        mc:Ignorable="d"
+        Title="{DynamicResource LOC_APPNAME}" Height="500" Width="500" WindowStartupLocation="CenterOwner" Icon="/QuickBeat;component/Resources/MusicRecord.png">
+    <hc:Window.NonClientAreaContent>
+        <Menu HorizontalAlignment="Left">
+            <MenuItem x:Name="TitleBar_Done" Header="Done"/>
+        </Menu>
+    </hc:Window.NonClientAreaContent>
+    <Grid>
+        <ListBox x:Name="Main_ListBox" Margin="0,0,0,32"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="32">
+            <ctl:GeoImage x:Name="CTRL_Add" GeoSource="{StaticResource AddGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_Import" GeoSource="{StaticResource DropperGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_MoveUp" GeoSource="{StaticResource UpGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_MoveDown" GeoSource="{StaticResource DownGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_MoveTo" GeoSource="{StaticResource UpDownGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_Remove" GeoSource="{StaticResource RemoveGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_Clear" GeoSource="{StaticResource DeleteFillCircleGeometry}" Margin="0,0,10,0"/>
+            <ctl:GeoImage x:Name="CTRL_Save" GeoSource="{StaticResource SaveGeometry}" Margin="0,0,10,0"/>
+        </StackPanel>
+    </Grid>
+</hc:Window>
