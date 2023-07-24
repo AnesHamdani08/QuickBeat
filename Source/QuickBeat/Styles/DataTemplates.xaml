@@ -1,0 +1,168 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ctl="clr-namespace:QuickBeat.Controls"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:cnv="clr-namespace:QuickBeat.Converters"
+    xmlns:utils="clr-namespace:QuickBeat.Utilities">
+
+    <cnv:BooleanToVisibilityPlusConverter x:Key="B2V"/>
+
+    <Style x:Key="ListBoxMetadataBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+        <Setter Property="SelectionMode" Value="Extended"/>
+        <Setter Property="hc:ListBoxAttach.IsOddEvenRow" Value="True"/>
+        <Setter Property="AlternationCount" Value="2"/>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self},Path=PlacementTarget}">
+                    <MenuItem Header="{DynamicResource LOC_APPEND}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedPlaylistCommand}" />
+                    <MenuItem Header="{DynamicResource LOC_ENQUEUE}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedQueueCommand}" />
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ScrollViewer Background="{DynamicResource SecondaryRegionBrush}" VirtualizingPanel.IsVirtualizing="True">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <!--<Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="ContextMenu">
+                        <Setter.Value>
+                            <ContextMenu>
+                                <MenuItem Header="{DynamicResource LOC_ENQUEUE}" CommandParameter="{Binding Path=Path}" Command="{x:Static utils:Commands.AddToSharedQueueCommand}" />
+                            </ContextMenu>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Content" Value="{Binding Path=EventName}"/>
+                </Style>
+            </Setter.Value>
+        </Setter>-->
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid Background="Transparent" Margin="10,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition SharedSizeGroup="Col0" Width="Auto" />
+                            <ColumnDefinition SharedSizeGroup="Col1" Width="Auto" />
+                            <ColumnDefinition SharedSizeGroup="Col2" Width="Auto" />
+                            <ColumnDefinition SharedSizeGroup="Col3" Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ctl:ClickTextBlock Text="👁️" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.PreviewCommand}" Margin="0,0,20,0"/>
+                        <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
+                        <StackPanel Margin="0,0,20,0" Grid.Column="2">
+                            <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
+                            <ctl:ClickTextBlock Text="{Binding Artists[0]}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusArtistCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        </StackPanel>
+                        <ctl:ClickTextBlock Text="{Binding Album}" Margin="0,0,20,0" Grid.Column="3" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusAlbumCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                    </Grid>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ListBoxPlaylistBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                    <Setter Property="Background" Value="{DynamicResource RegionBrush}"/>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ScrollViewer Background="{DynamicResource SecondaryRegionBrush}" VirtualizingPanel.IsVirtualizing="True">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                        <Grid Margin="10,5" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition SharedSizeGroup="Col0" Width="Auto" />
+                                <ColumnDefinition SharedSizeGroup="Col1" Width="Auto" />
+                                <ColumnDefinition SharedSizeGroup="Col2" Width="Auto" />
+                                <ColumnDefinition SharedSizeGroup="Col3" Width="Auto" />
+                                <ColumnDefinition SharedSizeGroup="Col4" Width="Auto" />
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <ctl:ClickTextBlock Text="👁️" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.PreviewCommand}" Margin="0,0,20,0"/>
+                            <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
+                            <ctl:ClickTextBlock Text="❌" Grid.Column="2" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding }" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.RemoveFromPlaylistCommand}" Margin="0,0,20,0"/>
+                            <StackPanel Margin="0,0,20,0" Grid.Column="3">
+                                <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
+                                <ctl:ClickTextBlock Text="{Binding DefaultArtist}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusArtistCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            </StackPanel>
+                            <ctl:ClickTextBlock Text="{Binding Album}" Margin="0,0,20,0" Grid.Column="4" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusAlbumCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <ctl:ClickTextBlock Grid.Column="5" Text="🔽" VerticalAlignment="Center" CommandParameter="{Binding Index}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.MoveDownCommand}"/>
+                            <ctl:ClickTextBlock Grid.Column="6" Text="🔼" VerticalAlignment="Center" CommandParameter="{Binding Index}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.MoveUpCommand}"/>
+                        </Grid>
+                    </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ListBoxPlaylistContainerBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+        <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ScrollViewer Background="{DynamicResource MainContentBackgroundBrush}" VirtualizingPanel.IsVirtualizing="True">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid ToolTip="{Binding Description}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Col0"/>
+                            <ColumnDefinition SharedSizeGroup="Col1"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Image Width="Auto" Height="32" Grid.RowSpan="2" Source="{Binding Cover}" Visibility="{Binding HasCover,Converter={StaticResource B2V}}" Margin="0,0,10,0"/>
+                        <ctl:ClickTextBlock Grid.Column="1" CommandTriggerMode="DoubleClick" Text="{Binding Name}" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance}, Path=Player.LoadPlaylistCommand}" FontSize="14" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1">
+                            <Run Text="{Binding Category}"/> • <Run Text="{Binding Count,Mode=OneWay}"/> <Run Text="{DynamicResource LOC_SONG}"/>
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
