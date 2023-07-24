@@ -48,5 +48,11 @@ Audio player and manager, plays all common media files alongside many more via p
 - Smart Shuffle
 
 # 📸Screenshots
-
+![Home](https://i.imgur.com/EskPUZf.png)
+![Home Dark](https://i.imgur.com/gheSpTH.png)
+![Home Dark/Light](https://imgur.com/a1gON9A)
+![Search](https://imgur.com/5jt1BFY)
+![Visualizer](https://imgur.com/Ciw3De5)
+![Winamp Plugin Support](https://imgur.com/IxYaTnR)
+![Winamp Plugin Support 1](https://imgur.com/IrxMVw9)
 *Wiki will be added soon
