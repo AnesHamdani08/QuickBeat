@@ -52,7 +52,7 @@ Namespace Player.WPF.Commands
                 _Player.LoadSong(parameter?.ToString)
                 Return
             End If
-            Dim url = InputBox("")
+            Dim url = Dialogs.InputBox.ShowSingle("URL")
             If Not String.IsNullOrEmpty(url) Then
                 Await _Player.LoadSong(New Metadata() With {.Location = Metadata.FileLocation.Remote, .Path = url})
             End If
@@ -717,7 +717,7 @@ Namespace Player.WPF.Commands
                                 Dim MarginAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.MarginAttribute), Profile.AudioEffect.MarginAttribute)
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
-                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -734,9 +734,14 @@ Namespace Player.WPF.Commands
                                                                                                         End Sub
                                     'GroupBoxContent.Children.Add(PropSlider)
                                     PropSlider.Value = prop.Key.GetValue(parameter)
-                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider))
+                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider, PropAttr?.DisplayName, PropAttr?.UnitShortForm))
                                 ElseIf PropAttr.ValueType.IsEnum Then
                                     Dim PropCBox As New ComboBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
+                                    Dim Res = Application.Current.TryFindResource("ComboBoxExtend")
+                                    If Res IsNot Nothing Then
+                                        PropCBox.Style = Res
+                                        HandyControl.Controls.TitleElement.SetTitle(PropCBox, PropAttr?.DisplayName)
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropCBox.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropCBox.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -812,7 +817,7 @@ Namespace Player.WPF.Commands
                                 Dim MarginAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.MarginAttribute), Profile.AudioEffect.MarginAttribute)
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
-                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -831,9 +836,14 @@ Namespace Player.WPF.Commands
                                                                                                         End Sub
                                     'GroupBoxContent.Children.Add(PropSlider)
                                     PropSlider.Value = prop.Key.GetValue(parameter)
-                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider))
+                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider, PropAttr?.DisplayName, PropAttr?.UnitShortForm))
                                 ElseIf PropAttr.ValueType.IsEnum Then
                                     Dim PropCBox As New ComboBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
+                                    Dim Res = Application.Current.TryFindResource("ComboBoxExtend")
+                                    If Res IsNot Nothing Then
+                                        PropCBox.Style = Res
+                                        HandyControl.Controls.TitleElement.SetTitle(PropCBox, PropAttr?.DisplayName)
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropCBox.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropCBox.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -915,7 +925,7 @@ Namespace Player.WPF.Commands
                                 Dim MarginAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.MarginAttribute), Profile.AudioEffect.MarginAttribute)
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
-                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -934,9 +944,14 @@ Namespace Player.WPF.Commands
                                                                                                         End Sub
                                     'GroupBoxContent.Children.Add(PropSlider)
                                     PropSlider.Value = prop.Key.GetValue(parameter)
-                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider))
+                                    GroupBoxContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider, PropAttr?.DisplayName, PropAttr?.UnitShortForm))
                                 ElseIf PropAttr.ValueType.IsEnum Then
                                     Dim PropCBox As New ComboBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
+                                    Dim Res = Application.Current.TryFindResource("ComboBoxExtend")
+                                    If Res IsNot Nothing Then
+                                        PropCBox.Style = Res
+                                        HandyControl.Controls.TitleElement.SetTitle(PropCBox, PropAttr?.DisplayName)
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropCBox.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropCBox.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -1022,7 +1037,7 @@ Namespace Player.WPF.Commands
                 If PropAttr Is Nothing Then Continue For
                 If PropAttr.Group <> "" Then Continue For
                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
-                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True}
+                    Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True}
                     PropSlider.Margin = New Thickness(0, 0, 10, 10)
                     PropSlider.Minimum = PropAttr.Minimum : PropSlider.Maximum = PropAttr.Maximum
                     AddHandler PropSlider.ValueChanged, New RoutedPropertyChangedEventHandler(Of Double)(Sub(s, e)
@@ -1035,10 +1050,15 @@ Namespace Player.WPF.Commands
                                                                                         End Sub
                     'WindowContent.Children.Add(PropSlider)                    
                     PropSlider.Value = prop.Key.GetValue(parameter)
-                    WindowContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider))
+                    WindowContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider, PropAttr?.DisplayName, PropAttr?.UnitShortForm))
                 ElseIf PropAttr.ValueType.IsEnum Then
                     Dim PropCBox As New ComboBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
                     PropCBox.Margin = New Thickness(0, 0, 10, 10)
+                    Dim Res = Application.Current.TryFindResource("ComboBoxExtend")
+                    If Res IsNot Nothing Then
+                        PropCBox.Style = Res
+                        HandyControl.Controls.TitleElement.SetTitle(PropCBox, PropAttr?.DisplayName)
+                    End If
                     For Each item In System.Enum.GetNames(PropAttr.ValueType)
                         PropCBox.Items.Add(New ComboBoxItem With {.Content = item})
                     Next
@@ -1228,7 +1248,9 @@ Namespace Player.WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            SharedProperties.Instance?.CustomPlaylists.Add(TryCast(parameter, Playlist)?.Clone)
+            Dim cPlaylist = TryCast(parameter, Playlist)?.Clone
+            cPlaylist.Cover = Utilities.CommonFunctions.ToCoverImage(cPlaylist.Name)
+            SharedProperties.Instance?.CustomPlaylists.Add(cPlaylist)
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
@@ -1246,8 +1268,11 @@ Namespace Player.WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            Dim psname = InputBox("Playlist name...")
-            If Not String.IsNullOrEmpty(psname) Then TryCast(parameter, Playlist).Name = psname
+            Dim psname = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.NAME)
+            If Not String.IsNullOrEmpty(psname) Then
+                TryCast(parameter, Playlist).Name = psname
+                TryCast(parameter, Playlist).Cover = psname.ToCoverImage
+            End If
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute

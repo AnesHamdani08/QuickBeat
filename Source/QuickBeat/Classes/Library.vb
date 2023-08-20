@@ -14,6 +14,7 @@ Namespace Library
         Public Event ArtistFocused(Group As MetadataGroup)
         Public Event AlbumFocused(Group As MetadataGroup)
         Public Event GroupFocused(Group As MetadataGroup)
+        Public Event MostPlayedChanged(Sender As Library)
         ''' <summary>
         ''' Occures when a <see cref="Player.Metadata.IsFavorite"/> changes value
         ''' </summary>
@@ -103,6 +104,7 @@ Namespace Library
                     _MostPlayed.IsInUse = True
                 End If
                 OnPropertyChanged()
+                RaiseEvent MostPlayedChanged(Me)
             End Set
         End Property
 
@@ -123,6 +125,7 @@ Namespace Library
                     _MostPlayedArtist.UpdateValues()
                 End If
                 OnPropertyChanged()
+                RaiseEvent MostPlayedChanged(Me)
             End Set
         End Property
 
@@ -143,6 +146,7 @@ Namespace Library
                     _MostPlayedArtist2.UpdateValues()
                 End If
                 OnPropertyChanged()
+                RaiseEvent MostPlayedChanged(Me)
             End Set
         End Property
 
@@ -163,6 +167,7 @@ Namespace Library
                     _MostPlayedArtist3.UpdateValues()
                 End If
                 OnPropertyChanged()
+                RaiseEvent MostPlayedChanged(Me)
             End Set
         End Property
 
@@ -231,10 +236,11 @@ Namespace Library
         Private Lookup_Artist As ILookup(Of String, Metadata)
         Private Lookup_Album As ILookup(Of String, Metadata)
 
+        Private _MostPlayedRefreshCounter As Integer = 0
 #End Region
 #Region "Methods"
         Async Sub Search(Optional SearchFilePathOnly As Boolean = False)
-            If String.IsNullOrEmpty(SearchQuery) Then Return
+            If String.IsNullOrEmpty(SearchQuery.Trim) Then Return
             If IsSearching Then Return
             If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search, Query:=" & SearchQuery & "...")
             IsSearching = True
@@ -328,7 +334,7 @@ Namespace Library
         End Sub
 
         Public Function SearchSync(Query As String, Optional CaseSensitive As Boolean = True, Optional SearchFilePathOnly As Boolean = False) As List(Of Metadata)
-            If String.IsNullOrEmpty(Query) Then Return New List(Of Metadata)
+            If String.IsNullOrEmpty(Query.Trim) Then Return New List(Of Metadata)
             Dim SearchResult As New List(Of Metadata) 'Not to be confused with Me.SearchResult
             If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search sync, Query:=" & Query & "...")
             Dim sw As New Stopwatch
@@ -468,8 +474,14 @@ Namespace Library
                 Return False
             Else
                 meta.PlayCount += increment
-                If meta.PlayCount > MostPlayed?.PlayCount Then
-                    MostPlayed = meta
+                _MostPlayedRefreshCounter += 1
+                If _MostPlayedRefreshCounter >= 5 Then
+                    EnsureMostPlayed()
+                    _MostPlayedRefreshCounter = 0
+                Else
+                    If meta.PlayCount > MostPlayed?.PlayCount Then
+                        MostPlayed = meta
+                    End If
                 End If
                 If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
                 Return False
@@ -486,10 +498,18 @@ Namespace Library
                                       Else
                                           meta.PlayCount += increment
                                           'Can be replaced with EnsureMostPlayed if not used in UI thread
-                                          If meta.PlayCount > MostPlayed?.PlayCount Then
+                                          _MostPlayedRefreshCounter += 1
+                                          If _MostPlayedRefreshCounter >= 5 Then
                                               Application.Current.Dispatcher.Invoke(Sub()
-                                                                                        MostPlayed = meta
+                                                                                        EnsureMostPlayed()
                                                                                     End Sub)
+                                              _MostPlayedRefreshCounter = 0
+                                          Else
+                                              If meta.PlayCount > MostPlayed?.PlayCount Then
+                                                  Application.Current.Dispatcher.Invoke(Sub()
+                                                                                            MostPlayed = meta
+                                                                                        End Sub)
+                                              End If
                                           End If
                                           If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
                                           Return False
@@ -621,6 +641,7 @@ Namespace Library
         ''' Only call when necessary!</remarks>
         ''' <param name="Item"></param>
         Public Sub EnsureMostPlayed(Optional Item As Metadata = Nothing, Optional SkipArtists As Boolean = True)
+
             If MostPlayed Is Nothing Or (MostPlayed IsNot Nothing AndAlso Item Is Nothing) Then
                 MostPlayed = Me.OrderByDescending(Of Integer)(Function(k) k.PlayCount).FirstOrDefault
             Else

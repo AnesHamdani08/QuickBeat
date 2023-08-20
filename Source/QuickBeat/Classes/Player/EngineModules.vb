@@ -141,6 +141,49 @@ Namespace Player
             End Sub
         End Class
 
+        Public Class BASS_FX
+            Inherits EngineModule
+
+            Public Overrides ReadOnly Property Name As String = "BASS FX"
+
+            Public Overrides ReadOnly Property Description As String = "An extension providing several effects, including reverse playback and tempo & pitch control."
+
+            Public Overrides ReadOnly Property Category As String = "Audio Effects"
+
+            Private _Info As String
+            Public Overrides Property Info As String
+                Get
+                    Return _Info
+                End Get
+                Set(value As String)
+                    _Info = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _IsEnabled As Boolean
+            Public Overrides Property IsEnabled As Boolean
+                Get
+                    Return _IsEnabled
+                End Get
+                Set(value As Boolean)
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Public Overrides Property Configuration As New Classes.StartupItemConfiguration("BASS FX")
+
+            Public Overrides Sub Init()
+                If _IsEnabled Then Return
+
+                Dim hFX = Un4seen.Bass.Bass.BASS_PluginLoad(IO.Path.Combine(My.Application.Info.DirectoryPath, "bass_fx.dll"))
+                _IsEnabled = True
+                OnPropertyChanged(NameOf(IsEnabled))
+
+                Info = $"Handle: {Un4seen.Bass.AddOn.Fx.BassFx.BASS_FX_GetVersion}"
+            End Sub
+        End Class
+
         Public Class AllDecoders
             Inherits EngineModule
 

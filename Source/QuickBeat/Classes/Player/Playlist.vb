@@ -29,6 +29,7 @@ Namespace Player
 #Enable Warning
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Index)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(ActualIndex)))
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(CurrentItem)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(NextItem)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(PreviousItem)))
             End Set

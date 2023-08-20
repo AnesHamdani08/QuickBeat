@@ -244,7 +244,8 @@ Namespace Youtube
         ''' Set <see cref="YoutubeDLLocation"/> after calling this constructor
         ''' </remarks>
         Public Sub New()
-            Configuration.SetStatus("Waiting for file path", 0)
+            Configuration.SetStatus("", 100)
+            Configuration.SetStatus("Waiting for file path", 0, 10000)
         End Sub
         ''' <summary>
         '''Initialize a new instance of <see cref="YoutubeDL"/>
@@ -697,9 +698,155 @@ Namespace Youtube
             End Sub
 
             Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
+                If Not Utilities.CommonFunctions.CheckInternet Then
+                    HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_INTERNET_DISCONNECTED)
+                    Return
+                End If
                 Dim url = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "URL")
                 Dim video = Await _Client.DumpAndManageVideo(url)
                 If video Is Nothing Then Return
+                Dim meta As New Player.Metadata With {.Location = Player.Metadata.FileLocation.Remote, .Title = video.Title}
+                meta.Artists = If(video.Properties.Artists IsNot Nothing, If(video.Properties.Artists.Length > 0, video.Properties.Artists, New String() {video.Author}), New String() {video.Author})
+                meta.Album = video.Properties.Album
+                meta.Genres = video.Properties.Genres
+                meta.Length = video.Duration.TotalSeconds
+                Select Case _Client.VideoQuality
+                    Case YoutubeDL.YoutubeVideo.Quality.best
+                        meta.Path = video.HQMixed.DirectURL
+                    Case YoutubeDL.YoutubeVideo.Quality.bestaudio
+                        meta.Path = video.HQAudio.DirectURL
+                    Case YoutubeDL.YoutubeVideo.Quality.bestvideo
+                        meta.Path = video.HQVideo.DirectURL
+                    Case YoutubeDL.YoutubeVideo.Quality.worst
+                        meta.Path = video.LQMixed.DirectURL
+                    Case YoutubeDL.YoutubeVideo.Quality.worstaudio
+                        meta.Path = video.LQAudio.DirectURL
+                    Case YoutubeDL.YoutubeVideo.Quality.worstvideo
+                        meta.Path = video.LQVideo.DirectURL
+                End Select
+                meta.PlayCount = video.ViewCount
+                Dim thumb As New BitmapImage
+                thumb.BeginInit()
+                thumb.UriSource = New Uri(video.ThumbnailURL, UriKind.Absolute)
+                thumb.EndInit()
+                meta.Covers = New ImageSource() {thumb}
+#Disable Warning
+                Await TryCast(parameter, Player.Player)?.LoadSong(meta)
+#Enable Warning
+                Dim Vsub = video.Subtitles.FirstOrDefault(Function(k) k.Item1 = "en")
+                If Vsub IsNot Nothing Then
+                    Dim _Vsub = Vsub.Item2.FirstOrDefault(Function(k) k.Extension = "vtt")
+                    If _Vsub IsNot Nothing Then
+                        If TypeOf Application.Current.MainWindow Is MainWindow Then
+                            With CType(Application.Current.MainWindow, MainWindow)
+                                Dim parser As New SubtitlesParser.Classes.Parsers.SubParser
+                                Using httpc As New Net.Http.HttpClient()
+                                    Dim data = Await httpc.GetStreamAsync(_Vsub.RawData)
+                                    Dim subs = parser.ParseStream(data)
+                                    Application.Current.Dispatcher.Invoke(Sub()
+                                                                              For Each _sub In subs
+                                                                                  .Subtitles?.Add(_sub)
+                                                                                  Dim PosSyncProc As New Un4seen.Bass.SYNCPROC(Sub(h, c, _data, u)
+                                                                                                                                   Application.Current.Dispatcher.Invoke(Sub()
+                                                                                                                                                                             .InfoText = String.Join(Environment.NewLine, _sub.PlaintextLines)
+                                                                                                                                                                         End Sub)
+                                                                                                                               End Sub)
+                                                                                  Dim stream = TryCast(parameter, Player.Player)?.Stream
+                                                                                  Dim PosSyncProcHandle = Un4seen.Bass.Bass.BASS_ChannelSetSync(stream, Un4seen.Bass.BASSSync.BASS_SYNC_POS, Un4seen.Bass.Bass.BASS_ChannelSeconds2Bytes(stream, TimeSpan.FromMilliseconds(_sub.StartTime).TotalSeconds), PosSyncProc, IntPtr.Zero)
+                                                                                  ._SubtilesPositionSyncProcs.Add(New Tuple(Of Integer, Integer, Un4seen.Bass.SYNCPROC)(stream, PosSyncProcHandle, PosSyncProc))
+                                                                              Next
+                                                                          End Sub)
+                                End Using
+                            End With
+                        End If
+                    End If
+                ElseIf video.Subtitles.Count > 0 Then
+                    Dim _Vsub = video.Subtitles.FirstOrDefault(Function(k) k.Item2.FirstOrDefault(Function(l) l.Extension = "vtt") IsNot Nothing)
+                    If _Vsub IsNot Nothing Then
+                        If TypeOf Application.Current.MainWindow Is MainWindow Then
+                            With CType(Application.Current.MainWindow, MainWindow)
+                                Dim parser As New SubtitlesParser.Classes.Parsers.SubParser
+                                Using httpc As New Net.Http.HttpClient()
+                                    Dim data = Await httpc.GetStreamAsync(_Vsub.Item2.FirstOrDefault(Function(k) k.Extension = "vtt")?.RawData)
+                                    Dim subs = parser.ParseStream(data)
+                                    Application.Current.Dispatcher.Invoke(Sub()
+                                                                              For Each _sub In subs
+                                                                                  .Subtitles?.Add(_sub)
+                                                                                  Dim PosSyncProc As New Un4seen.Bass.SYNCPROC(Sub(h, c, _data, u)
+                                                                                                                                   Application.Current.Dispatcher.Invoke(Sub()
+                                                                                                                                                                             .InfoText = String.Join(Environment.NewLine, _sub.PlaintextLines)
+                                                                                                                                                                         End Sub)
+                                                                                                                               End Sub)
+                                                                                  Dim stream = TryCast(parameter, Player.Player)?.Stream
+                                                                                  Dim PosSyncProcHandle = Un4seen.Bass.Bass.BASS_ChannelSetSync(stream, Un4seen.Bass.BASSSync.BASS_SYNC_POS, Un4seen.Bass.Bass.BASS_ChannelSeconds2Bytes(stream, TimeSpan.FromMilliseconds(_sub.StartTime).TotalSeconds), PosSyncProc, IntPtr.Zero)
+                                                                                  ._SubtilesPositionSyncProcs.Add(New Tuple(Of Integer, Integer, Un4seen.Bass.SYNCPROC)(stream, PosSyncProcHandle, PosSyncProc))
+                                                                              Next
+                                                                          End Sub)
+                                End Using
+                            End With
+                        End If
+                    End If
+                End If
+            End Sub
+
+            Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+                Return Not IsNothing(_Client) AndAlso IO.File.Exists(_Client.YoutubeDLLocation) AndAlso TypeOf parameter Is Player.Player
+            End Function
+        End Class
+        Public Class QuickLoadCommand
+            Implements ICommand
+
+            Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+            Private _Client As YoutubeDL
+
+            Sub New(client As YoutubeDL)
+                _Client = client
+                AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                                 RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                             End Sub)
+            End Sub
+
+            Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
+                If Not Utilities.CommonFunctions.CheckInternet Then
+                    HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_INTERNET_DISCONNECTED)
+                    Return
+                End If
+                Dim url = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "URL")
+                Dim video = Await _Client.GetVideo(url)
+                If video Is Nothing Then Return
+                Await TryCast(parameter, Player.Player)?.LoadSong(New Player.Metadata With {.Location = Player.Metadata.FileLocation.Remote, .Path = video.DirectURL, .Title = video.Title})
+            End Sub
+
+            Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+                Return Not IsNothing(_Client) AndAlso IO.File.Exists(_Client.YoutubeDLLocation) AndAlso TypeOf parameter Is Player.Player
+            End Function
+        End Class
+        Public Class SearchQuickLoadCommand
+            Implements ICommand
+
+            Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+            Private _Client As YoutubeDL
+
+            Sub New(client As YoutubeDL)
+                _Client = client
+                AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                                 RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                             End Sub)
+            End Sub
+
+            Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
+                If Not Utilities.CommonFunctions.CheckInternet Then
+                    HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_INTERNET_DISCONNECTED)
+                    Return
+                End If
+                Dim query = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "Query")
+                If String.IsNullOrEmpty(query) Then Return
+                Dim videos = Await _Client.SearchVideoAndDump(query, 1)
+                Dim video = videos.FirstOrDefault
+                If video Is Nothing Then Return
+                If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_FILEPLAY.Replace("%f", video.Title & " - " & video.Author)) = MessageBoxResult.Cancel Then
+                    Return
+                End If
                 Dim meta As New Player.Metadata With {.Location = Player.Metadata.FileLocation.Remote, .Title = video.Title}
                 meta.Artists = If(video.Properties.Artists IsNot Nothing, If(video.Properties.Artists.Length > 0, video.Properties.Artists, New String() {video.Author}), New String() {video.Author})
                 meta.Album = video.Properties.Album
@@ -755,96 +902,14 @@ Namespace Youtube
                             End With
                         End If
                     End If
-                End If
-            End Sub
-
-            Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
-                Return Not IsNothing(_Client) AndAlso IO.File.Exists(_Client.YoutubeDLLocation) AndAlso TypeOf parameter Is Player.Player
-            End Function
-        End Class
-        Public Class QuickLoadCommand
-            Implements ICommand
-
-            Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
-            Private _Client As YoutubeDL
-
-            Sub New(client As YoutubeDL)
-                _Client = client
-                AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
-                                                                                 RaiseEvent CanExecuteChanged(Me, New EventArgs())
-                                                                             End Sub)
-            End Sub
-
-            Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
-                Dim url = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "URL")
-                Dim video = Await _Client.GetVideo(url)
-                If video Is Nothing Then Return
-                Await TryCast(parameter, Player.Player)?.LoadSong(New Player.Metadata With {.Location = Player.Metadata.FileLocation.Remote, .Path = video.DirectURL, .Title = video.Title})
-            End Sub
-
-            Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
-                Return Not IsNothing(_Client) AndAlso IO.File.Exists(_Client.YoutubeDLLocation) AndAlso TypeOf parameter Is Player.Player
-            End Function
-        End Class
-        Public Class SearchQuickLoadCommand
-            Implements ICommand
-
-            Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
-            Private _Client As YoutubeDL
-
-            Sub New(client As YoutubeDL)
-                _Client = client
-                AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
-                                                                                 RaiseEvent CanExecuteChanged(Me, New EventArgs())
-                                                                             End Sub)
-            End Sub
-
-            Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
-                Dim query = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "Query")
-                If String.IsNullOrEmpty(query) Then Return
-                Dim videos = Await _Client.SearchVideoAndDump(query, 1)
-                Dim video = videos.FirstOrDefault
-                If video Is Nothing Then Return
-                If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_FILEPLAY.Replace("%f", video.Title & " - " & video.Author)) = MessageBoxResult.Cancel Then
-                    Return
-                End If
-                Dim meta As New Player.Metadata With {.Location = Player.Metadata.FileLocation.Remote, .Title = video.Title}
-                meta.Artists = If(video.Properties.Artists IsNot Nothing, If(video.Properties.Artists.Length > 0, video.Properties.Artists, New String() {video.Author}), New String() {video.Author})
-                meta.Album = video.Properties.Album
-                meta.Genres = video.Properties.Genres
-                meta.Length = video.Duration.TotalSeconds
-                Select Case _Client.VideoQuality
-                    Case YoutubeDL.YoutubeVideo.Quality.best
-                        meta.Path = video.HQMixed.DirectURL
-                    Case YoutubeDL.YoutubeVideo.Quality.bestaudio
-                        meta.Path = video.HQAudio.DirectURL
-                    Case YoutubeDL.YoutubeVideo.Quality.bestvideo
-                        meta.Path = video.HQVideo.DirectURL
-                    Case YoutubeDL.YoutubeVideo.Quality.worst
-                        meta.Path = video.LQMixed.DirectURL
-                    Case YoutubeDL.YoutubeVideo.Quality.worstaudio
-                        meta.Path = video.LQAudio.DirectURL
-                    Case YoutubeDL.YoutubeVideo.Quality.worstvideo
-                        meta.Path = video.LQVideo.DirectURL
-                End Select
-                meta.PlayCount = video.ViewCount
-                Dim thumb As New BitmapImage
-                thumb.BeginInit()
-                thumb.UriSource = New Uri(video.ThumbnailURL, UriKind.Absolute)
-                thumb.EndInit()
-                meta.Covers = New ImageSource() {thumb}
-#Disable Warning
-                TryCast(parameter, Player.Player)?.LoadSong(meta)
-#Enable Warning
-                Dim Vsub = video.Subtitles.FirstOrDefault(Function(k) k.Item1 = "en")
-                If Vsub IsNot Nothing Then
-                    Dim _Vsub = Vsub.Item2.FirstOrDefault(Function(k) k.Extension = "vtt")
+                Else
+                    Dim _Vsub = video.Subtitles.FirstOrDefault(Function(k) k.Item2.FirstOrDefault(Function(l) l.Extension = "vtt") IsNot Nothing)
                     If _Vsub IsNot Nothing Then
                         If TypeOf Application.Current.MainWindow Is MainWindow Then
                             With CType(Application.Current.MainWindow, MainWindow)
                                 Dim parser As New SubtitlesParser.Classes.Parsers.SubParser
                                 Using httpc As New Net.Http.HttpClient()
-                                    Dim data = Await httpc.GetStreamAsync(_Vsub.RawData)
+                                    Dim data = Await httpc.GetStreamAsync(_Vsub.Item2.FirstOrDefault(Function(k) k.Extension = "vtt")?.RawData)
                                     Dim subs = parser.ParseStream(data)
                                     Application.Current.Dispatcher.Invoke(Sub()
                                                                               For Each _sub In subs

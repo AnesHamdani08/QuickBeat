@@ -119,6 +119,11 @@ Namespace Utilities
             Return DomiColors
         End Function
 
+        ''' <summary>
+        ''' The resulting luma value range is 0..255, where 0 is the darkest and 255 is the lightest. Values greater than 128 are considered light.
+        ''' </summary>
+        ''' <param name="color">The color to calculate luminance for</param>
+        ''' <returns></returns>
         <Extension>
         Public Function Luminance(color As Color) As Double
             Return (0.299 * color.R + 0.587 * color.G + 0.114 * color.B)
@@ -193,6 +198,10 @@ Namespace Utilities
         <System.Runtime.InteropServices.DllImport("wininet.dll")>
         Private Function InternetGetConnectedState(ByRef Description As Integer, ByVal ReservedValue As Integer) As Boolean
         End Function
+        ''' <summary>
+        ''' Uses P/Invoke to check for active internet connection
+        ''' </summary>
+        ''' <returns></returns>
         Public Function CheckInternetConnection() As Boolean
             Try
                 Dim ConnDesc As Integer
@@ -200,6 +209,10 @@ Namespace Utilities
             Catch
                 Return False
             End Try
+        End Function
+
+        Public Function CheckInternet() As Boolean
+            Return HandyControl.Tools.ApplicationHelper.IsConnectedToInternet
         End Function
 
         <Extension>

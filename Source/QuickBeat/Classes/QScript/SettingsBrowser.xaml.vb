@@ -124,6 +124,7 @@ Namespace QScript
         End Sub
 
         Private Sub Main_SettingsView_MouseDoubleClick(sender As Object, e As MouseButtonEventArgs) Handles Main_SettingsView.MouseDoubleClick
+            If Main_SettingsView.SelectedIndex = -1 Then Return
             Dim CurSet = Settings_Source(Main_SettingsView.SelectedIndex)?.Tag
             Dim CurType = CurSet?.PropertyValue?.GetType
             If CurType IsNot Nothing Then

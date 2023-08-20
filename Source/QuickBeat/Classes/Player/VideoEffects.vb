@@ -88,6 +88,22 @@ Namespace Player
                 End Set
             End Property
 
+            Private _Metadata As Metadata
+            ''' <summary>
+            ''' The same reference to <see cref="Player.StreamMetadata"/>, modifying this will change it across the app
+            ''' </summary>
+            ''' <returns></returns>
+            Property Metadata As Metadata
+                Get
+                    Return _Metadata
+                End Get
+                Set(value As Metadata)
+                    _Metadata = value
+                    OnPropertyChanged()
+                    OnMetadataChanged()
+                End Set
+            End Property
+
             Private _Output As Image
             Property Output As Image
                 Get
@@ -106,6 +122,17 @@ Namespace Player
                 End Get
                 Set(value As ImageSource)
                     _CurrentFrame = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _Effect As Effects.Effect
+            Property Effect As Effects.Effect
+                Get
+                    Return _Effect
+                End Get
+                Set(value As Effects.Effect)
+                    _Effect = value
                     OnPropertyChanged()
                 End Set
             End Property
@@ -163,7 +190,14 @@ Namespace Player
             MustOverride Sub OnStartRequested()
             MustOverride Sub OnStopRequested()
             MustOverride Sub OnStreamChanged(oldValue As Integer)
+            MustOverride Sub OnMetadataChanged()
             MustOverride Sub OnSizeChanged()
+            MustOverride Sub OnPlayerPaused()
+            MustOverride Sub OnPlayerResumed()
+            ''' <summary>
+            ''' Occures when the video effect is clicked on.
+            ''' </summary>
+            ''' <param name="position">Mouse position relative to the control</param>
             MustOverride Sub OnMouseClick(position As Point)
             MustOverride Function Render() As ImageSource
             Public MustOverride Sub Init() Implements IStartupItem.Init
@@ -195,7 +229,7 @@ Namespace Player
             Private _PicBOX As New Forms.PictureBox
 
             Sub New()
-                Me.Name = "Windows Media Player Video Effect"
+                Me.Name = "Windows Media Player"
                 UsesCustomControl = True
             End Sub
 
@@ -213,6 +247,9 @@ Namespace Player
 
             Public Overrides Sub OnMouseClick(position As Point)
                 BassSfx.BASS_SFX_PluginClicked(_hSFX3, position.X, position.Y)
+            End Sub
+
+            Public Overrides Sub OnMetadataChanged()
             End Sub
 
             Public Overrides Sub OnStartRequested()
@@ -237,6 +274,12 @@ Namespace Player
                 BassSfx.BASS_SFX_PluginStop(_hSFX3)
                 BassSfx.BASS_SFX_PluginFree(_hSFX3)
                 _ExCount = 0
+            End Sub
+
+            Public Overrides Sub OnPlayerPaused()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
             End Sub
 
             Private _ExCount As Integer = 0
@@ -301,7 +344,7 @@ Namespace Player
             Private _file As String
 
             Sub New()
-                Me.Name = "Plugin Video Effect"
+                Me.Name = "External Plugin"
                 UsesCustomControl = True
             End Sub
 
@@ -326,6 +369,8 @@ Namespace Player
 
             Public Overrides Sub OnMouseClick(position As Point)
                 Dim v = BassSfx.BASS_SFX_PluginClicked(_hSFX3, position.X, position.Y)
+            End Sub
+            Public Overrides Sub OnMetadataChanged()
             End Sub
 
             Public Overrides Sub OnStartRequested()
@@ -359,6 +404,11 @@ Namespace Player
                 BassSfx.BASS_SFX_PluginStop(_hSFX3)
                 BassSfx.BASS_SFX_PluginFree(_hSFX3)
                 _ExCount = 0
+            End Sub
+            Public Overrides Sub OnPlayerPaused()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
             End Sub
 
             Private _ExCount As Integer = 0
@@ -412,14 +462,20 @@ Namespace Player
         Public Class BarsVideoEffect
             Inherits VideoEffect
 
-            Private _Visuals As New Un4seen.Bass.Misc.Visuals()
+            Private wBG As Brush = Nothing
+            Private wFG As Brush = Nothing
 
             Sub New()
-                MyBase.Name = "Bars Video Effect"
+                MyBase.Name = "Bars"
             End Sub
 
             Public Overrides Sub OnStartRequested()
-                'Throw New NotImplementedException()
+                If Metadata Is Nothing Then
+                    wBG = Brushes.Transparent
+                    wFG = New SolidColorBrush(Color.FromRgb(255, 193, 7))
+                Else
+                    OnMetadataChanged()
+                End If
             End Sub
 
             Public Overrides Sub OnStopRequested()
@@ -428,20 +484,41 @@ Namespace Player
             Public Overrides Sub OnMouseClick(position As Point)
 
             End Sub
+            Public Overrides Sub OnPlayerPaused()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
+            End Sub
+            Public Overrides Sub OnMetadataChanged()
+                If Metadata.DefaultCover Is Nothing Then
+                    wBG = Brushes.Transparent
+                    wFG = New SolidColorBrush(Color.FromRgb(255, 193, 7))
+                End If
+                Dim Clr = Utilities.CommonFunctions.GetAverageColor(Metadata.DefaultCover)
+                Dim Luma = Utilities.CommonFunctions.Luminance(Clr)
+                If Luma < 40 Then
+                    wBG = Brushes.White
+                Else
+                    wBG = Brushes.Black
+                End If
+                wFG = New SolidColorBrush(Clr)
+            End Sub
 
             Public Overrides Function Render() As ImageSource
-                Dim data = Utilities.SharedProperties.Instance.Player.GetChannelPeakData2(New Single() {10, 206, 413, 620, 827, 1034, 1241, 1448, 1655, 1862, 2068, 2275, 2482, 2689, 2896, 3103, 3310, 3517, 3724, 3931, 4137, 4344, 4551, 4758, 4965, 5172, 5379, 5586, 5793, 6000, 6206, 6413, 6620, 6827, 7034, 7241, 7448, 7655, 7862, 8068, 8275, 8482, 8689, 8896, 9103, 9310, 9517, 9724, 9931, 10137, 10344, 10551, 10758, 10965, 11172, 11379, 11586, 11793, 12000}, 511, Un4seen.Bass.BASSData.BASS_DATA_FFT1024 Or BASSData.BASS_DATA_FLOAT, 100)
+                Dim data = Utilities.SharedProperties.Instance.Player.GetChannelPeakData2(New Single() {10, 206, 413, 620, 827, 1034, 1241, 1448, 1655, 1862, 2068, 2275, 2482, 2689, 2896, 3103, 3310, 3517, 3724, 3931, 4137, 4344, 4551, 4758, 4965, 5172, 5379, 5586, 5793, 6000, 6206, 6413, 6620, 6827, 7034, 7241, 7448, 7655, 7862, 8068, 8275, 8482, 8689, 8896, 9103, 9310, 9517, 9724, 9931, 10137, 10344, 10551, 10758, 10965, 11172, 11379, 11586, 11793, 12000}, 2048, Un4seen.Bass.BASSData.BASS_DATA_FFT4096, 100)
                 Dim x As New DrawingVisual
                 Dim dc = x.RenderOpen
                 Dim i = data.Length - 1
                 dc.PushTransform(New RotateTransform With {.Angle = 180})
+                data = Utilities.CommonFunctions.CalcMovAvg(data, 1)
                 'dc.DrawRectangle(Brushes.Transparent, New Pen(Brushes.Green, 10), New Rect(0, 0, 1, 100))                
+                dc.DrawRectangle(wBG, Nothing, New Rect(0, 0, (i + 1) * 10 + 5 * (i), 160))
                 For Each peak In data
                     'Dim x_db = If(peak * 100 < 1, 0, 10 * Math.Log10(Math.Abs(peak * 100) ^ 2))
                     'dc.DrawRectangle(Brushes.Red, Nothing, New Rect(10 * i + (5 * i), 0, 10, x_db)) 'peak * 1280))                    
                     dc.DrawRectangle(Brushes.Transparent, Nothing, New Rect(10 * i + (5 * i), 0, 10, 100))
                     Dim x_db = If(peak < 1, 0, 10 * Math.Log10(Math.Abs(peak) ^ 2))
-                    dc.DrawRectangle(Brushes.Red, Nothing, New Rect(10 * i + (5 * i), 0, 10, peak))
+                    dc.DrawRectangle(wFG, Nothing, New Rect(10 * i + (5 * i), 0, 10, peak))
                     i -= 1
                 Next
                 dc.Close()
@@ -463,11 +540,110 @@ Namespace Player
             End Sub
         End Class
 
-        Public Class SpectrumPeakVideoEffect
+        Public Class SpectrumVideoEffect
             Inherits VideoEffect
 
-            Public Overrides Sub OnStartRequested()
+            Private wPen As Pen = Nothing
+            Private wBrush As Brush = Nothing
 
+            Sub New()
+                MyBase.Name = "Spectrum"
+            End Sub
+
+            Public Overrides Sub OnStartRequested()
+                If Metadata Is Nothing Then
+                    wPen = New Pen(Brushes.Green, 1) With {.DashCap = PenLineCap.Round, .EndLineCap = PenLineCap.Round, .LineJoin = PenLineJoin.Miter, .StartLineCap = PenLineCap.Round}
+                    wPen.Freeze()
+                    wBrush = Brushes.Transparent
+                Else
+                    OnMetadataChanged()
+                End If
+            End Sub
+
+            Public Overrides Sub OnStopRequested()
+                'Throw New NotImplementedException()                
+            End Sub
+
+            Public Overrides Sub OnMouseClick(position As Point)
+            End Sub
+            Public Overrides Sub OnPlayerPaused()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
+            End Sub
+
+            Public Overrides Sub OnMetadataChanged()
+                If Metadata.DefaultCover Is Nothing Then
+                    wPen = New Pen(Brushes.Green, 1) With {.DashCap = PenLineCap.Round, .EndLineCap = PenLineCap.Round, .LineJoin = PenLineJoin.Miter, .StartLineCap = PenLineCap.Round}
+                    wPen.Freeze()
+                    wBrush = Brushes.Transparent
+                End If
+                Dim Clr = Utilities.CommonFunctions.GetAverageColor(Metadata.DefaultCover)
+                Dim Luma = Utilities.CommonFunctions.Luminance(Clr)
+                If Luma < 40 Then
+                    wBrush = Brushes.White
+                Else
+                    wBrush = Brushes.Black
+                End If
+                wPen = New Pen(New SolidColorBrush(Clr), 1) With {.DashCap = PenLineCap.Round, .EndLineCap = PenLineCap.Round, .LineJoin = PenLineJoin.Miter, .StartLineCap = PenLineCap.Round}
+            End Sub
+
+
+            Public Overrides Function Render() As ImageSource
+                Dim data = Utilities.SharedProperties.Instance.Player.GetChannelPeakData2(New Single() {10, 206, 413, 620, 827, 1034, 1241, 1448, 1655, 1862, 2068, 2275, 2482, 2689, 2896, 3103, 3310, 3517, 3724, 3931, 4137, 4344, 4551, 4758, 4965, 5172, 5379, 5586, 5793, 6000, 6206, 6413, 6620, 6827, 7034, 7241, 7448, 7655, 7862, 8068, 8275, 8482, 8689, 8896, 9103, 9310, 9517, 9724, 9931, 10137, 10344, 10551, 10758, 10965, 11172, 11379, 11586, 11793, 12000}, 4096, Un4seen.Bass.BASSData.BASS_DATA_FFT8192, 100)
+                Dim x As New DrawingVisual
+                Dim dc = x.RenderOpen
+                Dim i = data.Length - 1
+                dc.PushTransform(New RotateTransform With {.Angle = 180})
+                Dim _Peak As Single = 0
+                data = Utilities.CommonFunctions.CalcMovAvg(data, 1)
+                'dc.DrawRectangle(Brushes.Transparent, New Pen(Brushes.Green, 10), New Rect(0, 0, 1, 100))                
+                dc.DrawRectangle(wBrush, Nothing, New Rect(0, 0, (i + 2) * 10 + 5 * (i + 2), 110))
+                For Each peak In data
+                    'Dim x_db = If(peak * 100 < 1, 0, 10 * Math.Log10(Math.Abs(peak * 100) ^ 2))
+                    'dc.DrawRectangle(Brushes.Red, Nothing, New Rect(10 * i + (5 * i), 0, 10, x_db)) 'peak * 1280))                    
+                    dc.DrawRectangle(Brushes.Transparent, Nothing, New Rect(10 * i + (5 * i), 0, 10, 100))
+                    'Dim x_db = If(peak < 1, 0, 10 * Math.Log10(Math.Abs(peak) ^ 2))
+                    dc.DrawLine(wPen, New Point(10 * (i + 1) + (5 * (i + 1) + 5), _Peak), New Point(10 * i + (5 * i) + 5, peak))
+                    _Peak = peak
+                    i -= 1
+                Next
+
+                dc.Close()
+                Dim v As New DrawingImage(x.Drawing)
+                Return v
+                'Update(Utilities.CommonFunctions.ToImageSource(_Visuals.CreateSpectrumLinePeak(Utilities.SharedProperties.Instance.Player.Stream, Width, Height, System.Drawing.Color.Red, System.Drawing.Color.Red, System.Drawing.Color.Black, System.Drawing.Color.Empty, Width / 160, 3, 2, 250, False, False, False)))
+            End Function
+
+            Public Overrides Sub Init()
+                'Throw New NotImplementedException()
+            End Sub
+
+            Public Overrides Sub OnStreamChanged(oldValue As Integer)
+                'Throw New NotImplementedException()
+            End Sub
+
+            Public Overrides Sub OnSizeChanged()
+                'Throw New NotImplementedException()
+            End Sub
+        End Class
+
+        Public Class BarsPeakVideoEffect
+            Inherits VideoEffect
+
+            Private Bg As Color = Nothing
+            Private Fg As Color = Nothing
+
+
+            Public Overrides Sub OnStartRequested()
+                _Visuals.ScaleFactorSqr = 2
+                _Visuals.ScaleFactorSqrBoost = 0.1
+                If Metadata Is Nothing Then
+                    Bg = Colors.Transparent
+                    Fg = Color.FromRgb(255, 193, 7)
+                Else
+                    OnMetadataChanged()
+                End If
             End Sub
 
             Public Overrides Sub OnStopRequested()
@@ -485,19 +661,39 @@ Namespace Player
             Public Overrides Sub OnMouseClick(position As Point)
 
             End Sub
+            Public Overrides Sub OnPlayerPaused()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
+            End Sub
+
+            Public Overrides Sub OnMetadataChanged()
+                If Metadata.DefaultCover Is Nothing Then
+                    Bg = Colors.Transparent
+                    Fg = Color.FromRgb(255, 193, 7)
+                End If
+                Dim Clr = Utilities.CommonFunctions.GetAverageColor(Metadata.DefaultCover)
+                Dim Luma = Utilities.CommonFunctions.Luminance(Clr)
+                If Luma < 40 Then
+                    Bg = Colors.White
+                Else
+                    Bg = Colors.Black
+                End If
+                Fg = Clr
+            End Sub
 
             Sub New()
                 MyBase.New
-                Name = "Spectrum Line Peak"
+                Name = "Bars With Peak"
             End Sub
 
             Public Overrides Sub Init()
                 Me.Configuration.IsLoaded = True
             End Sub
 
-            Private _Visuals As New Un4seen.Bass.Misc.Visuals With {.ScaleFactorSqr = 2, .ScaleFactorSqrBoost = 0.5} 'Low,High
+            Private _Visuals As New Un4seen.Bass.Misc.Visuals With {.ScaleFactorSqr = 1, .ScaleFactorSqrBoost = 0.005} 'Low,High
             Public Overrides Function Render() As ImageSource
-                Return Utilities.ToImageSource(_Visuals.CreateSpectrumLinePeak(Stream, Width, Height, System.Drawing.Color.Red, System.Drawing.Color.Red, System.Drawing.Color.Red, System.Drawing.Color.Empty, Width / 128, 5, 5, 250, False, False, False))
+                Return Utilities.ToImageSource(_Visuals.CreateSpectrumLinePeak(Stream, Width, Height, Utilities.CommonFunctions.ToGDIColor(Fg), Utilities.CommonFunctions.ToGDIColor(Fg), Utilities.CommonFunctions.ToGDIColor(Fg), Utilities.CommonFunctions.ToGDIColor(Bg), Width / 128, 5, 5, 250, False, False, False))
             End Function
         End Class
 
@@ -582,6 +778,16 @@ Namespace Player
             Public Overrides Sub OnMouseClick(position As Point)
 
             End Sub
+            Public Overrides Sub OnPlayerPaused()
+                _MediaElement.Pause()
+            End Sub
+
+            Public Overrides Sub OnPlayerResumed()
+                _MediaElement.Play()
+            End Sub
+
+            Public Overrides Sub OnMetadataChanged()
+            End Sub
 
             Sub New()
                 MyBase.New
@@ -613,5 +819,6 @@ Namespace Player
                 Return Nothing
             End Function
         End Class
+
     End Class
 End Namespace

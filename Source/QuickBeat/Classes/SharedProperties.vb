@@ -99,7 +99,7 @@ Namespace Utilities
             End Set
         End Property
 
-        Private _Themes As New ObjectModel.ObservableCollection(Of Type) From {GetType(Classes.Themes.Default), GetType(Classes.Themes.Neon)}
+        Private _Themes As New ObjectModel.ObservableCollection(Of Type) From {GetType(Classes.Themes.Default), GetType(Classes.Themes.Neon), GetType(Classes.Themes.Aqua), GetType(Classes.Themes.Marine)}
         Property Themes As ObjectModel.ObservableCollection(Of Type)
             Get
                 Return _Themes
@@ -158,6 +158,8 @@ Namespace Utilities
                 OnPropertyChanged()
             End Set
         End Property
+
+        ReadOnly Property Aqua As New Aqua.Aqua With {.ReferenceBinder = New QScript.KnownReferenceBinder}
 
         ReadOnly Property CurrentGreeting As String
             Get
@@ -233,20 +235,24 @@ Namespace Utilities
             If Library.Configuration.IsLoaded Then
                 If Library.MostPlayedArtist IsNot Nothing Then
                     Dim playlist = Library.MostPlayedArtist.ToPlaylist(Library.MostPlayedArtist.Cover)
+                    playlist.Description = "Recommendation"
                     RecommendedPlaylists.Add(playlist)
                 End If
                 If Library.MostPlayedArtist2 IsNot Nothing Then
                     Dim playlist = Library.MostPlayedArtist2.ToPlaylist(Library.MostPlayedArtist2.Cover)
+                    playlist.Description = "Recommendation"
                     RecommendedPlaylists.Add(playlist)
                 End If
                 If Library.MostPlayedArtist3 IsNot Nothing Then
                     Dim playlist = Library.MostPlayedArtist3.ToPlaylist(Library.MostPlayedArtist3.Cover)
+                    playlist.Description = "Recommendation"
                     RecommendedPlaylists.Add(playlist)
                 End If
                 Dim fav = Library.Where(Function(k) k.IsFavorite).ToPlaylist
                 fav.Tag = "Favorite"
                 Try
                     fav.Name = Utilities.ResourceResolver.Strings.FAVORITES
+                    fav.Description = "Your favourite songs."
                     'fav.Cover = ResourceResolver.Images.HEARTS.ToImageSource(New SolidColorBrush(Color.FromRgb(255, 193, 7)), New Pen(New SolidColorBrush(Color.FromRgb(255, 193, 7)), 2))
                     'Dim dv As New DrawingVisual()
                     'Dim dc = dv.RenderOpen
@@ -453,6 +459,7 @@ Namespace Utilities
                 fav.Tag = "Favorite"
                 Try
                     fav.Name = Utilities.ResourceResolver.Strings.FAVORITES
+                    fav.Description = "Your favourite songs."
                     fav.Cover = CommonFunctions.GenerateCoverImage(ResourceResolver.Images.HEARTS)
                     RecommendedPlaylists.Add(fav)
                     FavoriteSongs = fav
@@ -471,13 +478,37 @@ Namespace Utilities
 End Namespace
 
 'TODO Check CPU usage... No can dosville baby doll it's animation related
-'TODO add developer console highlight and error check
-'TODO add fx sequence?
+'TODO push new version
+'TODO add audio effect attirbute : control
+'TODO add more fx from bass fx
+'TODO fix scrollbar
+'TODO fix dev console formatting adding space and things
+'TODO Add loops , add dirty file check on close
+'TODO add logic comparison
+'TODO add object browser and type locator
 'TODO add custom themes
+'TODO maybe add fanart search
 'TODO add cache dump 'skip for now , data stream is corrupt , when writing to file it doesnt play
 'TODO complete aqua
 'TODO try and fix airspace problem
 'TODO fix metadata changing on previous stream metadata , remote tags reading kicking in before the streammetadata is changed // shouldn't be a problem since load url is not adding to playlist
-'TODO add playlist sort (drop for now as it needs some dirty work)
 'TODO plugins*
-'TODO render mode*
+'Changelog:
+'Fixed Audio Effects Not Saving
+'Added Reverb Audio Effect
+'Added Mix Audio Effect
+'Added Rotate Audio Effect
+'Added Drag to Reorder to Playlist
+'Added BASS FX Module
+'Added Parameter name and unit to effect config window
+'Enhaced Audio Effects Implementation
+'Added Dynamic Amplification Audio Effect
+'You Can Now Change the Control Bar Position (Top and Bottom)
+'Improved Developer Console Speed
+'Added Aqua Conditions Module
+'Added Aqua Async Module
+'Added Aqua Startup Script
+'Stability Improvments
+'Minor UI Improvments
+'Added Integration with FanArt
+'General Bug Fix
