@@ -1,0 +1,19 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:hc="https://handyorg.github.io/handycontrol">
+    <ResourceDictionary.MergedDictionaries>
+        <hc:ColorPaletteResources
+            TargetTheme="Dark"
+            BackgroundBrush="Transparent"
+            BackgroundColor="Transparent"
+            PrimaryBrush="#FFB740"
+            PrimaryColor="#FFB740"
+            SecondaryRegionBrush="#0D0804"
+            SecondaryRegionColor="#0D0804"
+            ThirdlyRegionBrush="#FC6418"            
+            ThirdlyRegionColor="#FC6418"
+            MainContentBackgroundBrush="#000000"
+            MainContentBackgroundColor="#000000"
+            />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

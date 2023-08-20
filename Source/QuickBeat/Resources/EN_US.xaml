@@ -161,9 +161,21 @@
     <sys:String x:Key="LOC_TO">To</sys:String>
     <sys:String x:Key="LOC_CHECKFORUPDATES">Check for Updates</sys:String>
     <sys:String x:Key="LOC_REPOSITORY">Repository</sys:String>
-    <sys:String x:Key="LOC_QUERY_UPDATES_FOUND">New Version Found, Go to The Repository to Update.</sys:String>
+    <sys:String x:Key="LOC_QUERY_UPDATES_FOUND">New Version Found, Go to the Repository to Update.</sys:String>
     <sys:String x:Key="LOC_QUERY_UPDATES_NOTFOUND">You're on the Latest Version.</sys:String>
     <sys:String x:Key="LOC_QUERY_UPDATES_ERROR">Couldn't Check for Updates, Try Again Later.</sys:String>
     <sys:String x:Key="LOC_QUERY_APP_RESTART">A Restart is Recommended for Settings to Take Proper Effect</sys:String>
+    <sys:String x:Key="LOC_IMPORT">Import</sys:String>
+    <sys:String x:Key="LOC_EXPORT">Export</sys:String>
+    <sys:String x:Key="LOC_QUERY_ERROR_UNKNOWN">An Unknown Error Occured.</sys:String>
+    <sys:String x:Key="LOC_QUERY_ERROR_PARSE">One or more values couldn't be parsed.</sys:String>
+    <sys:String x:Key="LOC_QUERY_PLAYLIST_IMPORT">You're About to Import %n with %c Song(s), Continue?</sys:String>
+    <sys:String x:Key="LOC_QUERY_REMOVE">You're About to Remove %n, Continue?</sys:String>
+    <sys:String x:Key="LOC_NAME">Name</sys:String>
+    <sys:String x:Key="LOC_QUERY_INTERNET_DISCONNECTED">Couldn't Connect to the Internet</sys:String>
+    <sys:String x:Key="LOC_BOTTOMCONTROLBAR">Bottom Control Bar</sys:String>
+    <sys:String x:Key="LOC_HINT_NOTHING">Nothing to show here!</sys:String>
+    <sys:String x:Key="LOC_CONTROLS">Controls</sys:String>
 </ResourceDictionary>    
+    
 
