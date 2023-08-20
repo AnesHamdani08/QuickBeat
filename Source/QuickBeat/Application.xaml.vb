@@ -1,4 +1,5 @@
-﻿Imports QuickBeat.Utilities
+﻿Imports System.Windows.Threading
+Imports QuickBeat.Utilities
 Imports Windows.Foundation
 
 Class Application
@@ -39,6 +40,8 @@ Class Application
         Else
             HandyControl.Themes.ThemeManager.Current.ApplicationTheme = HandyControl.Themes.ApplicationTheme.Dark
         End If
+
+        FanartTv.API.Key = "22e4c00b998da3517da3ee9eea9d83eb"
 
         Debug.WriteLine("Initializing SharedProperties...")
         Utilities.SharedProperties.Instance.Init()
@@ -91,5 +94,11 @@ Class Application
 
         My.Settings.Save()
         If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("All Good!, See You on the Next One!")
+    End Sub
+
+    Private Sub Application_DispatcherUnhandledException(sender As Object, e As DispatcherUnhandledExceptionEventArgs) Handles Me.DispatcherUnhandledException
+        Utilities.DebugMode.Instance.Start()
+        Utilities.DebugMode.Instance.Log(Of Application)(e.Exception.ToString)
+        e.Handled = True
     End Sub
 End Class

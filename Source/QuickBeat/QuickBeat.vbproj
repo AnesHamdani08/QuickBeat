@@ -58,6 +58,9 @@
     <Reference Include="Bass.Net">
       <HintPath>..\..\AUDX\AUDX\bin\Debug\Bass.Net.dll</HintPath>
     </Reference>
+    <Reference Include="FanartTv, Version=2.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FanartTv.2.0.5\lib\FanartTv.dll</HintPath>
+    </Reference>
     <Reference Include="HandyControl, Version=3.4.0.0, Culture=neutral, PublicKeyToken=45be8712787a1e5b, processorArchitecture=MSIL">
       <HintPath>..\packages\HandyControls.3.4.5\lib\net48\HandyControl.dll</HintPath>
     </Reference>
@@ -180,10 +183,13 @@
     <Compile Include="Classes\Converters\DoubleToVisibilityConverter.vb" />
     <Compile Include="Classes\Converters\GenericMultiValueConverter.vb" />
     <Compile Include="Classes\Converters\ImageSourceToAverageColorConverter.vb" />
+    <Compile Include="Classes\Converters\MultiLineStringToMultiLineNumberConverter.vb" />
     <Compile Include="Classes\Converters\NumericToRoundedNumericConverter.vb" />
     <Compile Include="Classes\Converters\PlaylistToDefaultImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\MetadataToLyricsConverter.vb" />
     <Compile Include="Classes\Converters\NullStringToVisibilityConverter.vb" />
+    <Compile Include="Classes\Converters\MetadataToFanartImageConverter.vb" />
+    <Compile Include="Classes\Converters\StringToFanartImageConverter.vb" />
     <Compile Include="Classes\Converters\TagLibPictureToImageSource.vb" />
     <Compile Include="Classes\Converters\TextToImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\ThemeTypeToColorPalleteConverter.vb" />
@@ -191,6 +197,7 @@
     <Compile Include="Classes\Converters\ValueToStringConverter.vb" />
     <Compile Include="Classes\Converters\VisibilityToBooleanConverter.vb" />
     <Compile Include="Classes\DebugMode.vb" />
+    <Compile Include="Classes\FanArtProvider.vb" />
     <Compile Include="Classes\Player\EngineModule.vb" />
     <Compile Include="Classes\GlobalHotkey.vb" />
     <Compile Include="Classes\HotkeyManager.vb" />
@@ -210,6 +217,7 @@
     <Compile Include="Classes\QScript\DeveloperConsole.xaml.vb">
       <DependentUpon>DeveloperConsole.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Classes\QScript\KnownReferenceBinder.vb" />
     <Compile Include="Classes\QScript\ListEditor.xaml.vb">
       <DependentUpon>ListEditor.xaml</DependentUpon>
     </Compile>
@@ -241,6 +249,7 @@
     <Compile Include="Classes\Themes.vb" />
     <Compile Include="Classes\YoutubeDL.vb" />
     <Compile Include="Controls\ClickTextBlock.vb" />
+    <Compile Include="Controls\DragDropListBox.vb" />
     <Compile Include="Controls\GeoImage.vb" />
     <Compile Include="Controls\Hotkey.xaml.vb">
       <DependentUpon>Hotkey.xaml</DependentUpon>
@@ -309,6 +318,22 @@
     <Page Include="Resources\Glitter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Resources\Themes\Marine\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Marine\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Aqua\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Aqua\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Themes\Dynamic\Dark.xaml">
       <Generator>MSBuild:Compile</Generator>

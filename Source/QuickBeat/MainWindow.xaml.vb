@@ -52,7 +52,7 @@ Class MainWindow
         End Set
     End Property
 
-    Public Shared IsBigCoverProperty As DependencyProperty = DependencyProperty.Register("IsBigCover", GetType(Boolean), GetType(MainWindow))
+    Public Shared IsBigCoverProperty As DependencyProperty = DependencyProperty.Register("IsBigCover", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
     Property IsBigCover As Boolean
         Get
             Return GetValue(IsBigCoverProperty)
@@ -62,16 +62,36 @@ Class MainWindow
         End Set
     End Property
 
+    Public Shared ShowVisualizerControlsProperty As DependencyProperty = DependencyProperty.Register("ShowVisualizerControls", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
+    Property ShowVisualizerControls As Boolean
+        Get
+            Return GetValue(ShowVisualizerControlsProperty)
+        End Get
+        Set(value As Boolean)
+            SetValue(ShowVisualizerControlsProperty, value)
+        End Set
+    End Property
+
+    Public Shared IsBottomControlsProperty As DependencyProperty = DependencyProperty.Register("IsBottomControls", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
+    Property IsBottomControls As Boolean
+        Get
+            Return GetValue(IsBottomControlsProperty)
+        End Get
+        Set(value As Boolean)
+            SetValue(IsBottomControlsProperty, value)
+        End Set
+    End Property
+
     Public Shared SubtitlesPathProperty As DependencyProperty = DependencyProperty.Register("SubtitlesPath", GetType(String), GetType(MainWindow), New UIPropertyMetadata(New PropertyChangedCallback(Sub(d, e)
                                                                                                                                                                                                           If d IsNot Nothing AndAlso TypeOf d Is MainWindow Then
                                                                                                                                                                                                               With TryCast(d, MainWindow)
                                                                                                                                                                                                                   .IsUsingSubtitles = False
                                                                                                                                                                                                                   .Subtitles?.Clear()
+                                                                                                                                                                                                                  .InfoText = ""
                                                                                                                                                                                                                   For Each item In ._SubtilesPositionSyncProcs
                                                                                                                                                                                                                       Un4seen.Bass.Bass.BASS_ChannelRemoveSync(item.Item1, item.Item2)
                                                                                                                                                                                                                   Next
                                                                                                                                                                                                                   ._SubtilesPositionSyncProcs.Clear()
-                                                                                                                                                                                                                  .InfoText = ""
                                                                                                                                                                                                               End With
                                                                                                                                                                                                               If IO.File.Exists(e.NewValue) Then
                                                                                                                                                                                                                   Dim subP As New SubtitlesParser.Classes.Parsers.SubParser
@@ -122,7 +142,10 @@ Class MainWindow
     End Property
 
     Public Shared IsUsingSubtitlesProperty As DependencyProperty = DependencyProperty.Register("IsUsingSubtitles", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(New PropertyChangedCallback(Sub(d, e)
-                                                                                                                                                                                                               If e.NewValue = False Then d?.SetValue(MainWindow.SubtitlesProperty, Nothing)
+                                                                                                                                                                                                               If e.NewValue = False Then
+                                                                                                                                                                                                                   d?.SetValue(MainWindow.SubtitlesProperty, Nothing)
+                                                                                                                                                                                                                   d?.SetValue(MainWindow.InfoTextProperty, Nothing)
+                                                                                                                                                                                                               End If
                                                                                                                                                                                                            End Sub)))
     ''' <summary>
     ''' Only set to false to release current subtitles and handles.
@@ -285,7 +308,6 @@ Class MainWindow
                                                                                                                        End Sub)
         AddHandler SharedProperties.Instance.Player.MediaLoaded, Sub(o, n)
                                                                      Application.Current.Dispatcher.Invoke(Sub()
-                                                                                                               Subtitles?.Clear()
                                                                                                                SubtitlesPath = Nothing
                                                                                                            End Sub)
                                                                  End Sub
@@ -293,7 +315,7 @@ Class MainWindow
         AddHandler TabTimer.Elapsed, New Timers.ElapsedEventHandler(Sub(s, _e)
                                                                         Try
                                                                             Me.Dispatcher.Invoke(Sub()
-                                                                                                     If TabControl_Main.SelectedIndex <> 0 Then
+                                                                                                     If TabControl_Main.SelectedIndex <> 0 OrElse Me.WindowState = WindowState.Minimized Then
                                                                                                          Return
                                                                                                      End If
                                                                                                      If HomeTabSwitchTicksLeft <= 0 Then 'Just in case ;)
@@ -319,8 +341,17 @@ Class MainWindow
             Me.WindowState = WindowState.Minimized
         End If
         IsBigCover = My.Settings.APP_VIEW_BIGCOVER
+        IsBottomControls = My.Settings.APP_VIEW_BOTTOMCONTROLS
         Application.Current.MainWindow = Me
         Version = My.Application.Info.Version.ToString
+
+        If Not String.IsNullOrEmpty(My.Settings.AQUA_STARTUP_SCRIPT) Then
+            Try
+                SharedProperties.Instance.Aqua.RunFile(My.Settings.AQUA_STARTUP_SCRIPT)
+            Catch ex As Exception
+                Utilities.DebugMode.Instance.Log(Of MainWindow)(ex.ToString)
+            End Try
+        End If
     End Sub
 
     Private Sub MenuItem_KeyboardNavigation_Click(sender As Object, e As RoutedEventArgs)
@@ -330,6 +361,8 @@ Class MainWindow
     Private Sub MainWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
         Dim mods = Keyboard.Modifiers
         Select Case e.Key
+            Case Key.F11
+                Me.IsFullScreen = Not Me.IsFullScreen
             Case Key.D
                 If mods.HasFlag(ModifierKeys.Control) Then
                     If DebugMode.Instance.IsEnabled Then My.Windows.DeveloperConsole.Show()
@@ -395,6 +428,7 @@ Class MainWindow
         'Saving UI settings
         My.Settings.APP_VIEW_SIDEBAR_RIGHT_VISIBILITY = Grid_SideBar_Right.Visibility
         My.Settings.APP_VIEW_BIGCOVER = IsBigCover
+        My.Settings.APP_VIEW_BOTTOMCONTROLS = IsBottomControls
 
         My.Settings.Save()
 
@@ -484,9 +518,15 @@ Class MainWindow
         End If
     End Sub
 
-    Private Sub Grid_NowPlaying_VisualizerHost_MouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
+    Private Sub Grid_NowPlaying_VisualizerHost_PreviewMouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
         If SharedProperties.Instance?.Player?.VideoEffect IsNot Nothing Then
             SharedProperties.Instance.Player.VideoEffect.OnMouseClick(e.GetPosition(Grid_NowPlaying_VisualizerHost))
+        End If
+    End Sub
+
+    Private Sub Image_VisualizerOutput_PreviewMouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
+        If SharedProperties.Instance?.Player?.VideoEffect IsNot Nothing Then
+            SharedProperties.Instance.Player.VideoEffect.OnMouseClick(e.GetPosition(Image_VisualizerOutput))
         End If
     End Sub
 
@@ -523,4 +563,5 @@ Class MainWindow
             HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_UPDATES_ERROR)
         End Try
     End Sub
+
 End Class
