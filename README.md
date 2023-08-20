@@ -14,6 +14,8 @@ Audio player and manager, plays all common media files alongside many more via p
 - A-B Loop
 - Keyboard Navigation
 - Recommendations
+- FanArt Integration
+- Drag to Reorder Playlist
 - Custom Playlists
 - Quick Preview
 - Library
@@ -25,6 +27,7 @@ Audio player and manager, plays all common media files alongside many more via p
     - Artist
     - Album
 - Ultra Fast Search
+- Powerful Script Engine for Your Custom Routines
 - Sleep Timer
 - Color Presets
 - Dark/Light Theme
