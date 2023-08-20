@@ -112,6 +112,27 @@ Namespace Classes
                 Me.IsErrored = False
             End If
         End Sub
+        ''' <summary>
+        ''' Set a temporary status and clears after a timeout
+        ''' </summary>
+        ''' <param name="Status"></param>
+        ''' <param name="Progress"></param>
+        ''' <param name="Timeout">Delay in milliseconds</param>
+        Sub SetStatus(Status As String, Progress As Double, Timeout As Double)
+            Dim oStatus = _Status
+            Dim oProgress = _Progress
+            Me.Status = Status
+            Me.Progress = Progress
+            Me.IsLoading = (Progress < 100)
+            Me.IsLoaded = (Progress = 100)
+            If Progress = 100 Then
+                Me.IsErrored = False
+            End If
+            Application.Current.Dispatcher.InvokeAsync(Async Function()
+                                                           Await Task.Delay(Timeout)
+                                                           SetStatus(oStatus, oProgress)
+                                                       End Function)
+        End Sub
         Sub SetError(IsErrored As Boolean, Exception As Exception)
             Me.IsErrored = IsErrored
             Me.Exception = Exception

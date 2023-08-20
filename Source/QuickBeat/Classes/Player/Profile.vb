@@ -16,6 +16,12 @@ Namespace Player
             Public Class FieldAttribute
                 Inherits Attribute
                 Property DisplayName As String
+                ''' <summary>
+                ''' The field unit if available
+                ''' </summary>
+                ''' <returns></returns>
+                Property Unit As String
+                Property UnitShortForm As String
                 Property ValueType As Type
                 Property Description As String
                 ''' <summary>
@@ -37,6 +43,13 @@ Namespace Player
                 Sub New(DisplayName As String, ValueType As Type)
                     Me.DisplayName = DisplayName
                     Me.ValueType = ValueType
+                End Sub
+
+                Sub New(DisplayName As String, ValueType As Type, Unit As String, UnitShortForm As String)
+                    Me.DisplayName = DisplayName
+                    Me.ValueType = ValueType
+                    Me.Unit = Unit
+                    Me.UnitShortForm = UnitShortForm
                 End Sub
             End Class
 
@@ -190,8 +203,9 @@ Namespace Player
         Private Sub _Parent_MediaLoaded(OldValue As Integer, NewValue As Integer) Handles _Parent.MediaLoaded
             For Each _Item In Me
                 If _Item Is Nothing Then Continue For
-                Un4seen.Bass.Bass.BASS_ChannelRemoveFX(OldValue, _Item?.HEffect)
+                Dim Result = Un4seen.Bass.Bass.BASS_ChannelRemoveFX(OldValue, _Item?.HEffect)
                 _Item.HStream = NewValue
+                _Item.HEffect = 0 'TODO subject to change
                 If _Item.IsEnabled Then _Item.Apply()
             Next
         End Sub

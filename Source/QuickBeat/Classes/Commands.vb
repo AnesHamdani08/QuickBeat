@@ -1,12 +1,8 @@
 ﻿Imports System.ComponentModel
-Imports System.Security.Policy
 Imports System.Threading
-Imports HandyControl.Controls
 Imports HandyControl.Tools.Command
 Imports QuickBeat.Player
-Imports QuickBeat.Hotkeys.WPF.Commands
 Imports QuickBeat.Library.WPF.Commands
-Imports QuickBeat.Library
 Imports QuickBeat.Utilities
 Imports QuickBeat.Player.WPF.Commands
 Imports QuickBeat.WPF.Commands
@@ -95,6 +91,8 @@ Namespace Utilities
 
         Public Shared AddItemsToSharedPlaylistCommand As New AddItemsToSharedPlaylistCommand
 
+        Public Shared AddItemsToPlaylistFromPickerCommand As New AddItemsToPlaylistFromPickerCommand
+
         Public Shared ViewImageCommand As New ViewImageCommand
 
         Public Shared ShowTagEditorCommand As New ShowTagEditorCommand
@@ -108,6 +106,14 @@ Namespace Utilities
         Public Shared RemoveMergedResourceDictionaryCommand As New RemoveMergedResourceDictionaryCommand
 
         Public Shared RestoreResourcesCommand As New RestoreResourcesCommand
+
+        Public Shared ExportPlaylistCommand As New ExportPlaylistCommand
+
+        Public Shared ImportPlaylistCommand As New ImportPlaylistCommand
+
+        Public Shared RemoveCustomPlaylistCommand As New RemoveCustomPlaylistCommand
+
+        Public Shared ViewPlaylistCommand As New ViewPlaylistCommand
     End Class
 
 End Namespace
@@ -671,6 +677,30 @@ Namespace Player.WPF.Commands
             Return parameter IsNot Nothing
         End Function
     End Class
+
+    Public Class AddItemsToPlaylistFromPickerCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim DLG As New Dialogs.PlaylistPicker() With {.Owner = Application.Current.MainWindow}
+            If DLG.ShowDialog Then
+                For Each item In parameter
+                    DLG.DialogPlaylistResult?.Add(TryCast(item, Metadata))
+                Next
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return parameter IsNot Nothing
+        End Function
+    End Class
 End Namespace
 Namespace WPF.Commands
     Public Class ViewImageCommand
@@ -686,7 +716,7 @@ Namespace WPF.Commands
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
             Dim IV As New HandyControl.Controls.ImageViewer()
             IV.ImageSource = BitmapFrame.Create(TryCast(parameter, BitmapSource))
-            Dim Popup As New HandyControl.Controls.BlurWindow() With {.Content = IV, .Width = 500, .Height = 500, .Background = Nothing, .WindowStartupLocation = WindowStartupLocation.CenterScreen}
+            Dim Popup As New HandyControl.Controls.Window() With {.Content = IV, .Width = 500, .Height = 500, .Background = Nothing, .WindowStartupLocation = WindowStartupLocation.CenterScreen}
             AddHandler Popup.Loaded, Sub()
                                          Popup.InvalidateVisual()
                                      End Sub
@@ -767,14 +797,14 @@ Namespace WPF.Commands
                 End If
             End If
             If ResDictSource IsNot Nothing Then
-                    Try
-                        Dim ResDict As New ResourceDictionary() With {.Source = ResDictSource}
-                        Application.Current.Resources.MergedDictionaries.Add(ResDict)
-                    Catch ex As Exception
-                        Utilities.DebugMode.Instance.Log(Of MergeResourceDictionaryCommand)(ex.ToString)
-                        HandyControl.Controls.MessageBox.Error(ex.ToString)
-                    End Try
-                End If
+                Try
+                    Dim ResDict As New ResourceDictionary() With {.Source = ResDictSource}
+                    Application.Current.Resources.MergedDictionaries.Add(ResDict)
+                Catch ex As Exception
+                    Utilities.DebugMode.Instance.Log(Of MergeResourceDictionaryCommand)(ex.ToString)
+                    HandyControl.Controls.MessageBox.Error(ex.ToString)
+                End Try
+            End If
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
@@ -865,6 +895,136 @@ Namespace WPF.Commands
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
             Return True
+        End Function
+    End Class
+
+    Public Class ExportPlaylistCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim DLG As New Dialogs.PlaylistPicker() With {.Owner = Application.Current.MainWindow}
+            If DLG.ShowDialog Then
+                If DLG.DialogPlaylistResult Is Nothing Then Return
+                Dim SFD As New Microsoft.Win32.SaveFileDialog With {.Filter = "QuickBeat Object|*.qbo", .FileName = DLG.DialogPlaylistResult?.Name}
+                If SFD.ShowDialog Then
+                    Try
+                        If IO.File.Exists(SFD.FileName) Then
+                            Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Truncate, IO.FileAccess.Write, IO.FileShare.Read)
+                                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                                BinF.Serialize(fs, DLG.DialogPlaylistResult)
+                                fs.Flush()
+                            End Using
+                        Else
+                            Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read)
+                                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                                BinF.Serialize(fs, DLG.DialogPlaylistResult)
+                                fs.Flush()
+                            End Using
+                        End If
+                    Catch ex As Exception
+                        Utilities.DebugMode.Instance.Log(Of ExportPlaylistCommand)(ex.ToString)
+                        HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_ERROR_UNKNOWN & Environment.NewLine & ex.Message)
+                    End Try
+                End If
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return True
+        End Function
+    End Class
+
+    Public Class ImportPlaylistCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim OFD As New Microsoft.Win32.OpenFileDialog With {.Filter = "QuickBeat Object|*.qbo", .CheckFileExists = True}
+            If OFD.ShowDialog Then
+                Try
+                    Using fs As New IO.FileStream(OFD.FileName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
+                        Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                        Dim Obj = BinF.Deserialize(fs)
+                        If Obj.GetType Is GetType(Player.Playlist) Then
+                            Dim pObj = TryCast(Obj, Player.Playlist)
+                            If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_IMPORT.Replace("%n", pObj?.Name).Replace("%c", pObj?.Count)) = MessageBoxResult.OK Then
+                                pObj.Cover = Utilities.CommonFunctions.ToCoverImage(pObj.Name)
+                                SharedProperties.Instance.CustomPlaylists.Add(pObj)
+                            End If
+                        End If
+                    End Using
+                Catch ex As Exception
+                    Utilities.DebugMode.Instance.Log(Of ExportPlaylistCommand)(ex.ToString)
+                    HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_ERROR_UNKNOWN & Environment.NewLine & ex.Message)
+                End Try
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return True
+        End Function
+    End Class
+
+    Public Class RemoveCustomPlaylistCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim pParam = TryCast(parameter, Playlist)
+            If pParam IsNot Nothing Then
+                If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_REMOVE.Replace("%n", pParam.Name)) = MessageBoxResult.OK Then
+                    Utilities.SharedProperties.Instance.CustomPlaylists?.Remove(pParam)
+                End If
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return parameter IsNot Nothing AndAlso TypeOf parameter Is Player.Playlist
+        End Function
+    End Class
+
+    Public Class ViewPlaylistCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim pParam = TryCast(parameter, Playlist)
+            If pParam IsNot Nothing Then
+                Utilities.SharedProperties.Instance.Library?.FocusGroup(pParam)
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return parameter IsNot Nothing AndAlso TypeOf parameter Is Player.Playlist
         End Function
     End Class
 End Namespace

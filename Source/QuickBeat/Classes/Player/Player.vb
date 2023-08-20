@@ -426,6 +426,7 @@ Namespace Player
                                          Await Task.Delay(1000)
                                      Loop
                                  End Function)
+                        VideoEffect?.OnPlayerResumed()
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Playing : GetSMTC().DisplayUpdater.Update()
@@ -433,6 +434,7 @@ Namespace Player
                 Case NameOf(IsPaused)
                     If IsPaused Then
                         If Level IsNot Nothing Then Level.IsActive = False
+                        VideoEffect?.OnPlayerPaused()
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Paused : GetSMTC().DisplayUpdater.Update()
@@ -440,6 +442,7 @@ Namespace Player
                 Case NameOf(IsStopped)
                     If IsStopped Then
                         If Level IsNot Nothing Then Level.IsActive = False
+                        VideoEffect?.OnPlayerPaused()
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Stopped : GetSMTC().DisplayUpdater.Update()
@@ -447,6 +450,7 @@ Namespace Player
                 Case NameOf(IsStalled)
                     If IsStalled Then
                         If Level IsNot Nothing Then Level.IsActive = False
+                        VideoEffect?.OnPlayerPaused()
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Closed : GetSMTC().DisplayUpdater.Update()
@@ -672,7 +676,7 @@ Namespace Player
                 If value Then
                     Volume = 0
                 Else
-                    Volume = _Volume
+                    Volume = _RawVolume
                 End If
                 _IsMuted = value
                 OnPropertyChanged()
@@ -857,7 +861,10 @@ Namespace Player
                     _VideoEffect.Stop()
                 End If
                 _VideoEffect = value
-                If _VideoEffect IsNot Nothing Then _VideoEffect.Stream = Stream
+                If _VideoEffect IsNot Nothing Then
+                    _VideoEffect.Stream = Stream
+                    _VideoEffect.Metadata = StreamMetadata
+                End If
                 OnPropertyChanged()
             End Set
         End Property
@@ -1272,6 +1279,11 @@ Namespace Player
 #Disable Warning
             SharedProperties.Instance.Library?.IncreasePlaycountAsync(value.Path, 1)
 #Enable Warning
+
+            If VideoEffect IsNot Nothing Then
+                VideoEffect.Metadata = value
+            End If
+
             OnPropertyChanged(NameOf(StreamMetadata))
             RaiseEvent MetadataChanged()
         End Sub
@@ -1613,19 +1625,7 @@ Namespace Player
                     If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Metadata.Exception:=" & ex.Message)
                 End Try
             End If
-            Dim PF64 = SH.GetItem("EffectsProfile")
-            If Not String.IsNullOrEmpty(PF64) Then
-                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                Try
-                    Dim Profile = BinF.Deserialize(New IO.MemoryStream(Convert.FromBase64String(PF64)))
-                    EffectsProfile = Profile
-                Catch ex As Exception
-                    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Profile.Exception:=" & ex.Message)
-                End Try
-            End If
-            If SH.ContainsKey("Path") Then Path = SH.GetItem("Path")
-            If SH.ContainsKey("Volume") Then Volume = SH.GetItem("Volume")
-            If SH.ContainsKey("TrueVolume") Then TrueVolume = SH.GetItem("TrueVolume")
+            'Must come before EffectsProfile because some effects depends on modules
             If SH.ContainsSection("Modules") Then
                 For Each item In SH.GetSection("Modules")
                     Try
@@ -1640,6 +1640,19 @@ Namespace Player
                     End Try
                 Next
             End If
+            Dim PF64 = SH.GetItem("EffectsProfile")
+            If Not String.IsNullOrEmpty(PF64) Then
+                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                Try
+                    Dim Profile = BinF.Deserialize(New IO.MemoryStream(Convert.FromBase64String(PF64)))
+                    EffectsProfile = Profile
+                Catch ex As Exception
+                    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Profile.Exception:=" & ex.Message)
+                End Try
+            End If
+            If SH.ContainsKey("Path") Then Path = SH.GetItem("Path")
+            If SH.ContainsKey("Volume") Then Volume = SH.GetItem("Volume")
+            If SH.ContainsKey("TrueVolume") Then TrueVolume = SH.GetItem("TrueVolume")
         End Sub
 
         Function SaveSettings() As String
@@ -1665,8 +1678,9 @@ Namespace Player
             If Not String.IsNullOrEmpty(MD64) Then SH.AddItem("Metadata", MD64)
             Dim PF64Mem As New IO.MemoryStream()
             Try
-                For Each profile In EffectsProfile
-                    profile.Clean()
+                For Each fx In EffectsProfile
+                    fx.Clean()
+                    fx.HEffect = 0
                 Next
                 BinF.Serialize(PF64Mem, EffectsProfile)
             Catch ex As Exception
@@ -1744,6 +1758,7 @@ Namespace Player
             Dim freq As Single
             Bass.BASS_ChannelGetAttribute(Stream, BASSAttribute.BASS_ATTRIB_FREQ, freq) ' get the sample rate
             Bass.BASS_ChannelGetData(Stream, fft, FFTdata) ' get the FFT data (1024 sample)
+            If freq = 0 Then freq = Me.SampleRate
             Dim b0 As Integer = 0
             For x As Integer = 0 To Bands.Length - 1
                 bandlevel(x) = 0

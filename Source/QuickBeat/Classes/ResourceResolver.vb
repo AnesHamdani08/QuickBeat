@@ -29,12 +29,52 @@ Namespace Utilities
                     Application.Current.Resources("LOC_QUERY_APP_RESTART") = value
                 End Set
             End Property
+            Public Shared Property QUERY_INTERNET_DISCONNECTED As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_INTERNET_DISCONNECTED")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_INTERNET_DISCONNECTED") = value
+                End Set
+            End Property
             Public Shared Property QUERY_UPDATES_ERROR As System.String
                 Get
                     Return Application.Current.Resources("LOC_QUERY_UPDATES_ERROR")
                 End Get
                 Set(value As System.String)
                     Application.Current.Resources("LOC_QUERY_UPDATES_ERROR") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_ERROR_UNKNOWN As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_ERROR_UNKNOWN")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_ERROR_UNKNOWN") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_ERROR_PARSE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_ERROR_PARSE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_ERROR_PARSE") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_REMOVE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_REMOVE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_REMOVE") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_PLAYLIST_IMPORT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_PLAYLIST_IMPORT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_PLAYLIST_IMPORT") = value
                 End Set
             End Property
             Public Shared Property LOC_QUERY_UPDATES_NOTFOUND As System.String
@@ -59,6 +99,14 @@ Namespace Utilities
                 End Get
                 Set(value As System.String)
                     Application.Current.Resources("LOC_ADD") = value
+                End Set
+            End Property
+            Public Shared Property NAME As System.String
+                Get
+                    Return Application.Current.Resources("LOC_NAME")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_NAME") = value
                 End Set
             End Property
             Public Shared Property ADDTOPLAYLIST As System.String

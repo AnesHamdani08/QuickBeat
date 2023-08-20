@@ -14,10 +14,11 @@ Namespace Utilities
         'Variables
 
         Public Sub Start()
+            If IsEnabled Then Return
             IsEnabled = True
             Utilities.SharedProperties.Instance.IsLogging = True
             Dim info = My.Application.Info
-            Utilities.SharedProperties.Instance.Notification("A08 V2",
+            Utilities.SharedProperties.Instance.Notification("QuickBeat Debug Kit",
                                                          $"App: {info.AssemblyName}" & Environment.NewLine &
                                                          $"Version: {info.Version}" & Environment.NewLine &
                                                          $"Debug Mode: Enabled",
