@@ -248,6 +248,30 @@ Partial Friend NotInheritable Class MySettings
             Me("APP_FIRSTRUN") = value
         End Set
     End Property
+    
+    <Global.System.Configuration.UserScopedSettingAttribute(),  _
+     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+     Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+    Public Property APP_VIEW_BOTTOMCONTROLS() As Boolean
+        Get
+            Return CType(Me("APP_VIEW_BOTTOMCONTROLS"),Boolean)
+        End Get
+        Set
+            Me("APP_VIEW_BOTTOMCONTROLS") = value
+        End Set
+    End Property
+    
+    <Global.System.Configuration.UserScopedSettingAttribute(),  _
+     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+    Public Property AQUA_STARTUP_SCRIPT() As String
+        Get
+            Return CType(Me("AQUA_STARTUP_SCRIPT"),String)
+        End Get
+        Set
+            Me("AQUA_STARTUP_SCRIPT") = value
+        End Set
+    End Property
 End Class
 
 Namespace My
