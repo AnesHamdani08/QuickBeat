@@ -14,6 +14,7 @@
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self},Path=PlacementTarget}">
+                    <MenuItem Header="{DynamicResource LOC_ADDTOPLAYLIST}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToPlaylistFromPickerCommand}"/>
                     <MenuItem Header="{DynamicResource LOC_APPEND}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedPlaylistCommand}" />
                     <MenuItem Header="{DynamicResource LOC_ENQUEUE}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedQueueCommand}" />
                 </ContextMenu>
@@ -92,7 +93,7 @@
         <Setter Property="ItemsPanel">
             <Setter.Value>
                 <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
+                        <VirtualizingStackPanel/>
                     </ItemsPanelTemplate>
             </Setter.Value>
         </Setter>
@@ -110,7 +111,7 @@
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <ctl:ClickTextBlock Text="👁️" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.PreviewCommand}" Margin="0,0,20,0"/>
-                            <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
+                            <!--<ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>-->
                             <ctl:ClickTextBlock Text="❌" Grid.Column="2" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding }" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.RemoveFromPlaylistCommand}" Margin="0,0,20,0"/>
                             <StackPanel Margin="0,0,20,0" Grid.Column="3">
                                 <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
@@ -127,6 +128,14 @@
 
     <Style x:Key="ListBoxPlaylistContainerBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+        <Setter Property="ContextMenu">
+            <Setter.Value>
+                <ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self},Path=PlacementTarget}">
+                    <MenuItem Header="{DynamicResource LOC_VIEW}" CommandParameter="{Binding Path=SelectedItem}" Command="{x:Static utils:Commands.ViewPlaylistCommand}"/>
+                    <MenuItem Header="{DynamicResource LOC_REMOVE}" CommandParameter="{Binding Path=SelectedItem}" Command="{x:Static utils:Commands.RemoveCustomPlaylistCommand}"/>
+                </ContextMenu>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate>
