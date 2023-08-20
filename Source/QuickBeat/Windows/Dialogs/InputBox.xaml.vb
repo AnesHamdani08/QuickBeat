@@ -51,11 +51,6 @@ Namespace Dialogs
             End If
         End Sub
 
-        Private Sub InputBox_Activated(sender As Object, e As EventArgs) Handles Me.Activated
-            HandyControl.Controls.WindowAttach.SetSystemBackdropType(Me, HandyControl.Tools.BackdropType.Tabbed)
-            InvalidateVisual()
-        End Sub
-
         ''' <summary>
         ''' Shows an inputbox with a single input, something like <see cref="Interaction.InputBox(String, String, String, Integer, Integer)"/> with single parameter
         ''' </summary>
