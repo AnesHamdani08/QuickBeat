@@ -51,6 +51,7 @@ Audio player and manager, plays all common media files alongside many more via p
 - Smart Shuffle
 
 # 📸Screenshots
+*May vary on newer versions*
 ![Home](https://i.imgur.com/EskPUZf.png)
 ![Home Dark](https://i.imgur.com/gheSpTH.png)
 ![Home Dark Light](https://i.imgur.com/a1gON9A.png)
