@@ -40,7 +40,7 @@
 &lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" /&gt;</Value>
     </Setting>
     <Setting Name="APP_PLAYER_RECENT_LIMIT" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">5</Value>
+      <Value Profile="(Default)">15</Value>
     </Setting>
     <Setting Name="APP_THEME_INDEX" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>

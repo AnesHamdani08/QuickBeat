@@ -191,7 +191,7 @@ Partial Friend NotInheritable Class MySettings
     
     <Global.System.Configuration.UserScopedSettingAttribute(),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("5")>  _
+     Global.System.Configuration.DefaultSettingValueAttribute("15")>  _
     Public Property APP_PLAYER_RECENT_LIMIT() As Integer
         Get
             Return CType(Me("APP_PLAYER_RECENT_LIMIT"),Integer)
