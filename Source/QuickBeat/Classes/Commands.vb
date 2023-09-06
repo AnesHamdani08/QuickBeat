@@ -6,14 +6,17 @@ Imports QuickBeat.Library.WPF.Commands
 Imports QuickBeat.Utilities
 Imports QuickBeat.Player.WPF.Commands
 Imports QuickBeat.WPF.Commands
+Imports EDeezer = E.Deezer
+Imports QuickBeat.Classes
+Imports QuickBeat.Interfaces
 
 Namespace Utilities
 
     Public Class Commands
         Public Shared LibraryScanCommandX = AsyncCommand.Create(Of Library.Library)(New Func(Of Library.Library, CancellationToken, Task)(Function(library, token)
-                                                                                                                                              If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Attempting to scan...")
+                                                                                                                                              Utilities.DebugMode.Instance.Log(Of Commands)("Attempting to scan...")
                                                                                                                                               If library Is Nothing Then
-                                                                                                                                                  If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Scan failed, Error:=null object")
+                                                                                                                                                  Utilities.DebugMode.Instance.Log(Of Commands)("Scan failed, Error:=null object")
                                                                                                                                                   Return Task.FromResult(Of Boolean)(False)
                                                                                                                                               End If
                                                                                                                                               If My.Settings.APP_LIBRARY_PATHS Is Nothing OrElse My.Settings.APP_LIBRARY_PATHS.Count = 0 Then Task.FromResult(Of Boolean)(False)
@@ -25,16 +28,16 @@ Namespace Utilities
                                                                                                                                               Dim TBA = Files.Except(library.Select(Of String)(Function(k) k.Path))
                                                                                                                                               Dim TBR = library.Select(Of String)(Function(k) k.Path).Except(Files)
                                                                                                                                               SharedProperties.Instance.Notification(ResourceResolver.Strings.LIBRARY, ResourceResolver.Strings.TEXT_LIBRARY_SCAN_RESULT.Replace("%c0", TBA.Count).Replace("%c1", TBR.Count), HandyControl.Data.NotifyIconInfoType.Info)
-                                                                                                                                              If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Found " & TBA.Count & " Files to be added. Adding...")
+                                                                                                                                              Utilities.DebugMode.Instance.Log(Of Commands)("Found " & TBA.Count & " Files to be added. Adding...")
                                                                                                                                               For Each file In TBA
                                                                                                                                                   library.Add(Metadata.FromFile(file, True))
                                                                                                                                                   If token.IsCancellationRequested Then
-                                                                                                                                                      If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Scan canceled.")
+                                                                                                                                                      Utilities.DebugMode.Instance.Log(Of Commands)("Scan canceled.")
                                                                                                                                                       Return Task.FromResult(Of Boolean)(False)
                                                                                                                                                   End If
                                                                                                                                               Next
                                                                                                                                               Dim i = 0
-                                                                                                                                              If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Found " & TBR.Count & " Files to be removed. Removing...")
+                                                                                                                                              Utilities.DebugMode.Instance.Log(Of Commands)("Found " & TBR.Count & " Files to be removed. Removing...")
                                                                                                                                               For Each file In TBR
                                                                                                                                                   Dim TBRi = library.FirstOrDefault(Function(k) k.Path = file)
                                                                                                                                                   If TBRi Is Nothing Then
@@ -43,18 +46,18 @@ Namespace Utilities
                                                                                                                                                   End If
                                                                                                                                                   library.Remove(TBRi)
                                                                                                                                                   If token.IsCancellationRequested Then
-                                                                                                                                                      If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Scan canceled.")
+                                                                                                                                                      Utilities.DebugMode.Instance.Log(Of Commands)("Scan canceled.")
                                                                                                                                                       Return Task.FromResult(Of Boolean)(False)
                                                                                                                                                   End If
                                                                                                                                               Next
-                                                                                                                                              If SharedProperties.Instance.IsLogging AndAlso i > 0 Then Utilities.DebugMode.Instance.Log(Of Commands)(i & " Files failed to be removed.")
+                                                                                                                                              If i > 0 Then Utilities.DebugMode.Instance.Log(Of Commands)(i & " Files failed to be removed.")
                                                                                                                                               If i > 0 Then SharedProperties.Instance.Notification(ResourceResolver.Strings.LIBRARY, ResourceResolver.Strings.TEXT_LIBRARY_SCAN_RESULT_REMOVE_FAILURE.Replace("%c0", i), HandyControl.Data.NotifyIconInfoType.Error)
                                                                                                                                               Return Task.FromResult(Of Boolean)(True)
                                                                                                                                           End Function))
 
         Public Shared LibraryRebuildCommandX = AsyncCommand.Create(Of Library.Library)(New Func(Of Library.Library, CancellationToken, Task)(Function(library, token)
                                                                                                                                                  If library Is Nothing Then Return Task.FromResult(Of Boolean)(False)
-                                                                                                                                                 If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Rebuilding library...")
+                                                                                                                                                 Utilities.DebugMode.Instance.Log(Of Commands)("Rebuilding library...")
                                                                                                                                                  library.Clear()
                                                                                                                                                  For Each path In My.Settings.APP_LIBRARY_PATHS
                                                                                                                                                      If Not IO.Directory.Exists(path) Then Continue For
@@ -65,7 +68,7 @@ Namespace Utilities
                                                                                                                                                          End If
                                                                                                                                                      Next
                                                                                                                                                  Next
-                                                                                                                                                 If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Commands)("Library rebuilt successfuly.")
+                                                                                                                                                 Utilities.DebugMode.Instance.Log(Of Commands)("Library rebuilt successfuly.")
                                                                                                                                                  Return Task.FromResult(Of Boolean)(True)
                                                                                                                                              End Function))
 
@@ -93,6 +96,8 @@ Namespace Utilities
 
         Public Shared AddItemsToPlaylistFromPickerCommand As New AddItemsToPlaylistFromPickerCommand
 
+        Public Shared RefreshMetadataActivePathCommand As New RefreshMetadataActivePathCommand
+
         Public Shared ViewImageCommand As New ViewImageCommand
 
         Public Shared ShowTagEditorCommand As New ShowTagEditorCommand
@@ -114,6 +119,8 @@ Namespace Utilities
         Public Shared RemoveCustomPlaylistCommand As New RemoveCustomPlaylistCommand
 
         Public Shared ViewPlaylistCommand As New ViewPlaylistCommand
+
+        Public Shared DeezerBrowseCommand As New Deezer.WPF.BrowseCommand
     End Class
 
 End Namespace
@@ -317,10 +324,10 @@ Namespace Library.WPF.Commands
         End Sub
 
         Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Attempting to scan...")
+            Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Attempting to scan...")
             IsScanning = True 'Block incoming calls until we're done with this one
             If parameter Is Nothing Then
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan failed, Error:=null object")
+                Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan failed, Error:=null object")
                 IsScanning = False
                 StopScanning = False
                 Return
@@ -341,7 +348,7 @@ Namespace Library.WPF.Commands
                                Dim TBRMeta = TBR.Select(Of Metadata)(Function(k) CType(parameter, Library).FirstOrDefault(Function(l) l.Path = k)).ToList
                                Application.Current.Dispatcher.Invoke(Sub()
                                                                          SharedProperties.Instance.Notification(ResourceResolver.Strings.LIBRARY, ResourceResolver.Strings.TEXT_LIBRARY_SCAN_RESULT.Replace("%c0", TBA.Count).Replace("%c1", TBR.Count), HandyControl.Data.NotifyIconInfoType.Info)
-                                                                         If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Found " & TBA.Count & " Files to be added. Adding...")
+                                                                         Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Found " & TBA.Count & " Files to be added. Adding...")
                                                                      End Sub)
                                For Each file In TBA
                                    Dim meta = Metadata.FromFile(file, True)
@@ -349,7 +356,7 @@ Namespace Library.WPF.Commands
                                                                              CType(parameter, Library).Add(meta)
                                                                          End Sub)
                                    If StopScanning Then
-                                       If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan canceled at adding phase.")
+                                       Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan canceled at adding phase.")
                                        IsScanning = False
                                        StopScanning = False
                                        Return
@@ -357,7 +364,7 @@ Namespace Library.WPF.Commands
                                Next
                                Dim i = 0
                                Application.Current.Dispatcher.Invoke(Sub()
-                                                                         If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Found " & TBR.Count & " Files to be removed. Removing...")
+                                                                         Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Found " & TBR.Count & " Files to be removed. Removing...")
                                                                      End Sub)
                                Do While i < TBRMeta.Count
                                    Dim m = TBRMeta(i)
@@ -370,13 +377,13 @@ Namespace Library.WPF.Commands
                                                                              End If
                                                                          End Sub)
                                    If StopScanning Then
-                                       If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan canceled as removing phase.")
+                                       Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Scan canceled as removing phase.")
                                        IsScanning = False
                                        StopScanning = False
                                        Return
                                    End If
                                Loop
-                               If SharedProperties.Instance.IsLogging AndAlso i > 0 Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)(i & " Files failed to be removed.")
+                               If i > 0 Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)(i & " Files failed to be removed.")
                                If i > 0 Then
                                    Application.Current.Dispatcher.Invoke(Sub()
                                                                              SharedProperties.Instance.Notification(ResourceResolver.Strings.LIBRARY, ResourceResolver.Strings.TEXT_LIBRARY_SCAN_RESULT_REMOVE_FAILURE.Replace("%c0", i), HandyControl.Data.NotifyIconInfoType.Error)
@@ -436,7 +443,7 @@ Namespace Library.WPF.Commands
                 IsRebuilding = False
                 Return
             End If
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Rebuilding ctype(parameter,Library)...")
+            Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Rebuilding ctype(parameter,Library)...")
             CType(parameter, Library).Clear()
             Await Task.Run(Sub()
                                Dim LibPaths(My.Settings.APP_LIBRARY_PATHS.Count - 1) As String
@@ -453,7 +460,7 @@ Namespace Library.WPF.Commands
                                Next
                            End Sub)
             CType(parameter, Library).EnsureMostPlayed()
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Library rebuilt successfuly.")
+            Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Library rebuilt successfuly.")
             StopRebuilding = False
             IsRebuilding = False
             HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_APP_RESTART)
@@ -503,10 +510,10 @@ Namespace Library.WPF.Commands
         End Sub
 
         Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Attempting to scan...")
+            Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Attempting to scan...")
             IsScanning = True 'Block incoming calls until we're done with this one
             If parameter Is Nothing Then
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Tag refresh failed, Error:=null object")
+                Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Tag refresh failed, Error:=null object")
                 IsScanning = False
                 StopScanning = False
                 Return
@@ -515,7 +522,7 @@ Namespace Library.WPF.Commands
                                For Each file In CType(parameter, Library)
                                    file.RefreshTagsFromFile_ThreadSafe(True)
                                    If StopScanning Then
-                                       If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Tag refresh canceled.")
+                                       Utilities.DebugMode.Instance.Log(Of Utilities.Commands)("Tag refresh canceled.")
                                        IsScanning = False
                                        StopScanning = False
                                        Return
@@ -677,7 +684,6 @@ Namespace Player.WPF.Commands
             Return parameter IsNot Nothing
         End Function
     End Class
-
     Public Class AddItemsToPlaylistFromPickerCommand
         Implements ICommand
 
@@ -699,6 +705,30 @@ Namespace Player.WPF.Commands
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
             Return parameter IsNot Nothing
+        End Function
+    End Class
+    Public Class RefreshMetadataActivePathCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Private _IsBusy As Boolean
+
+        Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
+            _IsBusy = True
+            With TryCast(parameter, Metadata)
+                Await .GetActivePath
+            End With
+            _IsBusy = False
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return (Not _IsBusy) AndAlso (parameter IsNot Nothing AndAlso TypeOf parameter Is Metadata)
         End Function
     End Class
 End Namespace
@@ -913,21 +943,33 @@ Namespace WPF.Commands
             Dim DLG As New Dialogs.PlaylistPicker() With {.Owner = Application.Current.MainWindow}
             If DLG.ShowDialog Then
                 If DLG.DialogPlaylistResult Is Nothing Then Return
-                Dim SFD As New Microsoft.Win32.SaveFileDialog With {.Filter = "QuickBeat Object|*.qbo", .FileName = DLG.DialogPlaylistResult?.Name}
+                Dim SFD As New Microsoft.Win32.SaveFileDialog With {.Filter = "QuickBeat Object|*.qbo|Playlist|*.m3u;*.m3u8", .FileName = DLG.DialogPlaylistResult?.Name}
                 If SFD.ShowDialog Then
                     Try
-                        If IO.File.Exists(SFD.FileName) Then
-                            Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Truncate, IO.FileAccess.Write, IO.FileShare.Read)
-                                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-                                BinF.Serialize(fs, DLG.DialogPlaylistResult)
-                                fs.Flush()
-                            End Using
+                        If SFD.FileName.EndsWith(".qbo") Then
+                            If IO.File.Exists(SFD.FileName) Then
+                                Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Truncate, IO.FileAccess.Write, IO.FileShare.Read)
+                                    Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                                    BinF.Serialize(fs, DLG.DialogPlaylistResult)
+                                    fs.Flush()
+                                End Using
+                            Else
+                                Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read)
+                                    Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                                    BinF.Serialize(fs, DLG.DialogPlaylistResult)
+                                    fs.Flush()
+                                End Using
+                            End If
                         Else
-                            Using fs As New IO.FileStream(SFD.FileName, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read)
-                                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-                                BinF.Serialize(fs, DLG.DialogPlaylistResult)
-                                fs.Flush()
-                            End Using
+                            Dim M3U As New M3UFile(Nothing) With {.Name = DLG.DialogPlaylistResult.Name}
+                            For Each meta In DLG.DialogPlaylistResult
+                                M3U.Add(meta)
+                            Next
+                            If SFD.FileName.EndsWith(".m3u8") Then
+                                M3U.Save(SFD.FileName, Text.Encoding.UTF8)
+                            Else
+                                M3U.Save(SFD.FileName)
+                            End If
                         End If
                     Catch ex As Exception
                         Utilities.DebugMode.Instance.Log(Of ExportPlaylistCommand)(ex.ToString)
@@ -954,20 +996,31 @@ Namespace WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            Dim OFD As New Microsoft.Win32.OpenFileDialog With {.Filter = "QuickBeat Object|*.qbo", .CheckFileExists = True}
+            Dim OFD As New Microsoft.Win32.OpenFileDialog With {.Filter = "QuickBeat Object|*.qbo|Playlist|*.m3u;*.m3u8", .CheckFileExists = True}
             If OFD.ShowDialog Then
                 Try
-                    Using fs As New IO.FileStream(OFD.FileName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
-                        Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-                        Dim Obj = BinF.Deserialize(fs)
-                        If Obj.GetType Is GetType(Player.Playlist) Then
-                            Dim pObj = TryCast(Obj, Player.Playlist)
-                            If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_IMPORT.Replace("%n", pObj?.Name).Replace("%c", pObj?.Count)) = MessageBoxResult.OK Then
-                                pObj.Cover = Utilities.CommonFunctions.ToCoverImage(pObj.Name)
-                                SharedProperties.Instance.CustomPlaylists.Add(pObj)
+                    If OFD.FileName.EndsWith(".qbo") Then
+                        Using fs As New IO.FileStream(OFD.FileName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
+                            Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                            Dim Obj = BinF.Deserialize(fs)
+                            If Obj.GetType Is GetType(Player.Playlist) Then
+                                Dim pObj = TryCast(Obj, Player.Playlist)
+                                If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_IMPORT.Replace("%n", pObj?.Name).Replace("%c", pObj?.Count)) = MessageBoxResult.OK Then
+                                    pObj.Cover = Utilities.CommonFunctions.ToCoverImage(pObj.Name)
+                                    SharedProperties.Instance.CustomPlaylists.Add(pObj)
+                                End If
                             End If
+                        End Using
+                    Else
+                        Dim M3U As New M3UFile(OFD.FileName)
+                        M3U.Load()
+                        If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_IMPORT.Replace("%n", If(String.IsNullOrEmpty(M3U.Name), "Unknown", M3U.Name)).Replace("%c", M3U.Count)) = MessageBoxResult.OK Then
+                            Dim pM3U = M3U.ToPlaylist
+                            pM3U.Name = If(String.IsNullOrEmpty(M3U.Name), Guid.NewGuid.ToString, M3U.Name)
+                            pM3U.Cover = Utilities.CommonFunctions.ToCoverImage(pM3U.Name)
+                            SharedProperties.Instance.CustomPlaylists.Add(pM3U)
                         End If
-                    End Using
+                    End If
                 Catch ex As Exception
                     Utilities.DebugMode.Instance.Log(Of ExportPlaylistCommand)(ex.ToString)
                     HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_ERROR_UNKNOWN & Environment.NewLine & ex.Message)
@@ -1027,4 +1080,559 @@ Namespace WPF.Commands
             Return parameter IsNot Nothing AndAlso TypeOf parameter Is Player.Playlist
         End Function
     End Class
+End Namespace
+Namespace Utilities.Deezer.WPF
+    Public Class BrowseCommand
+        Implements ICommand, INotifyPropertyChanged, Interfaces.IStartupItem
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
+
+        Public Const PLAYLIST_LIMIT As Integer = 50
+        Public Const ARTIST_ALBUM_LIMIT As Integer = 5
+        Public Const ARTIST_RADIO_LIMIT As Integer = 30
+        Public Const ARTIST_TOP_LIMIT As Integer = 15
+
+        Private _Preview As Boolean
+        Property Preview As Boolean
+            Get
+                Return _Preview
+            End Get
+            Set(value As Boolean)
+                _Preview = value
+                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(NameOf(Preview)))
+            End Set
+        End Property
+
+        Private _IsBusy As Boolean
+        Property IsBusy As Boolean
+            Get
+                Return _IsBusy
+            End Get
+            Set(value As Boolean)
+                _IsBusy = value
+                If value Then
+                    Configuration.IsLoading = True
+                Else
+                    Configuration.IsLoading = False
+                End If
+                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(NameOf(IsBusy)))
+            End Set
+        End Property
+
+        Public Property Configuration As New StartupItemConfiguration("Deezer Relay") Implements IStartupItem.Configuration
+
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+            If Not SharedProperties.Instance.ItemsConfiguration.Contains(Configuration) Then
+                SharedProperties.Instance.ItemsConfiguration.Add(Configuration)
+                Init()
+            End If
+        End Sub
+
+        Public Async Sub Execute(parameter As Object) Implements ICommand.Execute
+            If Not Utilities.SharedProperties.Instance.IsInternetConnected Then Return
+            IsBusy = True
+            Select Case parameter?.ToString.ToLower
+                Case "search/track"
+                    Dim query = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.QUERY)
+                    If Not String.IsNullOrEmpty(query) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim Result = Await Session.Search.Tracks(query, aCount:=1)
+                        Dim tr = Result?.FirstOrDefault
+                        If tr IsNot Nothing Then
+                            Configuration.SetStatus("Decoding...", 50)
+                            Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = tr.Link, .Provider = New DeezerMediaProvider(tr.Id), .BlockDOWNLOADPROC = True, .Album = tr.AlbumName, .Artists = New String() {tr.ArtistName}, .PlayCount = tr.Rank, .Index = tr.Number, .Title = tr.Title, .Length = tr.Duration, .Path = tr.Preview}
+                            Dim url = If(tr.HasPicture(E.Deezer.Api.PictureSize.Medium), tr.GetPicture(E.Deezer.Api.PictureSize.Medium), If(tr.HasPicture(EDeezer.Api.PictureSize.Large), tr.GetPicture(EDeezer.Api.PictureSize.Large), If(tr.HasPicture(EDeezer.Api.PictureSize.Small), tr.GetPicture(EDeezer.Api.PictureSize.Small), If(tr.HasPicture(EDeezer.Api.PictureSize.ExtraLarge), tr.GetPicture(EDeezer.Api.PictureSize.ExtraLarge), Nothing))))
+                            Dim bi As New BitmapImage
+                            bi.BeginInit()
+                            bi.UriSource = New Uri(url)
+                            bi.EndInit()
+                            MD.Covers = New ImageSource() {bi}
+                            Configuration.SetStatus("Routing Data...", 80)
+                            If Preview Then
+                                SharedProperties.Instance.Player?.Preview(MD)
+                            Else
+                                SharedProperties.Instance.Player?.LoadAndAddCommand.Execute(MD)
+                            End If
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "search/artist"
+                    Dim query = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.QUERY)
+                    If Not String.IsNullOrEmpty(query) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim Result = Await Session.Search.Artists(query, 0, 1)
+                        Dim Artist = Result?.FirstOrDefault
+                        If Artist IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Artist.Name, .Category = "Deezer", .PlayCount = Convert.ToInt32(Artist.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Artist.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl As New List(Of Tuple(Of String, String, EDeezer.Api.ITrack)) 'Title, Thumb, Track
+                            Try
+                                For Each album In Await Artist.GetAlbums(aCount:=ARTIST_ALBUM_LIMIT)
+                                    Dim url As String = Nothing
+                                    If album.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                        url = album.GetPicture(EDeezer.Api.PictureSize.Medium)
+                                    ElseIf album.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                        url = album.GetPicture(EDeezer.Api.PictureSize.Large)
+                                    ElseIf album.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                        url = album.GetPicture(EDeezer.Api.PictureSize.Small)
+                                    ElseIf album.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                        url = album.GetPicture(EDeezer.Api.PictureSize.ExtraLarge)
+                                    End If
+                                    For Each track In Await album.GetTracks()
+                                        ttl.Add(New Tuple(Of String, String, EDeezer.Api.ITrack)(album.Title, url, track))
+                                    Next
+                                Next
+                            Catch ex As Exception
+                                Utilities.DebugMode.Instance.Log(Of BrowseCommand)(ex.ToString)
+                            End Try
+                            Configuration.SetStatus("Decoding...", 50)
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Item3.Preview) Then Continue For
+                                'Dim tr = Await Session.Browse.GetTrackById(rTr.Id)
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Item3.Link, .Provider = New DeezerMediaProvider(rTr.Item3.Id), .BlockDOWNLOADPROC = True, .Album = rTr.Item1, .Artists = New String() {rTr.Item3.ArtistName}, .PlayCount = rTr.Item3.Rank, .Index = rTr.Item3.Number, .Title = rTr.Item3.Title, .Length = rTr.Item3.Duration, .Path = rTr.Item3.Preview}
+                                Dim uri As Uri = If(String.IsNullOrEmpty(rTr.Item2), Nothing, New Uri(rTr.Item2))
+                                If uri IsNot Nothing Then
+                                    Dim bi As New BitmapImage
+                                    bi.BeginInit()
+                                    bi.UriSource = uri
+                                    bi.EndInit()
+                                    MD.Covers = New ImageSource() {bi}
+                                End If
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "search/album"
+                    Dim query = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.QUERY)
+                    If Not String.IsNullOrEmpty(query) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim Result = Await Session.Search.Albums(query, 0, 1)
+                        Dim Album = Result?.FirstOrDefault
+                        If Album IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Album.Title, .Category = "Deezer", .PlayCount = Convert.ToInt32(Album.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Album.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Album.GetTracks()
+                            Configuration.SetStatus("Decoding...", 50)
+                            Dim url As String = Nothing
+                            If Album.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Medium)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Large)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Small)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.ExtraLarge)
+                            End If
+                            Dim uri As Uri = If(String.IsNullOrEmpty(url), Nothing, New Uri(url))
+                            Dim AlbumThumb As ImageSource = Nothing
+                            If uri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = uri
+                                bi.EndInit()
+                                AlbumThumb = bi
+                            End If
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = Album.Title, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                If AlbumThumb IsNot Nothing Then MD.Covers = New ImageSource() {AlbumThumb}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "search/playlist"
+                    Dim query = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.QUERY)
+                    If Not String.IsNullOrEmpty(query) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim Result = Await Session.Search.Playlists(query, 0, 1)
+                        Dim Playlist = Result?.FirstOrDefault
+                        If Playlist IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Playlist.Title, .Category = "Deezer", .PlayCount = Convert.ToInt32(Playlist.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Playlist.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Playlist.GetTracks(aCount:=PLAYLIST_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "search/radio"
+                    Dim query = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.QUERY)
+                    If Not String.IsNullOrEmpty(query) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim Result = Await Session.Search.Radio(query, 0, 1)
+                        Dim Radio = Result?.FirstOrDefault
+                        If Radio IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Radio.Title & " Radio", .Category = "Deezer"}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Radio.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Radio.GetTracks(aCount:=ARTIST_RADIO_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {"Deezer"}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "artist/top"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = EDeezer.DeezerSession.CreateNew
+                        Dim Artist = Await Session.Browse.GetArtistById(iQuery)
+                        If Artist IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Artist.Name, .Category = "Deezer", .PlayCount = Convert.ToInt32(Artist.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Artist.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Artist.GetTopTracks(aCount:=ARTIST_TOP_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            If ttl.Count = 0 Then
+                                IsBusy = False
+                                Return
+                            End If
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "artist/radio"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = EDeezer.DeezerSession.CreateNew
+                        Dim Artist = Await Session.Browse.GetArtistById(iQuery)
+                        If Artist IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Artist.Name & " Radio", .Category = "Deezer", .PlayCount = Convert.ToInt32(Artist.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Artist.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Artist.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Artist.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Artist.GetSmartRadio(aCount:=ARTIST_RADIO_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            If ttl.Count = 0 Then
+                                HandyControl.Controls.MessageBox.Error("No Radio Found!")
+                                IsBusy = False
+                                Return
+                            End If
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = If(String.IsNullOrEmpty(rTr.Link), Artist.Link, rTr.Link), .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "track"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = E.Deezer.DeezerSession.CreateNew
+                        Dim tr = Await Session.Browse.GetTrackById(iQuery)
+                        If tr IsNot Nothing Then
+                            Configuration.SetStatus("Decoding...", 50)
+                            Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = tr.Link, .Provider = New DeezerMediaProvider(tr.Id), .BlockDOWNLOADPROC = True, .Album = tr.AlbumName, .Artists = New String() {tr.ArtistName}, .PlayCount = tr.Rank, .Index = tr.Number, .Title = tr.Title, .Length = tr.Duration, .Path = tr.Preview}
+                            Dim url = If(tr.HasPicture(E.Deezer.Api.PictureSize.Medium), tr.GetPicture(E.Deezer.Api.PictureSize.Medium), If(tr.HasPicture(EDeezer.Api.PictureSize.Large), tr.GetPicture(EDeezer.Api.PictureSize.Large), If(tr.HasPicture(EDeezer.Api.PictureSize.Small), tr.GetPicture(EDeezer.Api.PictureSize.Small), If(tr.HasPicture(EDeezer.Api.PictureSize.ExtraLarge), tr.GetPicture(EDeezer.Api.PictureSize.ExtraLarge), Nothing))))
+                            Dim bi As New BitmapImage
+                            bi.BeginInit()
+                            bi.UriSource = New Uri(url)
+                            bi.EndInit()
+                            MD.Covers = New ImageSource() {bi}
+                            Configuration.SetStatus("Routing Data...", 80)
+                            If Preview Then
+                                SharedProperties.Instance.Player?.Preview(MD)
+                            Else
+                                SharedProperties.Instance.Player?.LoadAndAddCommand.Execute(MD)
+                            End If
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "album"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = EDeezer.DeezerSession.CreateNew
+                        Dim Album = Await Session.Browse.GetAlbumById(iQuery)
+                        If Album IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Album.Title, .Category = "Deezer", .PlayCount = Convert.ToInt32(Album.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Album.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Album.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Album.GetTracks()
+                            Configuration.SetStatus("Decoding...", 50)
+                            Dim url As String = Nothing
+                            If Album.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Medium)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Large)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.Small)
+                            ElseIf Album.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                url = Album.GetPicture(EDeezer.Api.PictureSize.ExtraLarge)
+                            End If
+                            Dim uri As Uri = If(String.IsNullOrEmpty(url), Nothing, New Uri(url))
+                            Dim AlbumThumb As ImageSource = Nothing
+                            If uri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = uri
+                                bi.EndInit()
+                                AlbumThumb = bi
+                            End If
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = Album.Title, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                If AlbumThumb IsNot Nothing Then MD.Covers = New ImageSource() {AlbumThumb}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "playlist"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = EDeezer.DeezerSession.CreateNew
+                        Dim Playlist = Await Session.Browse.GetPlaylistById(iQuery)
+                        If Playlist IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Playlist.Title, .Category = "Deezer", .PlayCount = Convert.ToInt32(Playlist.Fans)}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Playlist.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Playlist.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Playlist.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Playlist.GetTracks(aCount:=PLAYLIST_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {rTr.ArtistName}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+                Case "radio"
+                    Dim query = Dialogs.InputBox.ShowSingle("ID")
+                    Dim iQuery As Integer = 0
+                    If Not String.IsNullOrEmpty(query) AndAlso UInteger.TryParse(query, iQuery) Then
+                        Configuration.SetStatus("Acquiring data...", 0)
+                        Dim Session = EDeezer.DeezerSession.CreateNew
+                        Dim Radio = Await Session.Browse.GetRadioById(iQuery)
+                        If Radio IsNot Nothing Then
+                            Dim MDG As New Player.MetadataGroup() With {.Name = Radio.Title, .Category = "Deezer"}
+                            'Picture                    
+                            Dim tUri As Uri = Nothing
+                            If Radio.HasPicture(EDeezer.Api.PictureSize.Medium) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Medium))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.Large) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Large))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.Small) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.Small))
+                            ElseIf Radio.HasPicture(EDeezer.Api.PictureSize.ExtraLarge) Then
+                                tUri = New Uri(Radio.GetPicture(EDeezer.Api.PictureSize.ExtraLarge))
+                            End If
+                            If tUri IsNot Nothing Then
+                                Dim bi As New BitmapImage
+                                bi.BeginInit()
+                                bi.UriSource = tUri
+                                bi.EndInit()
+                                MDG.Cover = bi
+                            End If
+                            Dim ttl = Await Radio.GetTracks(aCount:=ARTIST_RADIO_LIMIT)
+                            Configuration.SetStatus("Decoding...", 50)
+                            For Each rTr In ttl
+                                If String.IsNullOrEmpty(rTr.Preview) Then Continue For
+                                Dim MD As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .OriginalPath = rTr.Link, .Provider = New DeezerMediaProvider(rTr.Id), .BlockDOWNLOADPROC = True, .Album = rTr.AlbumName, .Artists = New String() {"Deezer"}, .PlayCount = rTr.Rank, .Index = rTr.Number, .Title = rTr.Title, .Length = rTr.Duration, .Path = rTr.Preview}
+                                MD.Covers = New ImageSource() {MDG.Cover}
+                                MDG.Add(MD)
+                            Next
+                            Configuration.SetStatus("Routing Data...", 80)
+                            SharedProperties.Instance.Library?.FocusGroup(MDG)
+                        End If
+                        Session?.Dispose()
+                    End If
+            End Select
+            Configuration.SetStatus("All Good", 100)
+            IsBusy = False
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return Utilities.SharedProperties.Instance.IsInternetConnected AndAlso Not String.IsNullOrEmpty(parameter)
+        End Function
+
+        Public Sub Init() Implements IStartupItem.Init
+            Configuration.SetStatus("All Good", 100)
+        End Sub
+    End Class
+
+
 End Namespace

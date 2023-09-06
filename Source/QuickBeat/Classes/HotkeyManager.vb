@@ -334,7 +334,7 @@ Namespace Hotkeys
         End Sub
 
         'Sub Load(data As Specialized.StringCollection)
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Attempting to load data, Count:=" & data?.Count)
+        '    Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Attempting to load data, Count:=" & data?.Count)
         '    If data IsNot Nothing AndAlso data.Count > 0 Then
         '        Configuration.SetStatus("Loading Data...", 0)
         '        Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
@@ -349,19 +349,19 @@ Namespace Hotkeys
         '    Else
         '        Configuration.SetStatus("No data to be loaded", 100)
         '    End If
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Done loading data.")
+        '    Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Done loading data.")
         '    Configuration.SetStatus(Configuration.Status, 100)
         'End Sub
 
         'Iterator Function Save() As IEnumerable(Of String)
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Attempting to save data")
+        '    Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Attempting to save data")
         '    Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
         '    For Each hotkey In Me
         '        Dim mem As New IO.MemoryStream
         '        BinF.Serialize(mem, hotkey)
         '        Yield Convert.ToBase64String(mem.ToArray)
         '    Next
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Done saving data.")
+        '    Utilities.DebugMode.Instance.Log(Of HotkeyManager)("Done saving data.")
         'End Function
 
         Function Save() As IO.MemoryStream

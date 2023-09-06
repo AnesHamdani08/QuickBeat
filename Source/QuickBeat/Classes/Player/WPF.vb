@@ -20,13 +20,40 @@ Namespace Player.WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim path As String = ""
             If IO.File.Exists(parameter?.ToString) Then
-                _Player.LoadSong(parameter?.ToString)
-                Return
+                path = parameter?.ToString
+            Else
+                Dim Ofd As New Microsoft.Win32.OpenFileDialog() With {.CheckFileExists = True, .Multiselect = False, .Filter = "Supported Files|*.mp3;*.m4a;*.mp4;*.wav;*.aiff;*.mp2;*.mp1;*.ogg;*.wma;*.flac;*.alac;*.webm;*.midi;*.mid|Playlist|*.qbo;*.m3u;*.m3u8|All files|*.*"}
+                If Ofd.ShowDialog Then
+                    path = Ofd.FileName
+                End If
             End If
-            Dim Ofd As New Microsoft.Win32.OpenFileDialog() With {.CheckFileExists = True, .Multiselect = False, .Filter = "Supported Files|*.mp3;*.m4a;*.mp4;*.wav;*.aiff;*.mp2;*.mp1;*.ogg;*.wma;*.flac;*.alac;*.webm;*.midi;*.mid|All files|*.*"}
-            If Ofd.ShowDialog() Then
-                _Player.LoadSong(Ofd.FileName)
+            If Not String.IsNullOrEmpty(path) Then
+                If path.EndsWith(".qbo") Then
+                    Using fs As New IO.FileStream(path, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
+                        Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
+                        Dim Obj = BinF.Deserialize(fs)
+                        If Obj.GetType Is GetType(Playlist) Then
+                            Dim pObj = TryCast(Obj, Playlist)
+                            If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_LOAD.Replace("%n", pObj?.Name).Replace("%c", pObj?.Count)) = MessageBoxResult.OK Then
+                                pObj.Cover = Utilities.CommonFunctions.ToCoverImage(pObj.Name)
+                                _Player.LoadPlaylist(pObj)
+                            End If
+                        End If
+                    End Using
+                ElseIf path.EndsWith(".m3u") OrElse path.EndsWith(".m3u") Then
+                    Dim M3U As New M3UFile(path)
+                    M3U.Load()
+                    If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_PLAYLIST_LOAD.Replace("%n", If(String.IsNullOrEmpty(M3U.Name), "Unknown", M3U.Name)).Replace("%c", M3U.Count)) = MessageBoxResult.OK Then
+                        Dim pM3U = M3U.ToPlaylist
+                        pM3U.Name = If(String.IsNullOrEmpty(M3U.Name), Guid.NewGuid.ToString, M3U.Name)
+                        pM3U.Cover = Utilities.CommonFunctions.ToCoverImage(pM3U.Name)
+                        _Player.LoadPlaylist(pM3U)
+                    End If
+                Else
+                    _Player.LoadSong(path)
+                End If
             End If
         End Sub
 
@@ -54,7 +81,7 @@ Namespace Player.WPF.Commands
             End If
             Dim url = Dialogs.InputBox.ShowSingle("URL")
             If Not String.IsNullOrEmpty(url) Then
-                Await _Player.LoadSong(New Metadata() With {.Location = Metadata.FileLocation.Remote, .Path = url})
+                Await _Player.LoadSong(New Metadata() With {.Location = Metadata.FileLocation.Remote, .Path = url, .OriginalPath = url})
             End If
         End Sub
 
@@ -123,10 +150,14 @@ Namespace Player.WPF.Commands
                 '_Player.Playlist.Index = _Player.Playlist.Count - 1
                 Return
             End If
-            Dim Ofd As New Microsoft.Win32.OpenFileDialog() With {.CheckFileExists = True, .Multiselect = False, .Filter = "Supported Files|*.mp3;*.m4a;*.mp4;*.wav;*.aiff;*.mp2;*.mp1;*.ogg;*.wma;*.flac;*.alac;*.webm;*.midi;*.mid|All files|*.*"}
-            If Ofd.ShowDialog() Then
-                _Player.Playlist.Add(Metadata.FromFile(Ofd.FileName, True))
-                _Player.Playlist.Index = _Player.Playlist.Count - 1
+            If TypeOf parameter Is Metadata Then
+                _Player.Playlist.Index = _Player.Playlist.Add(TryCast(parameter, Metadata))
+            Else
+                Dim Ofd As New Microsoft.Win32.OpenFileDialog() With {.CheckFileExists = True, .Multiselect = False, .Filter = "Supported Files|*.mp3;*.m4a;*.mp4;*.wav;*.aiff;*.mp2;*.mp1;*.ogg;*.wma;*.flac;*.alac;*.webm;*.midi;*.mid|All files|*.*"}
+                If Ofd.ShowDialog() Then
+                    _Player.Playlist.Add(Metadata.FromFile(Ofd.FileName, True))
+                    _Player.Playlist.Index = _Player.Playlist.Count - 1
+                End If
             End If
         End Sub
 
@@ -321,6 +352,28 @@ Namespace Player.WPF.Commands
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
             TryCast(parameter, Player.StreamControlHandle)?.Stop()
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return TypeOf parameter Is Player.StreamControlHandle
+        End Function
+    End Class
+
+    Public Class StopControlHandleAndResumeCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Private _Parent As Player
+        Sub New(parent As Player)
+            _Parent = parent
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            TryCast(parameter, Player.StreamControlHandle)?.Stop()
+            _Parent.Play()
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
@@ -1106,17 +1159,7 @@ Namespace Player.WPF.Commands
                 WindowContent.Children.Add(MetButton)
             Next
             ConfigWindow.Content = WindowContent
-            ConfigWindow.ShowDialog()
-            Return
-            Dim RProp = InputBox("Found Properties" & Environment.NewLine & String.Join(Environment.NewLine, ExposedProperties.Select(Of String)(Function(k) k.Key.Name & ":" & String.Join(";", k.Value.Select(Of String)(Function(l) l.GetType.Name)))))
-            Dim RMet = InputBox("Found Methods" & Environment.NewLine & String.Join(Environment.NewLine, ExposedMethods.Select(Of String)(Function(k) k.Key.Name & ":" & String.Join(";", k.Value.Select(Of String)(Function(l) l.GetType.Name)))))
-            If Not String.IsNullOrEmpty(RProp) Then
-                Dim r = InputBox("Value for " & ExposedProperties.Keys(RProp).Name & "...")
-                CallByName(parameter, ExposedProperties.Keys(RProp).Name, CallType.Set, {r})
-            End If
-            If Not String.IsNullOrEmpty(RMet) Then
-                CallByName(parameter, ExposedMethods.Keys(RMet).Name, CallType.Method, Nothing)
-            End If
+            ConfigWindow.Show()
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute

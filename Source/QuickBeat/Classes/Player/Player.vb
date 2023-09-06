@@ -400,6 +400,20 @@ Namespace Player
                 OnPropertyChanged(NameOf(ControlHandle))
                 OnPropertyChanged(NameOf(StreamInfo))
             End Sub
+
+            Sub New(handle As Integer, info As Metadata)
+                _Handle = handle
+                _Metadata = info
+                _ControlHandle = New StreamControlHandle(handle)
+                If handle <> 0 Then
+                    _StreamInfo = Bass.BASS_ChannelGetInfo(handle)?.ToString
+                End If
+                Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_FREE, 0, _proc, IntPtr.Zero)
+                OnPropertyChanged(NameOf(Me.Handle))
+                OnPropertyChanged(NameOf(Metadata))
+                OnPropertyChanged(NameOf(ControlHandle))
+                OnPropertyChanged(NameOf(StreamInfo))
+            End Sub
         End Class
 
         Public Enum AudioQuality
@@ -467,7 +481,7 @@ Namespace Player
         End Sub
 
         Sub Init() Implements IStartupItem.Init
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Initializing BASS...")
+            Utilities.DebugMode.Instance.Log(Of Player)("Initializing BASS...")
             Configuration.SetStatus("Initializing...", 0)
             Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_DEV_DEFAULT, 1) 'So BASS output will follow active device.
             Dim outdevices = Bass.BASS_GetDeviceInfos
@@ -982,6 +996,7 @@ Namespace Player
             Set(value As Boolean)
                 _IsLoadingStream = value
                 OnPropertyChanged()
+                OnPropertyChanged(NameOf(TaskbarState))
             End Set
         End Property
 
@@ -1046,6 +1061,7 @@ Namespace Player
         Private _SMTC_Thumb_Path As String
 #End Region
 #Region "Fields"
+        Private _suppressautohttpclean As Boolean = False
         Private _data() As Byte ' local data buffer        
         Private _datastream As IO.MemoryStream 'total local data buffer ,tag-related
         Private _filename As String
@@ -1114,9 +1130,13 @@ Namespace Player
             End If
             'Cleanup
             'HTTP stuff cleaning
-            _data = Nothing
-            _datastream = Nothing
-            DownloadFinished = False
+            If _suppressautohttpclean Then
+                _suppressautohttpclean = False
+            Else
+                _data = Nothing
+                _datastream = Nothing
+                DownloadFinished = False
+            End If
             'General cleaning
             If _EndSyncProcHandle <> 0 Then
                 If Bass.BASS_ChannelRemoveSync(Stream, _EndSyncProcHandle) Then _EndSyncProcHandle = 0
@@ -1167,7 +1187,7 @@ Namespace Player
                     If Not IsCrossfading Then _SilencSkipProcHandle = Bass.BASS_ChannelSetSync(Stream, BASSSync.BASS_SYNC_POS, Bass.BASS_ChannelSeconds2Bytes(Stream, cueOutPos), _EndSyncProc, IntPtr.Zero)
                     Position = cueInPos
                 Else
-                    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Unable to detect cue points. " & Bass.BASS_ErrorGetCode.ToString)
+                    Utilities.DebugMode.Instance.Log(Of Player)("Unable to detect cue points. " & Bass.BASS_ErrorGetCode.ToString)
                 End If
             End If
             If IsCrossfading Then
@@ -1264,8 +1284,7 @@ Namespace Player
                         Try
                             IO.File.Delete(_SMTC_Thumb_Path)
                         Catch ex As Exception
-                            Dim log As New HandyControl.Tools.LogMessage(HandyControl.Tools.Logger.Level.Error, "Couldn't delete the SMTC thumbnail file. " & Configuration.Exception?.ToString, Now, "QuickBeat.Player", "OnMetadataChanged", 478)
-                            Console.WriteLine(log.ToString)
+                            Utilities.DebugMode.Instance.Log(Of Player)("Couldn't delete the SMTC thumbnail file. " & ex.ToString)
                         End Try
                     End If
                     If TryCast(value.DefaultCover, BitmapImage)?.StreamSource IsNot Nothing Then
@@ -1338,10 +1357,16 @@ Namespace Player
 
 #End Region
 #Region "Navigation"
-        Sub LoadSong(Path As String, Optional CreateOnly As Boolean = False)
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Path:=" & Path & "...")
+        Async Sub LoadSong(Path As String, Optional CreateOnly As Boolean = False, Optional IsRemote As Boolean = False, Optional BlockDOWNLOADPROC As Boolean = False)
+            Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Path:=" & Path & "...")
             IsLoadingStream = True
-            Dim nStream = Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
+            '            Dim nStream = Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
+            Dim nStream As Integer = 0
+            Await Task.Run(Async Function()
+                               nStream = If(Not IsRemote,
+                                Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
+                                Bass.BASS_StreamCreateURL(Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
+                           End Function)
             IsLoadingStream = False
             If CreateOnly Then
                 OnStreamChanged(nStream)
@@ -1358,36 +1383,39 @@ Namespace Player
                 If AutoPlay Then Play()
                 'Utilities.SharedProperties.Instance.Library?.IncreasePlaycount(Path, 1)
             Else
-                Console.WriteLine($"Error while creating stream: {Path},{Bass.BASS_ErrorGetCode.ToString}")
+                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {Path},{Bass.BASS_ErrorGetCode.ToString}")
                 [Next]()
             End If
         End Sub
 
         Async Function LoadSong(Metadata As Metadata) As Task
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Metadata:=" & Metadata.ToString)
+            Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Metadata:=" & Metadata.ToString)
             If Metadata.Location = Metadata.FileLocation.Remote Then
                 _stopdownproc = False
                 If RemoteTagsReading Then
-                    StreamMetadata.IsInUse = False
+                    If StreamMetadata IsNot Nothing Then StreamMetadata.IsInUse = False
                     Metadata.IsInUse = True
                     _Metadata = Metadata
                     _alreadyfoundtags = False
                 End If
+                _data = Nothing
+                _datastream = Nothing
+                DownloadFinished = False
             End If
             IsLoadingStream = True
             Dim nStream As Integer = 0
-            Await Task.Run(Sub()
+            Await Task.Run(Async Function()
                                nStream = If(Metadata.Location = Metadata.FileLocation.Local,
                                 Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
-                                Bass.BASS_StreamCreateURL(Metadata.Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, _HTTPDOWNLOADPROC, IntPtr.Zero))
-                           End Sub)
+                                Bass.BASS_StreamCreateURL(Await Metadata.GetActivePath, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
+                           End Function)
             IsLoadingStream = False
             If nStream <> 0 Then
-                If IsPreviewing Then
-                    PreviewControlHandle?.Stop()
-                End If
-                Path = Metadata.Path
+                'If IsPreviewing Then
+                '    PreviewControlHandle?.Stop()
+                'End If
                 If AutoStop Then Me.Stop()
+                Path = Metadata.Path
                 OnStreamChanged(nStream)
                 If Metadata.Location = Metadata.FileLocation.Remote AndAlso RemoteTagsReading Then
                     OnMetadataChanged(Metadata, True, True)
@@ -1398,20 +1426,20 @@ Namespace Player
                 If AutoPlay Then Play()
                 'Utilities.SharedProperties.Instance.Library?.IncreasePlaycount(Metadata.Path, 1)
             Else
-                Debug.WriteLine($"Error while creating stream: {Metadata.Location.ToString}/{Metadata.Path},{Bass.BASS_ErrorGetCode.ToString}")
+                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {Metadata.Location.ToString}/{Metadata.Path}, {Bass.BASS_ErrorGetCode.ToString}")
                 [Next]()
             End If
         End Function
 
         Async Sub Preview(Metadata As Metadata)
             If Metadata Is Nothing Then Return
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Attempting to preview song, Metadata:=" & Metadata.ToString)
+            Utilities.DebugMode.Instance.Log(Of Player)("Attempting to preview song, Metadata:=" & Metadata.ToString)
             IsLoadingStream = True
             Dim nStream As Integer = 0
             Await Task.Run(Sub()
                                nStream = If(Metadata.Location = Metadata.FileLocation.Local,
                                 Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
-                                Bass.BASS_StreamCreateURL(Metadata.Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, _HTTPDOWNLOADPROC, IntPtr.Zero))
+                                Bass.BASS_StreamCreateURL(Metadata.Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
                            End Sub)
             IsLoadingStream = False
             If nStream <> 0 Then
@@ -1421,12 +1449,12 @@ Namespace Player
                     PreviewControlHandle?.Stop()
                 End If
                 Dim SCH As New StreamControlHandle(nStream)
-                SCH.Tag = StreamMetadata
-                SCH.Position = SCH.Length / 4
+                SCH.Tag = New Tuple(Of Integer, Metadata)(Stream, StreamMetadata)
+                If SCH.Length >= 90 Then SCH.Position = SCH.Length / 4
                 AddHandler SCH.OnStop, Sub(sender)
                                            _Metadata.IsInUse = False
-                                           If TryCast(sender.Tag, Metadata) IsNot Nothing Then
-                                               _Metadata = TryCast(sender.Tag, Metadata)
+                                           If TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item2 IsNot Nothing Then
+                                               _Metadata = TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item2
                                                _Metadata.IsInUse = True
                                                _Metadata.EnsureCovers()
                                            End If
@@ -1434,15 +1462,19 @@ Namespace Player
                                            IsPreviewing = False
                                            PreviewControlHandle = Nothing
                                            Bass.BASS_StreamFree(SCH.Handle)
+                                           OnStreamChanged(TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item1)
                                        End Sub
-                IsPreviewing = True
+                'IsPreviewing = True
                 If IsPlaying Then Pause()
                 PreviewControlHandle = SCH
-                SCH.Play()
+                'SCH.Play()
                 Metadata.IsInUse = True
                 _Metadata = Metadata
                 Metadata.EnsureCovers()
                 OnPropertyChanged(NameOf(StreamMetadata))
+                OnStreamChanged(nStream)
+                Play()
+                IsPreviewing = True
             Else
                 IsPreviewing = False
             End If
@@ -1454,6 +1486,7 @@ Namespace Player
             OnPropertyChanged(NameOf(IsPaused))
             OnPropertyChanged(NameOf(IsStalled))
             OnPropertyChanged(NameOf(IsStopped))
+            OnPropertyChanged(NameOf(TaskbarState))
         End Sub
 
         Sub Pause()
@@ -1462,14 +1495,24 @@ Namespace Player
             OnPropertyChanged(NameOf(IsPaused))
             OnPropertyChanged(NameOf(IsStalled))
             OnPropertyChanged(NameOf(IsStopped))
+            OnPropertyChanged(NameOf(TaskbarState))
         End Sub
 
         Sub [Stop]()
-            Bass.BASS_ChannelStop(Stream)
+            If IsPreviewing Then
+                PreviewControlHandle.Stop()
+            Else
+                Try
+                    Bass.BASS_ChannelStop(Stream)
+                Catch ex As Exception
+                    Utilities.DebugMode.Instance.Log(Of Player)(ex.ToString)
+                End Try
+            End If
             OnPropertyChanged(NameOf(IsPlaying))
             OnPropertyChanged(NameOf(IsPaused))
             OnPropertyChanged(NameOf(IsStalled))
             OnPropertyChanged(NameOf(IsStopped))
+            OnPropertyChanged(NameOf(TaskbarState))
         End Sub
 
         Sub [Next]()
@@ -1520,7 +1563,7 @@ Namespace Player
         End Sub
 
         'Sub Load(data As Specialized.StringCollection)
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load data, Count:=" & data?.Count)
+        '    Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load data, Count:=" & data?.Count)
         '    If data IsNot Nothing AndAlso data.Count > 0 Then
         '        Configuration.SetStatus("Loading Data...", 0)
         '        Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
@@ -1535,19 +1578,19 @@ Namespace Player
         '    Else
         '        Configuration.SetStatus("No data to be loaded", 100)
         '    End If
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Done loading data.")
+        '    Utilities.DebugMode.Instance.Log(Of Player)("Done loading data.")
         '    Configuration.SetStatus(Configuration.Status, 100)
         'End Sub
 
         'Iterator Function Save() As IEnumerable(Of String)
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Attempting to save data")
+        '    Utilities.DebugMode.Instance.Log(Of Player)("Attempting to save data")
         '    Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
         '    For Each metadata In Playlist
         '        Dim mem As New IO.MemoryStream
         '        BinF.Serialize(mem, metadata)
         '        Yield Convert.ToBase64String(mem.ToArray)
         '    Next
-        '    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("Done saving data.")
+        '    Utilities.DebugMode.Instance.Log(Of Player)("Done saving data.")
         'End Function
 
         Sub LoadPlaylist(data As IO.MemoryStream)
@@ -1597,7 +1640,7 @@ Namespace Player
             Return PlMem
         End Function
 
-        Sub LoadSettings(data As String)
+        Async Sub LoadSettings(data As String)
             If String.IsNullOrEmpty(data) Then Return
             Dim SH As New SettingsHelper()
             SH.Load(data)
@@ -1619,10 +1662,10 @@ Namespace Player
                     '_Metadata = Meta
                     'Meta.EnsureCovers()                    
                     'OnPropertyChanged(NameOf(StreamMetadata))                                        
-                    LoadSong(Meta.Path, True)
+                    LoadSong(Await CType(Meta, Metadata).GetActivePath, True, If(CType(Meta, Metadata).Location = Metadata.FileLocation.Local, False, True), CType(Meta, Metadata).BlockDOWNLOADPROC)
                     OnMetadataChanged(Meta)
                 Catch ex As Exception
-                    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Metadata.Exception:=" & ex.Message)
+                    Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Metadata.Exception:=" & ex.Message)
                 End Try
             End If
             'Must come before EffectsProfile because some effects depends on modules
@@ -1636,7 +1679,7 @@ Namespace Player
                             emodule.Init()
                         End If
                     Catch ex As Exception
-                        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading modules.Exception:=" & ex.Message)
+                        Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading modules.Exception:=" & ex.Message)
                     End Try
                 Next
             End If
@@ -1647,7 +1690,7 @@ Namespace Player
                     Dim Profile = BinF.Deserialize(New IO.MemoryStream(Convert.FromBase64String(PF64)))
                     EffectsProfile = Profile
                 Catch ex As Exception
-                    If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Profile.Exception:=" & ex.Message)
+                    Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Profile.Exception:=" & ex.Message)
                 End Try
             End If
             If SH.ContainsKey("Path") Then Path = SH.GetItem("Path")
@@ -1672,7 +1715,7 @@ Namespace Player
             Try
                 BinF.Serialize(MD64Mem, StreamMetadata)
             Catch ex As Exception
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Metadata.Exception:=" & ex.Message)
+                Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Metadata.Exception:=" & ex.Message)
             End Try
             Dim MD64 = If(MD64Mem.Length > 0, Convert.ToBase64String(MD64Mem.ToArray), Nothing)
             If Not String.IsNullOrEmpty(MD64) Then SH.AddItem("Metadata", MD64)
@@ -1684,7 +1727,7 @@ Namespace Player
                 Next
                 BinF.Serialize(PF64Mem, EffectsProfile)
             Catch ex As Exception
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Profile.Exception:=" & ex.Message)
+                Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Profile.Exception:=" & ex.Message)
             End Try
             Dim PF64 = If(PF64Mem.Length > 0, Convert.ToBase64String(PF64Mem.ToArray), Nothing)
             If Not String.IsNullOrEmpty(PF64) Then SH.AddItem("EffectsProfile", PF64)
@@ -2003,6 +2046,12 @@ Namespace Player
                 Return _StopControlHandleCommand
             End Get
         End Property
+        <NonSerialized> Private _StopControlHandleAndResumeCommand As New WPF.Commands.StopControlHandleAndResumeCommand(Me)
+        ReadOnly Property StopControlHandleAndResumeCommand As WPF.Commands.StopControlHandleAndResumeCommand
+            Get
+                Return _StopControlHandleAndResumeCommand
+            End Get
+        End Property
         <NonSerialized> Private _PreviewCommand As New WPF.Commands.PreviewCommand(Me)
         ReadOnly Property PreviewCommand As WPF.Commands.PreviewCommand
             Get
@@ -2039,10 +2088,9 @@ Namespace Player
                 Return _AddGroupToPlaylistCommand
             End Get
         End Property
-
         ReadOnly Property TaskbarState As Shell.TaskbarItemProgressState
             Get
-                Return If(IsPlaying, Shell.TaskbarItemProgressState.Normal, If(IsPaused, Shell.TaskbarItemProgressState.Paused, If(IsStalled, Shell.TaskbarItemProgressState.Error, Shell.TaskbarItemProgressState.None)))
+                Return If(IsLoadingStream, Shell.TaskbarItemProgressState.Indeterminate, If(IsPlaying, Shell.TaskbarItemProgressState.Normal, If(IsPaused, Shell.TaskbarItemProgressState.Paused, If(IsStalled, Shell.TaskbarItemProgressState.Error, Shell.TaskbarItemProgressState.None))))
             End Get
         End Property
         ReadOnly Property TaskbarProgress As Double

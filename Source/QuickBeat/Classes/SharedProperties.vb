@@ -159,6 +159,17 @@ Namespace Utilities
             End Set
         End Property
 
+        Private _IsInternetConnected As Boolean = Utilities.CheckInternetConnection
+        Property IsInternetConnected As Boolean
+            Get
+                Return _IsInternetConnected
+            End Get
+            Set(value As Boolean)
+                _IsInternetConnected = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
         ReadOnly Property Aqua As New Aqua.Aqua With {.ReferenceBinder = New QScript.KnownReferenceBinder}
 
         ReadOnly Property CurrentGreeting As String
@@ -197,6 +208,7 @@ Namespace Utilities
                                                                                                                                                               End Sub), My.Settings.APP_LIBRARY_PATHS)
 
         Private WithEvents _FilePipe As New Classes.NamedPipeManager("QuickBeatPump", IO.Pipes.PipeDirection.InOut)
+        Private WithEvents _Timer As New Forms.Timer With {.Interval = 5000} 'Low freq. timer, used for lazy notifications purposes e.g internet state
         Public Property FilePipe As Classes.NamedPipeManager
             Get
                 Return _FilePipe
@@ -209,28 +221,25 @@ Namespace Utilities
 
         Public ReadOnly Property AllInitialized As Boolean
             Get
-                If Player Is Nothing OrElse Not Player?.Configuration.IsLoaded Then Return False
-                If Library Is Nothing OrElse Not Library?.Configuration.IsLoaded Then Return False
-                If HotkeyManager Is Nothing OrElse Not HotkeyManager?.Configuration.IsLoaded Then Return False
-                If FilePipe Is Nothing OrElse Not FilePipe?.Configuration.IsLoaded Then Return False
-                If YoutubeDL Is Nothing OrElse Not YoutubeDL?.Configuration.IsLoaded Then Return False
-                Return True
+                Return Not ItemsConfiguration.Any(Function(k) k.IsLoaded = False)
             End Get
         End Property
 
         Async Sub Init()
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Attempting to initialize...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Attempting to initialize...")
             If IsInitialized Then
-                If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Already initialized.")
+                Utilities.DebugMode.Instance.Log(Of SharedProperties)("Already initialized.")
                 Return
             End If
             'Init
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Setting theme...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Starting Timer")
+            _Timer.Start()
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Setting theme...")
             If Theme Is Nothing Then
                 'Theme = New Classes.Themes.Default
                 ThemesSelectedIndex = My.Settings.APP_THEME_INDEX
             End If
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Loading library...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Loading library...")
             Library.Load(My.Settings.APP_LIBRARY)
             If Library.Configuration.IsLoaded Then
                 If Library.MostPlayedArtist IsNot Nothing Then
@@ -263,10 +272,10 @@ Namespace Utilities
                     fav.Cover = CommonFunctions.GenerateCoverImage(ResourceResolver.Images.HEARTS)
                     RecommendedPlaylists.Add(fav)
                 Catch ex As Exception
-                    If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
+                    Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
                 End Try
             End If
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Loading custom playlists...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Loading custom playlists...")
             Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             For Each playlist In My.Settings.APP_PLAYER_PLAYLIST_CUSTOM
                 If Not String.IsNullOrEmpty(playlist) Then
@@ -284,7 +293,7 @@ Namespace Utilities
                         Pl.Cover = Pl.Name.ToCoverImage
                         CustomPlaylists.Add(Pl)
                     Catch ex As Exception
-                        If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
+                        Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
                     End Try
                 End If
             Next
@@ -297,11 +306,11 @@ Namespace Utilities
                     Dim MD As Player.Metadata = BinF.Deserialize(New IO.MemoryStream(MD64))
                     RecentSongs.Add(If(QuickBeat.Player.Metadata.FromFile(MD.Path, False, True), MD))
                 Catch ex As Exception
-                    If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load recent song from settings. Error:=" & ex.ToString)
+                    Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load recent song from settings. Error:=" & ex.ToString)
                 End Try
             Next
             RecommendedPlaylists.Add(RecentSongs)
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing player...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing player...")
             Player = New Player.Player With {.TaskbarOverlayPlaying = New BitmapImage(New Uri("pack://application:,,,/QuickBeat;component/Resources/CircledPlay.png")), .TaskbarOverlayPaused = New BitmapImage(New Uri("pack://application:,,,/QuickBeat;component/Resources/PauseButton.png")), .TaskbarOverlayStopped = New BitmapImage(New Uri("pack://application:,,,/QuickBeat;component/Resources/StopCircled.png"))}
             Player.Init()
             Player.LoadSettings(My.Settings.APP_PLAYER_SETTINGS)
@@ -320,11 +329,11 @@ Namespace Utilities
                     Next
                     Player.Playlist.RefreshItemsIndex()
                 Catch ex As Exception
-                    If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load playlist from settings. Error:=" & ex.ToString)
+                    Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load playlist from settings. Error:=" & ex.ToString)
                     Player.Configuration.SetError(True, New ArgumentException("Failed to load playlist."))
                 End Try
             End If
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing hotkey manager...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing hotkey manager...")
             If String.IsNullOrEmpty(My.Settings.APP_HOTKEYS) Then
                 HotkeyManager = New HotkeyManager(IntPtr.Zero)
                 HotkeyManager.Configuration.SetStatus("All Good", 100)
@@ -333,12 +342,12 @@ Namespace Utilities
                     Dim Hk64 = Convert.FromBase64String(My.Settings.APP_HOTKEYS)
                     HotkeyManager = Await Hotkeys.HotkeyManager.Load(New IO.MemoryStream(Hk64))
                 Catch ex As Exception
-                    If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
+                    Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
                     HotkeyManager = New HotkeyManager(IntPtr.Zero)
                     HotkeyManager.Configuration.SetError(True, New ArgumentException("Failed to load hotkeys."))
                 End Try
             End If
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing youtube-dl...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing youtube-dl...")
             If Not String.IsNullOrEmpty(My.Settings.APP_YOUTUBEDL_PATH) Then
                 YoutubeDL.YoutubeDLLocation = My.Settings.APP_YOUTUBEDL_PATH
             End If
@@ -351,10 +360,10 @@ Namespace Utilities
                 .Add(YoutubeDL.Configuration)
             End With
             MemoryManager.IsPeriodicCleaning = True
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing file pipe...")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Initializing file pipe...")
             FilePipe.Init()
             FilePipe.StartServer()
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("SharedProperties.Instance, Initialized.")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)("SharedProperties.Instance, Initialized.")
             IsInitialized = True
             Dim Args = Environment.GetCommandLineArgs.Skip(1)
             Dim ArgsCount = Args.Count
@@ -404,12 +413,14 @@ Namespace Utilities
         End Sub
 
         Private Sub _FilePipe_ReceiveString(sender As Classes.NamedPipeManager, msg As String) Handles _FilePipe.ReceiveString
-            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)($"Recieved string from {sender.NamedPipeName}: {msg}")
+            Utilities.DebugMode.Instance.Log(Of SharedProperties)($"Recieved string from {sender.NamedPipeName}: {msg}")
             If msg.ToLower.StartsWith("activate") Then
                 ActivateApp()
             ElseIf msg.ToLower.StartsWith("preview ") Then
                 Player.PreviewCommand.Execute(QuickBeat.Player.Metadata.FromFile(msg.Remove(0, "preview ".Length)))
                 ActivateApp()
+            ElseIf msg.ToLower.StartsWith("load ") Then
+                Player.LoadCommand.Execute(msg.Remove(0, "load ".Length))
             ElseIf msg.ToLower.StartsWith("appendload ") Then
                 Player.LoadAndAddCommand.Execute(msg.Remove(0, "appendload ".Length))
             ElseIf msg.ToLower.StartsWith("append ") Then
@@ -431,7 +442,7 @@ Namespace Utilities
                             Dim MD As Player.Metadata = BinF.Deserialize(New IO.MemoryStream(MD64))
                             RecentSongs.Add(If(QuickBeat.Player.Metadata.FromFile(MD.Path, False, True), MD))
                         Catch ex As Exception
-                            If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load recent song from settings. Error:=" & ex.ToString)
+                            Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load recent song from settings. Error:=" & ex.ToString)
                         End Try
                     Next
                     RecommendedPlaylists.Add(RecentSongs)
@@ -448,7 +459,7 @@ Namespace Utilities
                     Loop
                 End If
             End If
-                Theme?.OnMediaChanged(_Player.StreamMetadata)
+            Theme?.OnMediaChanged(_Player.StreamMetadata)
             'CommonFunctions.GetImageStats(_Player.StreamMetadata.DefaultCover)
         End Sub
 
@@ -464,7 +475,7 @@ Namespace Utilities
                     RecommendedPlaylists.Add(fav)
                     FavoriteSongs = fav
                 Catch ex As Exception
-                    If IsLogging Then Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
+                    Utilities.DebugMode.Instance.Log(Of SharedProperties)("Failed to load custom playlist from settings. Error:=" & ex.ToString)
                 End Try
             End If
             If sender.IsFavorite Then
@@ -474,14 +485,27 @@ Namespace Utilities
                 FavoriteSongs.Remove(FavoriteSongs.FirstOrDefault(Function(k) k.Path = sender.Path))
             End If
         End Sub
+
+        Private Sub _Timer_Tick(sender As Object, e As EventArgs) Handles _Timer.Tick
+            IsInternetConnected = Utilities.CheckInternetConnection
+            OnPropertyChanged(NameOf(IsInternetConnected))
+            If Not Player?.IsPreviewing Then
+                Player?.OnPropertyChanged(NameOf(Player.IsPlaying))
+                Player?.OnPropertyChanged(NameOf(Player.IsPaused))
+                Player?.OnPropertyChanged(NameOf(Player.IsStalled))
+                Player?.OnPropertyChanged(NameOf(Player.IsStopped))
+            End If
+        End Sub
     End Class
 End Namespace
 
 'TODO Check CPU usage... No can dosville baby doll it's animation related
-'TODO push new version
+'TODO maybe make github docs
+'TODO add a video effect like mpc hc cover playlist mode
+'TODO add clock while in fullscreen ?
+'TODO test deezer integration more, bind queries to library or something
 'TODO add audio effect attirbute : control
 'TODO add more fx from bass fx
-'TODO fix scrollbar
 'TODO fix dev console formatting adding space and things
 'TODO Add loops , add dirty file check on close
 'TODO add logic comparison
@@ -494,21 +518,19 @@ End Namespace
 'TODO fix metadata changing on previous stream metadata , remote tags reading kicking in before the streammetadata is changed // shouldn't be a problem since load url is not adding to playlist
 'TODO plugins*
 'Changelog:
-'Fixed Audio Effects Not Saving
-'Added Reverb Audio Effect
-'Added Mix Audio Effect
-'Added Rotate Audio Effect
-'Added Drag to Reorder to Playlist
-'Added BASS FX Module
-'Added Parameter name and unit to effect config window
-'Enhaced Audio Effects Implementation
-'Added Dynamic Amplification Audio Effect
-'You Can Now Change the Control Bar Position (Top and Bottom)
-'Improved Developer Console Speed
-'Added Aqua Conditions Module
-'Added Aqua Async Module
-'Added Aqua Startup Script
-'Stability Improvments
-'Minor UI Improvments
-'Added Integration with FanArt
-'General Bug Fix
+'Improved General App Performance
+'Added UPnP/DLNA Support
+'Enahced Remote Tag Reading
+'Added Playlist Support to "Open With" Operations
+'Added Playlist to File/Open
+'Added M3U/8 Support for Import and Export Operations
+'Input Dialog Can Now Be Closed or Confirmed Using Escape/Enter Keys
+'Fixed App Startup with a Remote File
+'Removed Controls Lock while Previewing
+'Added Merged URL, YouTube-DL, Deezer Under One Menu: Remote
+'Added Search Provider for Youtube-DL
+'Added Automatic Link Refresh
+'Added YoutubeDL Playlist Support (Tested with Youtube and SoundCloud)
+'Added Deezer Integration
+'Added Tab Selector to Home
+'Added MultiBandEqualizer Audio Effect

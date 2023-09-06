@@ -87,7 +87,7 @@ Namespace Classes
                                             Try
                                                 Dim text As String
                                                 Using server = New NamedPipeServerStream(TryCast(pipeName, String), ServerPipeDirection, MaxServerInstances)
-                                                    Configuration.SetStatus("Started, All Good!", 100)
+                                                    Configuration.SetStatus("Started, All Good", 100)
                                                     Await server.WaitForConnectionAsync(PipeThreadCT.Token)
 
                                                     Using reader As StreamReader = New StreamReader(server)

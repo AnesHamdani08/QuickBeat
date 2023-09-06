@@ -89,7 +89,8 @@ Namespace Player
         '    FXItem.Preset_Default()
         'End Sub
 
-        'Public Overrides Sub Apply()
+        'Public Overrides Sub Apply(Optional Force as Boolean = False)
+        '    If Not Force Then If HEffect <> 0 Then Return
         '    HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_, 0)
         '    _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
         '    OnPropertyChanged(NameOf(IsEnabled))
@@ -305,8 +306,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_CHORUS, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -542,8 +543,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_FLANGER, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -750,8 +751,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_ECHO, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -869,8 +870,8 @@ Namespace Player
 
             <NonSerialized> Private FXItem As Un4seen.Bass.BASS_DX8_I3DL2REVERB
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 If FXItem Is Nothing Then
                     FXItem = New Un4seen.Bass.BASS_DX8_I3DL2REVERB
                     FXItem.Preset_Default()
@@ -975,8 +976,8 @@ Namespace Player
 
             <NonSerialized> Private FXItem As Un4seen.Bass.AddOn.Fx.BASS_BFX_DAMP
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 If FXItem Is Nothing Then
                     FXItem = New Un4seen.Bass.AddOn.Fx.BASS_BFX_DAMP
                     FXItem.Preset_Soft()
@@ -1317,8 +1318,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_COMPRESSOR, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -1403,7 +1404,7 @@ Namespace Player
         End Class
 
         <Serializable>
-        Public Class SignleBandEqualizer
+        Public Class SingleBandEqualizer
             Inherits Profile.AudioEffect
 
             Public Overrides Property Name As String = "Single Band Equalizer"
@@ -1518,8 +1519,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -1608,6 +1609,285 @@ Namespace Player
         End Class
 
         <Serializable>
+        Public Class MultiBandEqualizer
+            Inherits Profile.AudioEffect
+
+            Public Enum MultiBandEqualizerIndex
+                Bass
+                UpperBass
+                MidRange
+                UpperMidRange
+                HighEnd
+            End Enum
+
+            Public Overrides Property Name As String = "Multi Band Equalizer"
+
+            Public Overrides Property Description As String = "5 band equalizer."
+
+            Public Overrides Property ShortName As String = "mEQ"
+
+            Public Overrides Property Category As String = "DX8;DSP"
+
+            Private _AreEnabled(4) As Boolean
+
+            Public Overrides Property IsEnabled As Boolean
+                Get
+                    Return _AreEnabled.All(Function(k) k)
+                End Get
+                Set(value As Boolean)
+                    If value = IsEnabled Then Return
+                    If value Then
+                        For i As Integer = 0 To 4
+                            _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                            _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                        Next
+                    Else
+                        For i As Integer = 0 To 4
+                            Dim r = Bass.BASS_ChannelRemoveFX(HStream, _HEffects(i))
+                            _AreEnabled(i) = Not r
+                            If r Then _HEffects(i) = 0
+                        Next
+                    End If
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _HEffects(4) As Integer
+            Public Overrides Property HEffect As Integer
+                Get
+                    Return _HEffects(Index)
+                End Get
+                Set(value As Integer)
+                    _HEffects(Index) = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _HStream As Integer
+            Public Overrides Property HStream As Integer
+                Get
+                    Return _HStream
+                End Get
+                Set(value As Integer)
+                    _HStream = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _Index As MultiBandEqualizerIndex
+            <Field("Index", GetType(MultiBandEqualizerIndex), Description:="Selected band.")>
+            Public Property Index As MultiBandEqualizerIndex
+                Get
+                    Return _Index
+                End Get
+                Set(value As MultiBandEqualizerIndex)
+                    _Index = value
+                    OnPropertyChanged()
+                    OnPropertyChanged(NameOf(Center))
+                    OnPropertyChanged(NameOf(Bandwidth))
+                    OnPropertyChanged(NameOf(Gain))
+                End Set
+            End Property
+
+            <Field("Center", GetType(Single), "Hertz", "Hz", Description:="Center frequency, in hertz, in the range from 80 to 16000. This value cannot exceed one-third of the frequency of the channel. Default 100 Hz.", Minimum:=80, Maximum:=18000)>
+            Public Property Center As Single
+                Get
+                    Return FXItems(Index).fCenter
+                End Get
+                Set(value As Single)
+                    FXItems(Index).fCenter = value
+                    If _AreEnabled(Index) Then
+                        If Not Bass.BASS_FXSetParameters(HEffect, FXItems(Index)) Then
+                            Threading.Thread.Sleep(100)
+                            Bass.BASS_FXSetParameters(HEffect, FXItems(Index))
+                        End If
+                        OnPropertyChanged()
+                    End If
+                End Set
+            End Property
+
+            <Field("Bandwidth", GetType(Single), "Semitones", "Sm.", Description:="Bandwidth, in semitones, in the range from 1 to 36. Default 18 semitones.", Minimum:=1, Maximum:=36)>
+            Public Property Bandwidth As Single
+                Get
+                    Return FXItems(Index).fBandwidth
+                End Get
+                Set(value As Single)
+                    FXItems(Index).fBandwidth = value
+                    If _AreEnabled(Index) Then
+                        If Not Bass.BASS_FXSetParameters(HEffect, FXItems(Index)) Then
+                            Threading.Thread.Sleep(100)
+                            Bass.BASS_FXSetParameters(HEffect, FXItems(Index))
+                        End If
+                        OnPropertyChanged()
+                    End If
+                End Set
+            End Property
+
+            <Field("Gain", GetType(Single), "Decibels", "dB", Description:="Gain, in the range from -15 to 15. Default 0 dB.", Minimum:=-15, Maximum:=15)>
+            Public Property Gain As Single
+                Get
+                    Return FXItems(Index).fGain
+                End Get
+                Set(value As Single)
+                    FXItems(Index).fGain = value
+                    If _AreEnabled(Index) Then
+                        If Not Bass.BASS_FXSetParameters(HEffect, FXItems(Index)) Then
+                            Threading.Thread.Sleep(100)
+                            Bass.BASS_FXSetParameters(HEffect, FXItems(Index))
+                        End If
+                        OnPropertyChanged()
+                    End If
+                End Set
+            End Property
+
+            <MethodGroup(DisplayName:="Presets", Description:="A set of premade values", GridStackWrap:=TriState.False, Height:=Double.NaN, HorizontalItemSpacing:=10, Orientation:=Orientation.Horizontal, Scroll:=False, VerticalItemSpacing:=10, Width:=Double.NaN)>
+            Property Group0
+
+
+            <NonSerialized> Private FXItems(4) As Un4seen.Bass.BASS_DX8_PARAMEQ
+
+            Sub New()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 0)
+                FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 0)
+                FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, 0)
+                FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, 0)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 0)
+            End Sub
+
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If _HEffects.All(Function(k) k <> 0) Then Return
+                Dim i = 0
+                If Force OrElse _HEffects(i) = 0 Then
+                    _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                    _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                End If
+                i = 1
+                If Force OrElse _HEffects(i) = 0 Then
+                    _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                    _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                End If
+                i = 2
+                If Force OrElse _HEffects(i) = 0 Then
+                    _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                    _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                End If
+                i = 3
+                If Force OrElse _HEffects(i) = 0 Then
+                    _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                    _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                End If
+                i = 4
+                If Force OrElse _HEffects(i) = 0 Then
+                    _HEffects(i) = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
+                    _AreEnabled(i) = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                End If
+                OnPropertyChanged(NameOf(IsEnabled))
+                NotifyUI()
+            End Sub
+
+            Private Sub NotifyUI()
+                OnPropertyChanged(NameOf(Index))
+                OnPropertyChanged(NameOf(Center))
+                OnPropertyChanged(NameOf(Gain))
+                OnPropertyChanged(NameOf(Bandwidth))
+            End Sub
+
+            Sub Update()
+                For i As Integer = 0 To 4
+                    If _AreEnabled(i) Then
+                        Dim r = Bass.BASS_FXSetParameters(_HEffects(i), FXItems(i))
+                    End If
+                Next
+                NotifyUI()
+            End Sub
+
+            <Method("Default", "Sets the instance members to a preset.", Group:="Presets")>
+            Sub Preset_Default()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 0)
+                FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 0)
+                FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, 0)
+                FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, 0)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 0)
+                Update()
+            End Sub
+
+            <Method("Bass", "Sets the instance members to a preset.", Group:="Presets")>
+            Sub Preset_Bass()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 4)
+                FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 6)
+                FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, -1)
+                FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, -1)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 1)
+                Update()
+            End Sub
+
+            <Method("Treble", "Sets the instance members to a preset.", Group:="Presets")>
+            Sub Preset_Treble()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 0)
+                FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 1)
+                FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, 1)
+                FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, 6)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 4)
+                Update()
+            End Sub
+
+            <Method("Party", "Sets the instance members to a preset.", Group:="Presets")>
+            Sub Preset_Party()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 5.5)
+                FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 0)
+                FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, 0)
+                FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, 0)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 5.5)
+                Update()
+            End Sub
+
+            <Method("Club", "Sets the instance members to a preset.", Group:="Presets")>
+            Sub Preset_Club()
+                FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 0)
+                FXItems(1) = New BASS_DX8_PARAMEQ(120, 18, 2)
+                FXItems(2) = New BASS_DX8_PARAMEQ(500, 18, 5)
+                FXItems(3) = New BASS_DX8_PARAMEQ(2000, 18, 5)
+                FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 0)
+                Update()
+            End Sub
+
+#Region "Serialization"
+            Private SerializationData As String
+
+            <Runtime.Serialization.OnDeserialized>
+            Private Sub Deserialization(context As Runtime.Serialization.StreamingContext)
+                'Restore values from serialization
+                Dim SData = SerializationData.Split(";")
+                FXItems = {Nothing, Nothing, Nothing, Nothing, Nothing}
+                Try
+                    FXItems(0) = New BASS_DX8_PARAMEQ(SData(0), SData(1), SData(2))
+                    FXItems(1) = New BASS_DX8_PARAMEQ(SData(3), SData(4), SData(5))
+                    FXItems(2) = New BASS_DX8_PARAMEQ(SData(6), SData(7), SData(8))
+                    FXItems(3) = New BASS_DX8_PARAMEQ(SData(9), SData(10), SData(11))
+                    FXItems(4) = New BASS_DX8_PARAMEQ(SData(12), SData(13), SData(14))
+                Catch ex As Exception
+                    Utilities.DebugMode.Instance?.Log(Of MultiBandEqualizer)(ex.ToString)
+                    FXItems(0) = New BASS_DX8_PARAMEQ(80, 18, 0)
+                    FXItems(1) = New BASS_DX8_PARAMEQ(200, 18, 0)
+                    FXItems(2) = New BASS_DX8_PARAMEQ(1000, 18, 0)
+                    FXItems(3) = New BASS_DX8_PARAMEQ(5000, 18, 0)
+                    FXItems(4) = New BASS_DX8_PARAMEQ(10000, 18, 0)
+                End Try
+            End Sub
+
+            <Runtime.Serialization.OnSerializing>
+            Private Sub Serializing(context As Runtime.Serialization.StreamingContext)
+                'Save values for deserialization
+                SerializationData = ""
+                For i As Integer = 0 To 4
+                    SerializationData &= FXItems(i).fBandwidth & ";" & FXItems(i).fCenter & ";" & FXItems(i).fGain & If(i < 4, ";", "")
+                Next
+                _HEffects = {0, 0, 0, 0, 0}
+            End Sub
+#End Region
+        End Class
+
+        <Serializable>
         Public Class BassBoost
             Inherits Profile.AudioEffect
 
@@ -1689,8 +1969,8 @@ Namespace Player
                 ' FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -1830,8 +2110,8 @@ Namespace Player
 
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 HEffect = Bass.BASS_ChannelSetFX(HStream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0)
                 _IsEnabled = Bass.BASS_FXSetParameters(HEffect, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -1968,7 +2248,7 @@ Namespace Player
                 FXItem = If(StreamInfo Is Nothing, 0, StreamInfo.freq)
             End Sub
 
-            Public Overrides Sub Apply()
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
                 _IsEnabled = Bass.BASS_ChannelSetAttribute(HStream, BASSAttribute.BASS_ATTRIB_FREQ, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
                 NotifyUI()
@@ -2081,7 +2361,7 @@ Namespace Player
                 If Not Bass.BASS_ChannelGetAttribute(HStream, BASSAttribute.BASS_ATTRIB_PAN, FXItem) Then FXItem = 0
             End Sub
 
-            Public Overrides Sub Apply()
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
                 _IsEnabled = Bass.BASS_ChannelSetAttribute(HStream, BASSAttribute.BASS_ATTRIB_PAN, FXItem)
                 OnPropertyChanged(NameOf(IsEnabled))
                 NotifyUI()
@@ -2239,7 +2519,7 @@ Namespace Player
                 End If
             End Sub
 
-            Public Overrides Sub Apply()
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
                 HEffect = BassWaDsp.BASS_WADSP_ChannelSetDSP(HPlugin, HStream, 0)
                 _IsEnabled = (HEffect <> 0)
                 OnPropertyChanged(NameOf(IsEnabled))
@@ -2386,8 +2666,8 @@ Namespace Player
                 FXItem.Preset_Default()
             End Sub
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 If FXItem Is Nothing Then
                     FXItem = New BASS_DX8_REVERB
                     FXItem.Preset_Default()
@@ -2497,8 +2777,8 @@ Namespace Player
 
             <NonSerialized> Private FXItem As Un4seen.Bass.AddOn.Fx.BASS_BFX_MIX
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 If FXItem Is Nothing Then
                     FXItem = New Un4seen.Bass.AddOn.Fx.BASS_BFX_MIX(8)
                 End If
@@ -2782,8 +3062,8 @@ Namespace Player
 
             <NonSerialized> Private FXItem As Un4seen.Bass.AddOn.Fx.BASS_BFX_ROTATE
 
-            Public Overrides Sub Apply()
-                If HEffect <> 0 Then Return
+            Public Overrides Sub Apply(Optional Force As Boolean = False)
+                If Not Force Then If HEffect <> 0 Then Return
                 If FXItem Is Nothing Then
                     FXItem = New Un4seen.Bass.AddOn.Fx.BASS_BFX_ROTATE(0.1, AddOn.Fx.BASSFXChan.BASS_BFX_CHANALL)
                 End If

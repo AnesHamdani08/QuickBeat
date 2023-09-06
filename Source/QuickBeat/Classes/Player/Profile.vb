@@ -130,7 +130,7 @@ Namespace Player
             MustOverride Property IsEnabled As Boolean
             MustOverride Property HEffect As Integer
             MustOverride Property HStream As Integer
-            MustOverride Sub Apply()
+            MustOverride Sub Apply(Optional Force As Boolean = False)
             Overridable Sub Clean()
 
             End Sub
@@ -206,7 +206,7 @@ Namespace Player
                 Dim Result = Un4seen.Bass.Bass.BASS_ChannelRemoveFX(OldValue, _Item?.HEffect)
                 _Item.HStream = NewValue
                 _Item.HEffect = 0 'TODO subject to change
-                If _Item.IsEnabled Then _Item.Apply()
+                If _Item.IsEnabled Then _Item.Apply(True)
             Next
         End Sub
 

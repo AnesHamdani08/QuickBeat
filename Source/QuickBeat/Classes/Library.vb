@@ -181,7 +181,7 @@ Namespace Library
                 Dim TimeOut As Integer = 0
                 Do While i > 0
                     If TimeOut = 100 Then
-                        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Hit timeout on random group.")
+                        Utilities.DebugMode.Instance.Log(Of Library)("Hit timeout on random group.")
                         Exit Do
                     End If
                     TimeOut += 1
@@ -242,7 +242,7 @@ Namespace Library
         Async Sub Search(Optional SearchFilePathOnly As Boolean = False)
             If String.IsNullOrEmpty(SearchQuery.Trim) Then Return
             If IsSearching Then Return
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search, Query:=" & SearchQuery & "...")
+            Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search, Query:=" & SearchQuery & "...")
             IsSearching = True
             SearchResult.Clear()
             Await Task.Run(Sub()
@@ -330,13 +330,13 @@ Namespace Library
                                'Old Code
                            End Sub)
             IsSearching = False
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done searching.")
+            Utilities.DebugMode.Instance.Log(Of Library)("Done searching.")
         End Sub
 
         Public Function SearchSync(Query As String, Optional CaseSensitive As Boolean = True, Optional SearchFilePathOnly As Boolean = False) As List(Of Metadata)
             If String.IsNullOrEmpty(Query.Trim) Then Return New List(Of Metadata)
             Dim SearchResult As New List(Of Metadata) 'Not to be confused with Me.SearchResult
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search sync, Query:=" & Query & "...")
+            Utilities.DebugMode.Instance.Log(Of Library)("Attempting to search sync, Query:=" & Query & "...")
             Dim sw As New Stopwatch
             sw.Start()
 
@@ -399,13 +399,13 @@ Namespace Library
             fItemArtist = Nothing
             fItemAlbum = Nothing
 
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done searching sync.")
+            Utilities.DebugMode.Instance.Log(Of Library)("Done searching sync.")
 
             Return SearchResult
         End Function
 
         Sub Load(data As Specialized.StringCollection)
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to load data, Count:=" & data?.Count)
+            Utilities.DebugMode.Instance.Log(Of Library)("Attempting to load data, Count:=" & data?.Count)
             If data IsNot Nothing AndAlso data.Count > 0 Then
                 Configuration.SetStatus("Loading Data...", 0)
                 Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter()
@@ -426,19 +426,19 @@ Namespace Library
 
             RefreshSearchCache()
 
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done loading data.")
+            Utilities.DebugMode.Instance.Log(Of Library)("Done loading data.")
             Configuration.SetStatus($"Done indexing, loaded {Count} song", 100)
         End Sub
 
         Iterator Function Save() As IEnumerable(Of String)
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to save data")
+            Utilities.DebugMode.Instance.Log(Of Library)("Attempting to save data")
             Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             For Each metadata In Me
                 Dim mem As New IO.MemoryStream
                 BinF.Serialize(mem, metadata)
                 Yield Convert.ToBase64String(mem.ToArray)
             Next
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done saving data.")
+            Utilities.DebugMode.Instance.Log(Of Library)("Done saving data.")
         End Function
 
         Private Sub RefreshSearchCache()
@@ -467,10 +467,10 @@ Namespace Library
         End Sub
 
         Function IncreasePlaycount(path As String, increment As Integer) As Boolean
-            If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to increase playcount, Path:=" & path & ", Increment:=" & increment)
+            Utilities.DebugMode.Instance.Log(Of Library)("Attempting to increase playcount, Path:=" & path & ", Increment:=" & increment)
             Dim meta = Me.FirstOrDefault(Function(k) k.Path = path)
             If meta Is Nothing Then
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Couldn't find metadata.")
+                Utilities.DebugMode.Instance.Log(Of Library)("Couldn't find metadata.")
                 Return False
             Else
                 meta.PlayCount += increment
@@ -483,17 +483,17 @@ Namespace Library
                         MostPlayed = meta
                     End If
                 End If
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
+                Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
                 Return False
             End If
         End Function
 
         Async Function IncreasePlaycountAsync(path As String, increment As Integer) As Task(Of Boolean)
             Return Await Task.Run(Function()
-                                      If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Attempting to increase playcount, Path:=" & path & ", Increment:=" & increment)
+                                      Utilities.DebugMode.Instance.Log(Of Library)("Attempting to increase playcount, Path:=" & path & ", Increment:=" & increment)
                                       Dim meta = Me.FirstOrDefault(Function(k) k.Path = path)
                                       If meta Is Nothing Then
-                                          If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Couldn't find metadata.")
+                                          Utilities.DebugMode.Instance.Log(Of Library)("Couldn't find metadata.")
                                           Return False
                                       Else
                                           meta.PlayCount += increment
@@ -511,7 +511,7 @@ Namespace Library
                                                                                         End Sub)
                                               End If
                                           End If
-                                          If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
+                                          Utilities.DebugMode.Instance.Log(Of Library)("Done increasing playcount.")
                                           Return False
                                       End If
                                   End Function)
@@ -523,18 +523,20 @@ Namespace Library
                 FocusedGroup.FreeCovers()
             End If
 
-            Dim metadatas = Me.Where(Function(k) k.Artists?.Any(Function(l) l.ToLower = artist.ToLower))
-            If metadatas.Count = 0 Then Return
-            Dim artistgroup As New MetadataGroup() With {.Name = artist, .Category = "Artist"}
-            For Each metadata In metadatas
-                artistgroup.Add(metadata)
-            Next
-            artistgroup.UpdateValues()
+            If Not String.IsNullOrEmpty(artist) Then
+                Dim metadatas = Me.Where(Function(k) k.Artists?.Any(Function(l) l.ToLower = artist.ToLower))
+                If metadatas.Count = 0 Then Return
+                Dim artistgroup As New MetadataGroup() With {.Name = artist, .Category = "Artist"}
+                For Each metadata In metadatas
+                    artistgroup.Add(metadata)
+                Next
+                artistgroup.UpdateValues()
 
-            artistgroup.IsInUse = True
-            FocusedGroup = artistgroup
+                artistgroup.IsInUse = True
+                FocusedGroup = artistgroup
 
-            RaiseEvent ArtistFocused(FocusedGroup)
+                RaiseEvent ArtistFocused(FocusedGroup)
+            End If
         End Sub
 
         Sub FocusAlbumGroup(album As String)
@@ -543,18 +545,20 @@ Namespace Library
                 FocusedGroup.FreeCovers()
             End If
 
-            Dim metadatas = Me.Where(Function(k) k.Album?.ToLower = album.ToLower)
-            If metadatas.Count = 0 Then Return
-            Dim albumgroup As New MetadataGroup() With {.Name = album, .Category = "Album"}
-            For Each metadata In metadatas
-                albumgroup.Add(metadata)
-            Next
-            albumgroup.UpdateValues()
+            If Not String.IsNullOrEmpty(album) Then
+                Dim metadatas = Me.Where(Function(k) k.Album?.ToLower = album.ToLower)
+                If metadatas.Count = 0 Then Return
+                Dim albumgroup As New MetadataGroup() With {.Name = album, .Category = "Album"}
+                For Each metadata In metadatas
+                    albumgroup.Add(metadata)
+                Next
+                albumgroup.UpdateValues()
 
-            albumgroup.IsInUse = True
-            FocusedGroup = albumgroup
+                albumgroup.IsInUse = True
+                FocusedGroup = albumgroup
 
-            RaiseEvent AlbumFocused(FocusedGroup)
+                RaiseEvent AlbumFocused(FocusedGroup)
+            End If
         End Sub
 
         Sub FocusGroup(playlist As Playlist)

@@ -26,7 +26,7 @@ Namespace Utilities
         End Sub
 
         Public Sub Log(Of TClass As Class)(message As String, <Runtime.CompilerServices.CallerLineNumber> Optional CallerLine As String = Nothing, <Runtime.CompilerServices.CallerMemberName> Optional CallerName As String = Nothing)
-            Console.WriteLine($"[{Now.ToString("HH:mm:ss")}][{GetType(TClass).FullName}.{CallerName},{CallerLine}]: {message}")
+            If SharedProperties.Instance?.IsLogging Then Debug.WriteLine($"[{Now.ToString("HH:mm:ss")}][{GetType(TClass).FullName}.{CallerName},{CallerLine}]: {message}")
         End Sub
 
 #Region "WPF Support"

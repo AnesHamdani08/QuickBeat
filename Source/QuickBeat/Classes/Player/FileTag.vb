@@ -179,7 +179,7 @@ Namespace Player
                     Try
                         Tags = TagLib.File.Create(Path, TagLib.ReadStyle.Average)
                     Catch ex As Exception
-                        If Utilities.SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
+                        Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
                     End Try
                 End If
                 If Tags IsNot Nothing AndAlso Tags.Tag.Pictures.Length > 0 Then

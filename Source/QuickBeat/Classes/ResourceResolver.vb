@@ -77,6 +77,14 @@ Namespace Utilities
                     Application.Current.Resources("LOC_QUERY_PLAYLIST_IMPORT") = value
                 End Set
             End Property
+            Public Shared Property QUERY_PLAYLIST_LOAD As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_PLAYLIST_LOAD")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_PLAYLIST_LOAD") = value
+                End Set
+            End Property
             Public Shared Property LOC_QUERY_UPDATES_NOTFOUND As System.String
                 Get
                     Return Application.Current.Resources("LOC_LOC_QUERY_UPDATES_NOTFOUND")
@@ -953,6 +961,22 @@ Namespace Utilities
                 End Get
                 Set(value As System.Windows.Media.StreamGeometry)
                     Application.Current.Resources("GEO_SPEAKER") = value
+                End Set
+            End Property
+            Public Shared Property FOLDER As System.Windows.Media.StreamGeometry
+                Get
+                    Return Application.Current.Resources("GEO_FOLDER")
+                End Get
+                Set(value As System.Windows.Media.StreamGeometry)
+                    Application.Current.Resources("GEO_FOLDER") = value
+                End Set
+            End Property
+            Public Shared Property MUSICNOTE As System.Windows.Media.StreamGeometry
+                Get
+                    Return Application.Current.Resources("GEO_MUSICNOTE")
+                End Get
+                Set(value As System.Windows.Media.StreamGeometry)
+                    Application.Current.Resources("GEO_MUSICNOTE") = value
                 End Set
             End Property
             Public Shared Property RANDOM As System.Windows.Media.StreamGeometry

@@ -142,7 +142,7 @@ Namespace Utilities
             Try
                 format = bitmap.Format
             Catch ex As Exception
-                If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)(ex.ToString)
+                Utilities.DebugMode.Instance.Log(Of Application)(ex.ToString)
                 Return Color.FromArgb(0, 0, 0, 0)
             End Try
             If format <> PixelFormats.Bgr24 AndAlso format <> PixelFormats.Bgr32 AndAlso format <> PixelFormats.Bgra32 AndAlso format <> PixelFormats.Pbgra32 Then

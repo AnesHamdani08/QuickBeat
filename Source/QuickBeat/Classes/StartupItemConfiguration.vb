@@ -118,7 +118,7 @@ Namespace Classes
         ''' <param name="Status"></param>
         ''' <param name="Progress"></param>
         ''' <param name="Timeout">Delay in milliseconds</param>
-        Sub SetStatus(Status As String, Progress As Double, Timeout As Double)
+        Async Sub SetStatus(Status As String, Progress As Double, Timeout As Double)
             Dim oStatus = _Status
             Dim oProgress = _Progress
             Me.Status = Status
@@ -128,15 +128,17 @@ Namespace Classes
             If Progress = 100 Then
                 Me.IsErrored = False
             End If
-            Application.Current.Dispatcher.InvokeAsync(Async Function()
-                                                           Await Task.Delay(Timeout)
-                                                           SetStatus(oStatus, oProgress)
-                                                       End Function)
+            Await Task.Delay(Timeout)
+            SetStatus(oStatus, oProgress)
         End Sub
         Sub SetError(IsErrored As Boolean, Exception As Exception)
             Me.IsErrored = IsErrored
             Me.Exception = Exception
             Me.IsLoaded = Not IsErrored
         End Sub
+
+        Public Overrides Function ToString() As String
+            Return $"{Name}: {Status}[{IsLoading}]: {Progress}, Error[{IsErrored}]: {If(Exception Is Nothing, "None", Exception.Message)}"
+        End Function
     End Class
 End Namespace
