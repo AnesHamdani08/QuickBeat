@@ -88,6 +88,7 @@
     <sys:String x:Key="LOC_NONE">None</sys:String>
     <sys:String x:Key="LOC_QUERY_TIMEREND">The timer reached its end.</sys:String>
     <sys:String x:Key="LOC_REMOTETAGSREADING">Remote Tags Reading</sys:String>
+    <sys:String x:Key="LOC_REMOTE">Remote</sys:String>
     <sys:String x:Key="LOC_URL">URL</sys:String>
     <sys:String x:Key="LOC_QUERY_URL">Enter the url...</sys:String>
     <sys:String x:Key="LOC_SORT">Sort</sys:String>
@@ -111,13 +112,14 @@
     <sys:String x:Key="LOC_SWITCH">Switch</sys:String>
     <sys:String x:Key="LOC_LOOP">Loop</sys:String>
     <sys:String x:Key="LOC_YOUTUBE">YouTube</sys:String>
+    <sys:String x:Key="LOC_YOUTUBEDL">YouTube-DL</sys:String>
     <sys:String x:Key="LOC_QUALITY">Quality</sys:String>
     <sys:String x:Key="LOC_QUICKOPEN">Quick Open</sys:String>
     <sys:String x:Key="LOC_DIRECTPLAY">Direct Play</sys:String>
     <sys:String x:Key="LOC_QUERY_SWITCHTOPLAYLIST">Switch to Playlist</sys:String>
     <sys:String x:Key="LOC_QUERY_FILELOCATION">Please fill in the file's location</sys:String>
     <sys:String x:Key="LOC_QUERY_FILEPLAY">Do you want to play %f ?</sys:String>
-    <sys:String x:Key="LOC_FINDQUICKOPEN">Find Quick Open</sys:String>
+    <sys:String x:Key="LOC_FINDANDOPEN">Find and Open</sys:String>
     <sys:String x:Key="LOC_SUBTITLES">Subtitles</sys:String>
     <sys:String x:Key="LOC_COLORPRESET">Color Preset</sys:String>
     <sys:String x:Key="LOC_INDEX">Index</sys:String>
@@ -170,12 +172,22 @@
     <sys:String x:Key="LOC_QUERY_ERROR_UNKNOWN">An Unknown Error Occured.</sys:String>
     <sys:String x:Key="LOC_QUERY_ERROR_PARSE">One or more values couldn't be parsed.</sys:String>
     <sys:String x:Key="LOC_QUERY_PLAYLIST_IMPORT">You're About to Import %n with %c Song(s), Continue?</sys:String>
+    <sys:String x:Key="LOC_QUERY_PLAYLIST_LOAD">You're About to Load %n with %c Song(s), Continue?</sys:String>
     <sys:String x:Key="LOC_QUERY_REMOVE">You're About to Remove %n, Continue?</sys:String>
     <sys:String x:Key="LOC_NAME">Name</sys:String>
     <sys:String x:Key="LOC_QUERY_INTERNET_DISCONNECTED">Couldn't Connect to the Internet</sys:String>
     <sys:String x:Key="LOC_BOTTOMCONTROLBAR">Bottom Control Bar</sys:String>
     <sys:String x:Key="LOC_HINT_NOTHING">Nothing to show here!</sys:String>
     <sys:String x:Key="LOC_CONTROLS">Controls</sys:String>
+    <sys:String x:Key="LOC_DEEZER_ARTIST">Deezer Artist</sys:String>
+    <sys:String x:Key="LOC_DEEZER_TRACK">Deezer Track</sys:String>
+    <sys:String x:Key="LOC_RADIO">Radio</sys:String>
+    <sys:String x:Key="LOC_BYID">By ID</sys:String>
+    <sys:String x:Key="LOC_TOP">Top</sys:String>
+    <sys:String x:Key="LOC_PROVIDER">Provider</sys:String>
+    <sys:String x:Key="LOC_INTERNET">Internet</sys:String>
+    <sys:String x:Key="LOC_LAN">Local Network</sys:String>
+    <sys:String x:Key="LOC_STOPSTREAM">Stop Stream</sys:String>
 </ResourceDictionary>    
     
 
