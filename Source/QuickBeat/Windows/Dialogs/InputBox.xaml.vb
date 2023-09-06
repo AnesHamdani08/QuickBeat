@@ -37,6 +37,12 @@ Namespace Dialogs
             End Get
         End Property
 
+        ''' <summary>
+        ''' Adds a <see cref="TextBox"/> as the first item of the input box
+        ''' </summary>
+        ''' <param name="Name">Field name</param>
+        ''' <param name="IsNeccessary">Is field neccessary</param>
+        ''' <param name="DefaultInput">The text in the field</param>
         Public Sub AddTextBox(Name As String, Optional IsNeccessary As Boolean = True, Optional DefaultInput As String = "")
             Dim TB As New TextBox With {.Text = DefaultInput, .Tag = "Take Me Home!"}
             HandyControl.Controls.TitleElement.SetTitle(TB, Name)
@@ -58,29 +64,41 @@ Namespace Dialogs
         Shared Function ShowSingle(title As String, Optional DefaultResponse As String = "") As String
             Dim ib As New InputBox() With {.Title = title}
             ib.AddTextBox(title, True, DefaultResponse)
-            ib.ShowDialog()
-            Return ib.Value(title)
+            If ib.ShowDialog() Then
+                Return ib.Value(title)
+            Else
+                Return ""
+            End If
         End Function
 
         Shared Function ShowSingle(Owner As System.Windows.Window, title As String, Optional DefaultResponse As String = "") As String
             Dim ib As New InputBox() With {.Owner = Owner, .Title = title, .WindowStartupLocation = WindowStartupLocation.CenterOwner}
             ib.AddTextBox(title, True, DefaultResponse)
-            ib.ShowDialog()
-            Return ib.Value(title)
+            If ib.ShowDialog() Then
+                Return ib.Value(title)
+            Else
+                Return ""
+            End If
         End Function
 
         Shared Function ShowSingle(Owner As System.Windows.Window, title As String, description As String, Optional DefaultResponse As String = "") As String
             Dim ib As New InputBox() With {.Owner = Owner, .Title = title, .Description = description, .WindowStartupLocation = WindowStartupLocation.CenterOwner}
             ib.AddTextBox(title, True, DefaultResponse)
-            ib.ShowDialog()
-            Return ib.Value(title)
+            If ib.ShowDialog() Then
+                Return ib.Value(title)
+            Else
+                Return ""
+            End If
         End Function
 
         Shared Function ShowSingle(Owner As System.Windows.Window, title As String, description As String, footer As String, Optional DefaultResponse As String = "") As String
             Dim ib As New InputBox() With {.Owner = Owner, .Title = title, .Description = description, .Footer = footer, .WindowStartupLocation = WindowStartupLocation.CenterOwner}
             ib.AddTextBox(title, True, DefaultResponse)
-            ib.ShowDialog()
-            Return ib.Value(title)
+            If ib.ShowDialog() Then
+                Return ib.Value(title)
+            Else
+                Return ""
+            End If
         End Function
 
         Private Sub Commands_Continue_CanExecute(sender As Object, e As CanExecuteRoutedEventArgs)
@@ -90,6 +108,17 @@ Namespace Dialogs
         Private Sub Commands_Continue_Executed(sender As Object, e As ExecutedRoutedEventArgs)
             _SafeToClose = True
             DialogResult = True
+        End Sub
+
+        Private Sub InputBox_PreviewKeyUp(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyUp
+            Select Case e.Key
+                Case Key.Escape
+                    Close()
+                Case Key.Enter
+                    If Button_Continue.Command IsNot Nothing Then
+                        If Button_Continue.Command.CanExecute(Nothing) Then Button_Continue.Command.Execute(Nothing)
+                    End If
+            End Select
         End Sub
     End Class
 End Namespace

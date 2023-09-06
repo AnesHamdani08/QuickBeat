@@ -62,7 +62,7 @@ Namespace Dialogs
             Try
                 FileTag.Save()
             Catch ex As Exception
-                If Utilities.SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of TagEditor)(ex.ToString)
+                Utilities.DebugMode.Instance.Log(Of TagEditor)(ex.ToString)
                 If _WasReadOnly Then info.IsReadOnly = True
                 Dim errorCode As Integer = Runtime.InteropServices.Marshal.GetHRForException(ex) And ((1 << 16) - 1)
                 If (errorCode = 32 OrElse errorCode = 33) Then
