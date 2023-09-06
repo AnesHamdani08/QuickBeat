@@ -5,8 +5,12 @@ Audio player and manager, plays all common media files alongside many more via p
 - High Quality 32-Bit Floating-Point Playback
 - Audio Stream Auto-Free & Memory Manager
 - Remote Files Playback
+- Smart Link Referesh for Remote Files
+- UPnP/DLNA Servers Support
+- UPnP/DLNA Renderers Support
 - Remote Tags Support
 - Youtube-DL and Similar Programs Support (yt-dlp...)
+- Deezer Integration (Popular Songs, Recommendations, Playback, Search)
 - Support for Popular Subtitle Formats Inc. Support for Youtube Subtitles
 - Background Playback
 - File Metadata Editor
@@ -15,6 +19,8 @@ Audio player and manager, plays all common media files alongside many more via p
 - Keyboard Navigation
 - Recommendations
 - FanArt Integration
+- Smart Fast Playlist
+- M3U/8 Playlist Support
 - Drag to Reorder Playlist
 - Custom Playlists
 - Quick Preview
