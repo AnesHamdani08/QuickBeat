@@ -61,7 +61,7 @@
                             <ColumnDefinition SharedSizeGroup="Col3" Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <ctl:ClickTextBlock Text="👁️" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.PreviewCommand}" Margin="0,0,20,0"/>
-                        <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
+                        <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
                         <StackPanel Margin="0,0,20,0" Grid.Column="2">
                             <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
                             <ctl:ClickTextBlock Text="{Binding Artists[0]}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusArtistCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
