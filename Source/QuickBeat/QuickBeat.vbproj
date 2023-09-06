@@ -58,6 +58,12 @@
     <Reference Include="Bass.Net">
       <HintPath>..\..\AUDX\AUDX\bin\Debug\Bass.Net.dll</HintPath>
     </Reference>
+    <Reference Include="E.Deezer, Version=4.2.2.548, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\E.Deezer.4.2.2\lib\net45\E.Deezer.dll</HintPath>
+    </Reference>
+    <Reference Include="FanartTv, Version=2.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\FanartTv.2.0.5\lib\FanartTv.dll</HintPath>
+    </Reference>
     <Reference Include="HandyControl, Version=3.4.0.0, Culture=neutral, PublicKeyToken=45be8712787a1e5b, processorArchitecture=MSIL">
       <HintPath>..\packages\HandyControls.3.4.5\lib\net48\HandyControl.dll</HintPath>
     </Reference>
@@ -145,6 +151,7 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -180,10 +187,14 @@
     <Compile Include="Classes\Converters\DoubleToVisibilityConverter.vb" />
     <Compile Include="Classes\Converters\GenericMultiValueConverter.vb" />
     <Compile Include="Classes\Converters\ImageSourceToAverageColorConverter.vb" />
+    <Compile Include="Classes\Converters\MultiLineStringToMultiLineNumberConverter.vb" />
+    <Compile Include="Classes\Converters\NullToVisibilityConverter.vb" />
     <Compile Include="Classes\Converters\NumericToRoundedNumericConverter.vb" />
     <Compile Include="Classes\Converters\PlaylistToDefaultImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\MetadataToLyricsConverter.vb" />
     <Compile Include="Classes\Converters\NullStringToVisibilityConverter.vb" />
+    <Compile Include="Classes\Converters\MetadataToFanartImageConverter.vb" />
+    <Compile Include="Classes\Converters\StringToFanartImageConverter.vb" />
     <Compile Include="Classes\Converters\TagLibPictureToImageSource.vb" />
     <Compile Include="Classes\Converters\TextToImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\ThemeTypeToColorPalleteConverter.vb" />
@@ -191,6 +202,13 @@
     <Compile Include="Classes\Converters\ValueToStringConverter.vb" />
     <Compile Include="Classes\Converters\VisibilityToBooleanConverter.vb" />
     <Compile Include="Classes\DebugMode.vb" />
+    <Compile Include="Classes\DeezerProvider.vb" />
+    <Compile Include="Classes\FanArtProvider.vb" />
+    <Compile Include="Classes\GenericDebugListener.vb" />
+    <Compile Include="Classes\M3UFile.vb" />
+    <Compile Include="Classes\Media Providers\DeezerMediaProvider.vb" />
+    <Compile Include="Classes\Media Providers\IOMediaProvider.vb" />
+    <Compile Include="Classes\Media Providers\YoutubeDLMediaProvider.vb" />
     <Compile Include="Classes\Player\EngineModule.vb" />
     <Compile Include="Classes\GlobalHotkey.vb" />
     <Compile Include="Classes\HotkeyManager.vb" />
@@ -210,6 +228,7 @@
     <Compile Include="Classes\QScript\DeveloperConsole.xaml.vb">
       <DependentUpon>DeveloperConsole.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Classes\QScript\KnownReferenceBinder.vb" />
     <Compile Include="Classes\QScript\ListEditor.xaml.vb">
       <DependentUpon>ListEditor.xaml</DependentUpon>
     </Compile>
@@ -239,13 +258,21 @@
     <Compile Include="Classes\Subtitle Parser\Writers\SsaWriter.vb" />
     <Compile Include="Classes\Lists\SyncedObservableCollection.vb" />
     <Compile Include="Classes\Themes.vb" />
+    <Compile Include="Classes\UPnP\LocalMediaRenderer.vb" />
+    <Compile Include="Classes\UPnP\MediaRenderer.vb" />
+    <Compile Include="Classes\UPnP\MediaServer.vb" />
+    <Compile Include="Classes\UPnP\UPnPInfo.vb" />
+    <Compile Include="Classes\UPnP\UPnPItem.vb" />
+    <Compile Include="Classes\UPnP\UPnPProvider.vb" />
     <Compile Include="Classes\YoutubeDL.vb" />
     <Compile Include="Controls\ClickTextBlock.vb" />
+    <Compile Include="Controls\DragDropListBox.vb" />
     <Compile Include="Controls\GeoImage.vb" />
     <Compile Include="Controls\Hotkey.xaml.vb">
       <DependentUpon>Hotkey.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\ValueSlider.vb" />
+    <Compile Include="Interfaces\IMediaProvider.vb" />
     <Compile Include="Windows\Dialogs\InputBox.xaml.vb">
       <DependentUpon>InputBox.xaml</DependentUpon>
     </Compile>
@@ -309,6 +336,22 @@
     <Page Include="Resources\Glitter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Resources\Themes\Marine\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Marine\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Aqua\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Aqua\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Themes\Dynamic\Dark.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -438,6 +481,17 @@
       <Project>{00a3da68-50ec-4756-8f59-f44a239f45fd}</Project>
       <Name>Aqua</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="UPNPLib">
+      <Guid>{DB3442A7-A2E9-4A59-9CB5-F5C1A5D901E5}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <Import Project="..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets" Condition="Exists('..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets')" />

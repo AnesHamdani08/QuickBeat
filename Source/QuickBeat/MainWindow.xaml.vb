@@ -3,6 +3,14 @@ Imports System.Runtime.InteropServices.WindowsRuntime
 Imports QuickBeat.Utilities
 
 Class MainWindow
+#Region "Events"
+    Public Event CurrentSubtitleChanged(oldValue As String, newValue As String, item As SubtitlesParser.Classes.SubtitleItem)
+#End Region
+#Region "Raisers"
+    Protected Sub OnCurrentSubtitleChanged(oldValue As String, newValue As String, item As SubtitlesParser.Classes.SubtitleItem)
+        RaiseEvent CurrentSubtitleChanged(oldValue, newValue, item)
+    End Sub
+#End Region
 #Region "Fields"
     Private Sub LibraryFocusHandler(g As Player.MetadataGroup)
         TabControl_Main.SelectedIndex = 5
@@ -52,7 +60,7 @@ Class MainWindow
         End Set
     End Property
 
-    Public Shared IsBigCoverProperty As DependencyProperty = DependencyProperty.Register("IsBigCover", GetType(Boolean), GetType(MainWindow))
+    Public Shared IsBigCoverProperty As DependencyProperty = DependencyProperty.Register("IsBigCover", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
     Property IsBigCover As Boolean
         Get
             Return GetValue(IsBigCoverProperty)
@@ -62,16 +70,36 @@ Class MainWindow
         End Set
     End Property
 
+    Public Shared ShowVisualizerControlsProperty As DependencyProperty = DependencyProperty.Register("ShowVisualizerControls", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
+    Property ShowVisualizerControls As Boolean
+        Get
+            Return GetValue(ShowVisualizerControlsProperty)
+        End Get
+        Set(value As Boolean)
+            SetValue(ShowVisualizerControlsProperty, value)
+        End Set
+    End Property
+
+    Public Shared IsBottomControlsProperty As DependencyProperty = DependencyProperty.Register("IsBottomControls", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(True))
+    Property IsBottomControls As Boolean
+        Get
+            Return GetValue(IsBottomControlsProperty)
+        End Get
+        Set(value As Boolean)
+            SetValue(IsBottomControlsProperty, value)
+        End Set
+    End Property
+
     Public Shared SubtitlesPathProperty As DependencyProperty = DependencyProperty.Register("SubtitlesPath", GetType(String), GetType(MainWindow), New UIPropertyMetadata(New PropertyChangedCallback(Sub(d, e)
                                                                                                                                                                                                           If d IsNot Nothing AndAlso TypeOf d Is MainWindow Then
                                                                                                                                                                                                               With TryCast(d, MainWindow)
                                                                                                                                                                                                                   .IsUsingSubtitles = False
                                                                                                                                                                                                                   .Subtitles?.Clear()
+                                                                                                                                                                                                                  .InfoText = ""
                                                                                                                                                                                                                   For Each item In ._SubtilesPositionSyncProcs
                                                                                                                                                                                                                       Un4seen.Bass.Bass.BASS_ChannelRemoveSync(item.Item1, item.Item2)
                                                                                                                                                                                                                   Next
                                                                                                                                                                                                                   ._SubtilesPositionSyncProcs.Clear()
-                                                                                                                                                                                                                  .InfoText = ""
                                                                                                                                                                                                               End With
                                                                                                                                                                                                               If IO.File.Exists(e.NewValue) Then
                                                                                                                                                                                                                   Dim subP As New SubtitlesParser.Classes.Parsers.SubParser
@@ -81,13 +109,17 @@ Class MainWindow
                                                                                                                                                                                                                           TryCast(d, MainWindow).Subtitles?.Add(item)
                                                                                                                                                                                                                           Dim PosSyncProc As New Un4seen.Bass.SYNCPROC(Sub(h, c, data, u)
                                                                                                                                                                                                                                                                            Application.Current.Dispatcher.Invoke(Sub()
-                                                                                                                                                                                                                                                                                                                     TryCast(d, MainWindow).InfoText = String.Join(Environment.NewLine, item.PlaintextLines)
+                                                                                                                                                                                                                                                                                                                     Dim oldValue = d?.GetValue(InfoTextProperty)
+                                                                                                                                                                                                                                                                                                                     Dim newValue As String = String.Join(Environment.NewLine, item.PlaintextLines)
+                                                                                                                                                                                                                                                                                                                     TryCast(d, MainWindow).InfoText = newValue
+                                                                                                                                                                                                                                                                                                                     TryCast(d, MainWindow)?.OnCurrentSubtitleChanged(oldValue, newValue, item)
                                                                                                                                                                                                                                                                                                                  End Sub)
                                                                                                                                                                                                                                                                        End Sub)
                                                                                                                                                                                                                           Dim stream = SharedProperties.Instance.Player?.Stream
                                                                                                                                                                                                                           Dim PosSyncProcHandle = Un4seen.Bass.Bass.BASS_ChannelSetSync(stream, Un4seen.Bass.BASSSync.BASS_SYNC_POS, Un4seen.Bass.Bass.BASS_ChannelSeconds2Bytes(stream, TimeSpan.FromMilliseconds(item.StartTime).TotalSeconds), PosSyncProc, IntPtr.Zero)
                                                                                                                                                                                                                           TryCast(d, MainWindow)._SubtilesPositionSyncProcs.Add(New Tuple(Of Integer, Integer, Un4seen.Bass.SYNCPROC)(stream, PosSyncProcHandle, PosSyncProc))
                                                                                                                                                                                                                       Next
+                                                                                                                                                                                                                      d?.SetValue(MainWindow.IsUsingSubtitlesProperty, True)
                                                                                                                                                                                                                       fs.Close()
                                                                                                                                                                                                                   End Using
                                                                                                                                                                                                                   subP = Nothing
@@ -122,7 +154,14 @@ Class MainWindow
     End Property
 
     Public Shared IsUsingSubtitlesProperty As DependencyProperty = DependencyProperty.Register("IsUsingSubtitles", GetType(Boolean), GetType(MainWindow), New PropertyMetadata(New PropertyChangedCallback(Sub(d, e)
-                                                                                                                                                                                                               If e.NewValue = False Then d?.SetValue(MainWindow.SubtitlesProperty, Nothing)
+                                                                                                                                                                                                               If e.NewValue = False Then
+                                                                                                                                                                                                                   d?.SetValue(MainWindow.SubtitlesProperty, Nothing)
+                                                                                                                                                                                                                   d?.SetValue(MainWindow.InfoTextProperty, Nothing)
+                                                                                                                                                                                                                   For Each item In TryCast(d, MainWindow)._SubtilesPositionSyncProcs
+                                                                                                                                                                                                                       Un4seen.Bass.Bass.BASS_ChannelRemoveSync(item.Item1, item.Item2)
+                                                                                                                                                                                                                   Next
+                                                                                                                                                                                                                   TryCast(d, MainWindow)._SubtilesPositionSyncProcs.Clear()
+                                                                                                                                                                                                               End If
                                                                                                                                                                                                            End Sub)))
     ''' <summary>
     ''' Only set to false to release current subtitles and handles.
@@ -134,6 +173,16 @@ Class MainWindow
         End Get
         Set(value As Boolean)
             SetValue(IsUsingSubtitlesProperty, value)
+        End Set
+    End Property
+
+    Public Shared SelectedUPnPItemProperty As DependencyProperty = DependencyProperty.Register("SelectedUPnPItem", GetType(UPnP.UPnPItem), GetType(MainWindow))
+    Property SelectedUPnPItem As UPnP.UPnPItem
+        Get
+            Return GetValue(SelectedUPnPItemProperty)
+        End Get
+        Set(value As UPnP.UPnPItem)
+            SetValue(SelectedUPnPItemProperty, value)
         End Set
     End Property
 #End Region
@@ -155,8 +204,10 @@ Class MainWindow
                 RadioButton_MainTabControl_Search.IsChecked = True
             Case 4
                 RadioButton_MainTabControl_Settings.IsChecked = True
+            Case 7
+                RadioButton_MainTabControl_UPnP.IsChecked = True
         End Select
-        If e.Parameter = TabControl_Main.Items.Count - 1 Then
+        If e.Parameter = TabControl_Main.Items.Count - 2 Then
             IsNowPlaying = True
         Else
             IsNowPlaying = False
@@ -204,11 +255,15 @@ Class MainWindow
     End Sub
 
     Private Sub OpenInExplorer_CanExecute(sender As Object, e As CanExecuteRoutedEventArgs)
-        e.CanExecute = IO.File.Exists(e.Parameter)
+        e.CanExecute = True
     End Sub
 
     Private Sub OpenInExplorer_Executed(sender As Object, e As ExecutedRoutedEventArgs)
-        Process.Start("explorer.exe", "/select," & e.Parameter)
+        If IO.File.Exists(e.Parameter.ToString) Then
+            Process.Start("explorer.exe", "/select," & e.Parameter)
+        Else
+            Process.Start(e.Parameter.ToString)
+        End If
     End Sub
 
     Private Sub PickPlayerVideoEffect_CanExecute(sender As Object, e As CanExecuteRoutedEventArgs)
@@ -285,24 +340,48 @@ Class MainWindow
                                                                                                                        End Sub)
         AddHandler SharedProperties.Instance.Player.MediaLoaded, Sub(o, n)
                                                                      Application.Current.Dispatcher.Invoke(Sub()
-                                                                                                               Subtitles?.Clear()
-                                                                                                               SubtitlesPath = Nothing
+                                                                                                               IsUsingSubtitles = True
+                                                                                                               IsUsingSubtitles = False
                                                                                                            End Sub)
                                                                  End Sub
         Dim TabTimer As New Timers.Timer With {.Interval = 1000}
         AddHandler TabTimer.Elapsed, New Timers.ElapsedEventHandler(Sub(s, _e)
                                                                         Try
                                                                             Me.Dispatcher.Invoke(Sub()
-                                                                                                     If TabControl_Main.SelectedIndex <> 0 Then
+                                                                                                     If TabControl_Main.SelectedIndex <> 0 OrElse Me.WindowState = WindowState.Minimized Then
                                                                                                          Return
                                                                                                      End If
                                                                                                      If HomeTabSwitchTicksLeft <= 0 Then 'Just in case ;)
-                                                                                                         Select Case TabControl_Home_Sub.SelectedIndex
-                                                                                                             Case 0
+                                                                                                         Select Case TabControl_Home_Sub.SelectedIndex 'TODO Change those when you change home screen tabs
+                                                                                                             Case 0 'Most Played Track
                                                                                                                  TabControl_Home_Sub.SelectedIndex = 1
-                                                                                                             Case 1
-                                                                                                                 TabControl_Home_Sub.SelectedIndex = 2
-                                                                                                             Case 2
+                                                                                                             Case 1 'MP Artist
+                                                                                                                 If TryCast(TabControl_Home_Sub.Items.Item(2), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 2
+                                                                                                                 ElseIf TryCast(TabControl_Home_Sub.Items.Item(3), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 3
+                                                                                                                 ElseIf TryCast(TabControl_Home_Sub.Items.Item(4), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 4
+                                                                                                                 ElseIf TryCast(TabControl_Home_Sub.Items.Item(5), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 5
+                                                                                                                 End If
+                                                                                                             Case 2 'Deezer MP Artist                                                                                                                 
+                                                                                                                 If TryCast(TabControl_Home_Sub.Items.Item(3), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 3
+                                                                                                                 ElseIf TryCast(TabControl_Home_Sub.Items.Item(4), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 4
+                                                                                                                 Else
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 5
+                                                                                                                 End If
+                                                                                                             Case 3 'Deezer MP Related Artist                                                                                                                 
+                                                                                                                 If TryCast(TabControl_Home_Sub.Items.Item(4), TabItem)?.Visibility = Visibility.Visible Then
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 4
+                                                                                                                 Else
+                                                                                                                     TabControl_Home_Sub.SelectedIndex = 5
+                                                                                                                 End If
+                                                                                                             Case 4 'Deezer Random Track
+                                                                                                                 TabControl_Home_Sub.SelectedIndex = 5
+                                                                                                             Case 5 'Random
                                                                                                                  TabControl_Home_Sub.SelectedIndex = 0
                                                                                                          End Select
                                                                                                          'TabControl_Home_Sub.SelectedIndex = If(TabControl_Home_Sub.SelectedIndex = 0, 1, 0) '0, 1, 0
@@ -319,8 +398,17 @@ Class MainWindow
             Me.WindowState = WindowState.Minimized
         End If
         IsBigCover = My.Settings.APP_VIEW_BIGCOVER
+        IsBottomControls = My.Settings.APP_VIEW_BOTTOMCONTROLS
         Application.Current.MainWindow = Me
         Version = My.Application.Info.Version.ToString
+
+        If Not String.IsNullOrEmpty(My.Settings.AQUA_STARTUP_SCRIPT) Then
+            Try
+                SharedProperties.Instance.Aqua.RunFile(My.Settings.AQUA_STARTUP_SCRIPT)
+            Catch ex As Exception
+                Utilities.DebugMode.Instance.Log(Of MainWindow)(ex.ToString)
+            End Try
+        End If
     End Sub
 
     Private Sub MenuItem_KeyboardNavigation_Click(sender As Object, e As RoutedEventArgs)
@@ -330,6 +418,8 @@ Class MainWindow
     Private Sub MainWindow_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
         Dim mods = Keyboard.Modifiers
         Select Case e.Key
+            Case Key.F11
+                Me.IsFullScreen = Not Me.IsFullScreen
             Case Key.D
                 If mods.HasFlag(ModifierKeys.Control) Then
                     If DebugMode.Instance.IsEnabled Then My.Windows.DeveloperConsole.Show()
@@ -395,6 +485,7 @@ Class MainWindow
         'Saving UI settings
         My.Settings.APP_VIEW_SIDEBAR_RIGHT_VISIBILITY = Grid_SideBar_Right.Visibility
         My.Settings.APP_VIEW_BIGCOVER = IsBigCover
+        My.Settings.APP_VIEW_BOTTOMCONTROLS = IsBottomControls
 
         My.Settings.Save()
 
@@ -484,9 +575,15 @@ Class MainWindow
         End If
     End Sub
 
-    Private Sub Grid_NowPlaying_VisualizerHost_MouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
+    Private Sub Grid_NowPlaying_VisualizerHost_PreviewMouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
         If SharedProperties.Instance?.Player?.VideoEffect IsNot Nothing Then
             SharedProperties.Instance.Player.VideoEffect.OnMouseClick(e.GetPosition(Grid_NowPlaying_VisualizerHost))
+        End If
+    End Sub
+
+    Private Sub Image_VisualizerOutput_PreviewMouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs)
+        If SharedProperties.Instance?.Player?.VideoEffect IsNot Nothing Then
+            SharedProperties.Instance.Player.VideoEffect.OnMouseClick(e.GetPosition(Image_VisualizerOutput))
         End If
     End Sub
 
@@ -497,6 +594,7 @@ Class MainWindow
     Private Sub Button_Settings_Reset_Click(sender As Object, e As RoutedEventArgs)
         If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.QUERY_SETTINGSRESET) = MessageBoxResult.OK Then
             My.Settings.Reset()
+            My.Settings.APP_FIRSTRUN = False
             My.Settings.Save()
         End If
     End Sub
@@ -506,6 +604,7 @@ Class MainWindow
             Process.GetCurrentProcess.Kill()
         End If
     End Sub
+
     Private Async Sub MenuItem_CheckForUpdates_Click(sender As Object, e As RoutedEventArgs)
         Try
             Dim Vinfo = Await HandyControl.Tools.UpdateHelper.CheckUpdateAsync("AnesHamdani08", "QuickBeat")
@@ -522,5 +621,50 @@ Class MainWindow
             Utilities.DebugMode.Instance.Log(Of MainWindow)(ex.ToString)
             HandyControl.Controls.MessageBox.Error(Utilities.ResourceResolver.Strings.QUERY_UPDATES_ERROR)
         End Try
+    End Sub
+
+    Private Sub TreeView_UPnP_Expanded(sender As Object, e As RoutedEventArgs)
+        Dim tvi = TryCast(e.OriginalSource, TreeViewItem)
+        If tvi IsNot Nothing Then
+            If tvi.DataContext IsNot Nothing AndAlso TypeOf tvi.DataContext Is UPnP.UPnPItem Then
+                Dim DT = TryCast(tvi.DataContext, UPnP.UPnPItem)
+                SelectedUPnPItem = DT
+                If TypeOf DT.Tag Is UPnP.ContentDirectory.CD_Item Then
+                    DT.Items.Clear()
+                    Dim cdObj = TryCast(DT.Parent.GetCDObjectInformation(DT.Tag.ID), UPnP.ContentDirectory.CD_Item)
+                    If cdObj IsNot Nothing Then
+                        If DT.Parent IsNot Nothing AndAlso DT.Parent.SelectedRendererIndex = -1 Then
+                            Dim cdObjRes = cdObj.Resource.FirstOrDefault(Function(k) UPnP.UPnPProvider.TryGetMimeTypeFromDLNAProtocole(k.protocolInfo) = "audio/mpeg")
+                            If cdObjRes IsNot Nothing Then
+                                Dim Meta As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .Path = cdObjRes.URI.ToString, .OriginalPath = cdObjRes.URI.ToString, .Title = cdObj.Title, .Album = cdObj.Album, .Artists = New String() {cdObj.Artist}, .Genres = New String() {cdObj.Genre}, .Length = TimeSpan.Parse(cdObjRes.duration).TotalSeconds}
+                                Utilities.SharedProperties.Instance.Player.LoadSong(Meta)
+                            End If
+                        Else
+                            If DT.Parent Is Nothing Then Return
+                            DT.Parent.SelectedRenderer.SetAVUriCommand?.Execute(cdObj)
+                            DT.Parent.SelectedRenderer.PlaybackControlCommand?.Execute("play")
+                        End If
+                    End If
+                Else
+                        If DT.Parent IsNot Nothing Then
+                            DT.Items.Clear()
+                            DT.Parent.LoadChildren(DT)
+                        End If
+                    End If
+                End If
+            End If
+    End Sub
+
+    Private Sub TreeView_UPnP_Collapsed(sender As Object, e As RoutedEventArgs)
+        Dim tvi = TryCast(e.OriginalSource, TreeViewItem)
+        If tvi IsNot Nothing Then
+            If tvi.DataContext IsNot Nothing AndAlso TypeOf tvi.DataContext Is UPnP.UPnPItem Then
+                Dim DT = TryCast(tvi.DataContext, UPnP.UPnPItem)
+                If DT.Parent IsNot Nothing Then
+                    DT.Items.Clear()
+                    DT.Items.Add(New UPnP.UPnPItem("Loading...", Utilities.CommonFunctions.GenerateCoverImage(Utilities.ResourceResolver.Images.CLOCK)))
+                End If
+            End If
+        End If
     End Sub
 End Class

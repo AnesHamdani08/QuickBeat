@@ -1,4 +1,5 @@
-﻿Imports QuickBeat.Utilities
+﻿Imports System.Windows.Threading
+Imports QuickBeat.Utilities
 Imports Windows.Foundation
 
 Class Application
@@ -15,7 +16,11 @@ Class Application
             Dim Pipe As New Classes.NamedPipeManager("QuickBeatPump", IO.Pipes.PipeDirection.InOut)
             Pipe.Init()
             If e.Args.Length = 1 Then
-                Pipe.Write($"preview {e.Args.FirstOrDefault}")
+                If e.Args(0).EndsWith(".m3u") OrElse e.Args(0).EndsWith(".m3u8") OrElse e.Args(0).EndsWith(".qbo") Then
+                    Pipe.Write($"load {e.Args.FirstOrDefault}")
+                Else
+                    Pipe.Write($"preview {e.Args.FirstOrDefault}")
+                End If
             ElseIf e.Args.Length > 0 Then
                 For i As Integer = 0 To e.Args.Length - 1
                     If i = e.Args.Length - 1 Then
@@ -30,29 +35,33 @@ Class Application
             Process.GetCurrentProcess.Kill()
         End If
 
+        Debug.Listeners.Add(New Utilities.GenericDebugListener)
+
         Console.SetOut(New Utilities.MultiTextWriter.ControlWriter(My.Windows.DeveloperConsole.ConsoleOut_TB, My.Windows.DeveloperConsole.Dispatcher))
 
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Initializing...")
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Applying Theme")
+        Utilities.DebugMode.Instance.Log(Of Application)("Initializing...")
+        Utilities.DebugMode.Instance.Log(Of Application)("Applying Theme")
         If My.Settings.APP_THEME_LIGHT Then
             HandyControl.Themes.ThemeManager.Current.ApplicationTheme = HandyControl.Themes.ApplicationTheme.Light
         Else
             HandyControl.Themes.ThemeManager.Current.ApplicationTheme = HandyControl.Themes.ApplicationTheme.Dark
         End If
 
-        Debug.WriteLine("Initializing SharedProperties...")
+        FanartTv.API.Key = "22e4c00b998da3517da3ee9eea9d83eb"
+
+        Utilities.DebugMode.Instance.Log(Of Application)("Initializing SharedProperties...")
         Utilities.SharedProperties.Instance.Init()
     End Sub
 
     Private Sub Application_Exit(sender As Object, e As ExitEventArgs) Handles Me.[Exit]
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Initiating Exit Sequence...")
-        Dim Lib64 = SharedProperties.Instance.Library.Save() : If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 60%")
-        Dim Hk64 = SharedProperties.Instance.HotkeyManager.Save : If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 80%")
-        Dim Pl64 = SharedProperties.Instance.Player.SavePlaylist : If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 100%")
+        Utilities.DebugMode.Instance.Log(Of Application)("Initiating Exit Sequence...")
+        Dim Lib64 = SharedProperties.Instance.Library.Save() : Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 60%")
+        Dim Hk64 = SharedProperties.Instance.HotkeyManager.Save : Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 80%")
+        Dim Pl64 = SharedProperties.Instance.Player.SavePlaylist : Utilities.DebugMode.Instance.Log(Of Application)("Generator 1: 100%")
         Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
 
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Generator 1 Now Activated.")
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("Saving...")
+        Utilities.DebugMode.Instance.Log(Of Application)("Generator 1 Now Activated.")
+        Utilities.DebugMode.Instance.Log(Of Application)("Saving...")
         My.Settings.APP_LIBRARY.Clear()
         My.Settings.APP_PLAYER_PLAYLIST_CUSTOM.Clear()
 
@@ -90,6 +99,12 @@ Class Application
         My.Settings.APP_THEME_LIGHT = If(HandyControl.Themes.ThemeManager.Current.ActualApplicationTheme = HandyControl.Themes.ApplicationTheme.Light, True, False)
 
         My.Settings.Save()
-        If SharedProperties.Instance.IsLogging Then Utilities.DebugMode.Instance.Log(Of Application)("All Good!, See You on the Next One!")
+        Utilities.DebugMode.Instance.Log(Of Application)("All Good!, See You on the Next One!")
+    End Sub
+
+    Private Sub Application_DispatcherUnhandledException(sender As Object, e As DispatcherUnhandledExceptionEventArgs) Handles Me.DispatcherUnhandledException
+        'Utilities.DebugMode.Instance.Start() 'TODO Enable while debugging only
+        Utilities.DebugMode.Instance.Log(Of Application)(e.Exception.ToString)
+        e.Handled = True
     End Sub
 End Class
