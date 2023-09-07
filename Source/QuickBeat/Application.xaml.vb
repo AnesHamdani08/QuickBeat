@@ -47,7 +47,7 @@ Class Application
             HandyControl.Themes.ThemeManager.Current.ApplicationTheme = HandyControl.Themes.ApplicationTheme.Dark
         End If
 
-        FanartTv.API.Key = "22e4c00b998da3517da3ee9eea9d83eb"
+        FanartTv.API.Key = "YOUR API KEY HERE"
 
         Utilities.DebugMode.Instance.Log(Of Application)("Initializing SharedProperties...")
         Utilities.SharedProperties.Instance.Init()
