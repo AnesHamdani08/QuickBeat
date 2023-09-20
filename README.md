@@ -2,12 +2,14 @@
 Audio player and manager, plays all common media files alongside many more via plugins.
 # 🧰Features
 - Modern and Responsive UI
+- Reactive Seekbar: Brings Your Session to Life
 - High Quality 32-Bit Floating-Point Playback
+- Automatic Volume Leveling: Keep Your Songs at the Same Level
 - Audio Stream Auto-Free & Memory Manager
 - Remote Files Playback
 - Smart Link Referesh for Remote Files
 - UPnP/DLNA Servers Support
-- UPnP/DLNA Renderers Support
+- UPnP/DLNA Renderers Support With Active Controling
 - Remote Tags Support
 - Youtube-DL and Similar Programs Support (yt-dlp...)
 - Deezer Integration (Popular Songs, Recommendations, Playback, Search)
@@ -32,7 +34,7 @@ Audio player and manager, plays all common media files alongside many more via p
     - Title
     - Artist
     - Album
-- Ultra Fast Search
+- Ultra Fast Search with Deep Integration and High Accuracy
 - Powerful Script Engine for Your Custom Routines
 - Sleep Timer
 - Color Presets
