@@ -58,11 +58,14 @@ Audio player and manager, plays all common media files alongside many more via p
 
 # 📸Screenshots
 *May vary on newer versions*
-![Home](https://i.imgur.com/EskPUZf.png)
-![Home Dark](https://i.imgur.com/gheSpTH.png)
-![Home Dark Light](https://i.imgur.com/a1gON9A.png)
-![Search](https://i.imgur.com/5jt1BFY.png)
-![Visualizer](https://i.imgur.com/Ciw3De5.png)
+*Updated for QuickBeat - Elegance (1.2.0.2)*
+![Home](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/464ae7fa-fa1e-427d-9794-aa4ebbc43cef)
+![Home Light Default Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/a7a0e3ef-f6d1-4f69-ac5e-0ea149fdb25d)
+![Home Light Aqua Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/d61285f8-0438-46c3-b670-97ed664bc59d)
+![Search](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/ddd86649-8334-408b-853d-c1d3d3216697)
+![UPnP Browser](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/b76a5b4f-312b-4e1e-a471-e5521dd16609)
+![Visualizer](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/f38e03f6-f85b-42da-b08a-fc23301e2b3a)
 ![Winamp Plugin Support](https://i.imgur.com/IxYaTnR.png)
 ![Winamp Plugin Support 1](https://i.imgur.com/IrxMVw9.png)
+
 *Wiki will be added soon
