@@ -57,6 +57,10 @@ Audio player and manager, plays all common media files alongside many more via p
   - Video Player
 - Cover Viewer
 - Smart Shuffle
+- TaskBar JumpList Integration: Quickly Load and Control your Music
+- Discord Integration: Display Your Music on the Fly!
+- Automatic File Association
+- Reactive Seekbar!
 
 # 📸Screenshots
 *May vary on newer versions*
@@ -64,6 +68,10 @@ Audio player and manager, plays all common media files alongside many more via p
 ![Home](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/464ae7fa-fa1e-427d-9794-aa4ebbc43cef)
 ![Home Light Default Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/a7a0e3ef-f6d1-4f69-ac5e-0ea149fdb25d)
 ![Home Light Aqua Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/d61285f8-0438-46c3-b670-97ed664bc59d)
+![Home](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/e93d5d94-d2ce-43c9-b376-824ddb2ea6ad)
+![Group View](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/1b16e207-5eda-4fe9-ae09-97e90d0c9bb4)
+![Settings P1](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/aaebf0a4-a38d-484e-8228-f8a93b70f1b6)
+![Settings P2](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/c3092810-0c02-47cd-a4bf-4e477635eaa1)
 ![Search](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/ddd86649-8334-408b-853d-c1d3d3216697)
 ![UPnP Browser](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/b76a5b4f-312b-4e1e-a471-e5521dd16609)
 ![Visualizer](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/f38e03f6-f85b-42da-b08a-fc23301e2b3a)
