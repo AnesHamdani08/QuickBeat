@@ -10,6 +10,7 @@ Audio player and manager, plays all common media files alongside many more via p
 - Smart Link Referesh for Remote Files
 - UPnP/DLNA Servers Support
 - UPnP/DLNA Renderers Support With Active Controling
+- LAN Music Discovery: Share your music to other devices in your LAN
 - Remote Tags Support
 - Youtube-DL and Similar Programs Support (yt-dlp...)
 - Deezer Integration (Popular Songs, Recommendations, Playback, Search)
@@ -18,6 +19,7 @@ Audio player and manager, plays all common media files alongside many more via p
 - File Metadata Editor
 - Automatic Metadata Fetcher Inc. Support for Cover Art
 - A-B Loop
+- Easily Backup Your Configuration
 - Keyboard Navigation
 - Recommendations
 - FanArt Integration
@@ -34,7 +36,7 @@ Audio player and manager, plays all common media files alongside many more via p
     - Title
     - Artist
     - Album
-- Ultra Fast Search with Deep Integration and High Accuracy
+- Ultra Fast Search with Deep Integration and High Accuracy (Based on Lucene.NET)
 - Powerful Script Engine for Your Custom Routines
 - Sleep Timer
 - Color Presets
