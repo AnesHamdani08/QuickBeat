@@ -1,5 +1,6 @@
 # 💿 QuickBeat
 # 💠Upcoming Changelog
+ - Added Audio Profile (Effects) Import/Export
  - Added Music Discovery(Web File Server) and Streaming to Local Network Devices
  - Local Network Optimzations
  - Fixed Audio Effects Disabled After Session Resume
