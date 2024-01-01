@@ -7,6 +7,8 @@ Audio player and manager, plays all common media files alongside many more via p
 - Automatic Volume Leveling: Keep Your Songs at the Same Level
 - Audio Stream Auto-Free & Memory Manager
 - Remote Files Playback
+- Play Files from Your Favourite Websites (Read Disclaimer)
+- Pattern Navigation (Download to find out :D)
 - Smart Link Referesh for Remote Files
 - UPnP/DLNA Servers Support
 - UPnP/DLNA Renderers Support With Active Controling
