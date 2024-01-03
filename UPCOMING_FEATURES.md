@@ -1,2 +1,33 @@
 # 💿 QuickBeat
-# 💠Upcoming Changelog
+# 💠 Upcoming Changelog
+# 📝 Todos
+- Maybe Make GitHub Docs
+- Test Deezer Integration More, Bind Queries to Library or Something
+- Add Audio Effect Attirbute: Control
+- Add Session to Webserver (Cookies or Server Side, You Choose)
+- Audio Effect Priority
+- Redesign Audio Effect Selection in Settings
+- Add Disable Profile
+- Add Recent Files
+- Add Favourite Support for Remote Files
+- Add Remote Files in Playlist
+- Add Separate Library for Remote Files (Really Good Addition, Probably How Will Implement Support for Favorit on Remote Filse and Tags)
+- Settings Quick Access (Probably Floating)
+- Inspect Discord Integration Random Crashes
+- Fix Aqua Dot Thing or Even Remake It
+- Cache Deezer Thumbnails Ig, in Settings (base64 Obv, Lower Resolution Since It Wont Be Made To View in Public)
+- Add More Module to Multi Decoder Module (Bass Aac …)
+- Inspect Why Not Playing “http://onj3.andrelouis.com/Phonetones/Unzipped/Nokia/E63/Tones/Digital/Runway.aac”
+- Add Custom Engine Module
+- Add Support for File Tag Comment in Right Sideabr
+- Check Audio Profile Sometimes Not Working When Clear All (Test It First)
+- Cache of Remote Files in Playlist
+- Add Delete Song and Send to Trash
+- Add Pause Other Players When This Is Playing and Vice Versa
+- Add Process Pinging To Check if Current Instance Is Respoding When Using Pipes
+- Maybe Add Metadata Dumping/Import/Export in Tag Editor or Sum Like That (?)
+- Add Song Badges
+- Increase Playcount on Song Loop, Position Restart if > 3/4 of the Song or Near End
+- Maybe Add Cache for Net Things, Stream, Deezer Images (Probably Not Allowed Maybe Contact Them)
+- Test Profile Presets
+- Test New Settings Home Page (Audio Effect Display? Maybe New Mini Config Dash)
