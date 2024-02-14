@@ -1,5 +1,38 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- QuickLink: Stream To and Control Other QuickBeat Instances That Are Running On Lan
+- Added Stereo Enhacer Sound Effect
+- Due to the recent changes Youtube-DLs is now beta
+- Youtube-DLs Playlist is now disabled until fixed
+- Improved Discord Integration Error Handling
+- Added an Indicator when Playing Remote Files
+- Remote Media Favourite Status and Playcount are Now Memorized
+- Added Settings Quick Scroll to Category
+- Added New Entries to Media Properties Dialog
+- Media PlayCount now increases when playing on loop
+- Faster Artist Info Loading Times in The Right Sidebar
+- Added Manual Value Input in Audio Effect Config Window
+- Added Value Prefixes(m,µ,n,p,f) in Audio Effect Config Window
+- All New Cache System for Remote Files, Faster Loading Times for Repeated Playback
+- Direct Play Indicator Now Syncs with Playlist Changes
+- Major Upgrade to Memory Management
+- Added Properties Context Menu Item to Library Items
+- Added View Artist in Deezer (Next to Learn More) in Right Sidebar
+- Further Optimizations to Reactive Seekbar Performance when set to None
+- Updated Memory Manager
+- Bug Fix For Discord Integration
+- Added Discord Integration Cache For Faster Queries
+- Library Search Cache Is Now Refreshed When Kibary Is Changed
+- When looping, current media reset-position now respects "Skip Silence" setting
+- Added Remove from library in selected context menus(library browser, group viewer (artist,album)
+- Added SYLT frames (synced lyrics that come bundled with songs) Read/Write support
+- Added Two New Edge WebView2 Context Menu Items: Parse Synced Lyrics and Parse Text Lyrics
+- Automatic Detection of Synchronised Lyrics Files when Downloading
+- Added LRC support
+- Optimized Disk Usage when Loading a File
+- Memory Manager Upgrade
+- Minor bug fixes
+- Code optimizations
 # 📝 Todos
 - Maybe Make GitHub Docs
 - Test Deezer Integration More, Bind Queries to Library or Something
