@@ -1,3 +1,4 @@
+**Upcoming Updates are Delayed, the Upcoming Version Should be Released in April**
 # 💿QuickBeat
 Audio player and manager, plays all common media files alongside many more via plugins.
 # 🧰Features
