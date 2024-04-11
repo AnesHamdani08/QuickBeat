@@ -71,16 +71,14 @@ Audio player and manager, plays all common media files alongside many more via p
 
 # 📸Screenshots
 *May vary on newer versions*
-*Updated for QuickBeat - Elegance (1.2.0.2)*
-![Home](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/464ae7fa-fa1e-427d-9794-aa4ebbc43cef)
-![Home Light Default Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/a7a0e3ef-f6d1-4f69-ac5e-0ea149fdb25d)
-![Home Light Aqua Theme](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/d61285f8-0438-46c3-b670-97ed664bc59d)
-![Home](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/e93d5d94-d2ce-43c9-b376-824ddb2ea6ad)
-![Group View](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/1b16e207-5eda-4fe9-ae09-97e90d0c9bb4)
-![Settings P1](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/aaebf0a4-a38d-484e-8228-f8a93b70f1b6)
-![Settings P2](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/c3092810-0c02-47cd-a4bf-4e477635eaa1)
-![Search](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/ddd86649-8334-408b-853d-c1d3d3216697)
-![UPnP Browser](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/b76a5b4f-312b-4e1e-a471-e5521dd16609)
+*Updated for QuickBeat - Ascent (1.6.0.0)*
+![Home Elegance Theme Dark 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/96d2428b-2c0e-4c97-bdef-157c3691dd6c)
+![Home Elegance Theme Light 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/0d4bdb2b-9af7-4a03-b1ed-e76bbcaae10e)
+![Home Aqua Theme Dark 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/31fbb10b-498b-4ab2-af6b-d74cc2d0b683)
+![Group View 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/206b9102-37d9-4d5b-93a2-56bf811bde67)
+![Settings 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/47348862-2b57-4b26-be94-dd06a482a6e8)
+![Search 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/2171054b-cc64-4d7b-ba39-bd065290a49d)
+![LAN Browser 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/7b949421-72b4-4ac6-b563-abc005a69ebb)
 ![Visualizer](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/f38e03f6-f85b-42da-b08a-fc23301e2b3a)
 ![Winamp Plugin Support](https://i.imgur.com/IxYaTnR.png)
 ![Winamp Plugin Support 1](https://i.imgur.com/IrxMVw9.png)
