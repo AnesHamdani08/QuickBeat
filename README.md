@@ -5,14 +5,15 @@ Audio player and manager, plays all common media files alongside many more via p
 - Reactive Seekbar: Brings Your Session to Life
 - High Quality 32-Bit Floating-Point Playback
 - Automatic Volume Leveling: Keep Your Songs at the Same Level
-- Audio Stream Auto-Free & Memory Manager
-- Remote Files Playback
+- Audio Stream Auto-Free & Memory Manager: Low Resources Usage
+- Remote Files Cache & Playback: Never Miss a Beat Even Offline!
 - Play Files from Your Favourite Websites (Read Disclaimer)
 - Pattern Navigation (Download to find out :D)
 - Smart Link Referesh for Remote Files
 - UPnP/DLNA Servers Support
 - UPnP/DLNA Renderers Support With Active Controling
 - LAN Music Discovery: Share your music to other devices in your LAN
+- QuickLink: Control and Chat(Send Text, Songs and Images) With Other PCs Running QuickBeat in your LAN, Turn your LAN Into a Party !
 - Remote Tags Support
 - Youtube-DL and Similar Programs Support (yt-dlp...)
 - Deezer Integration (Popular Songs, Recommendations, Playback, Search)
@@ -20,6 +21,7 @@ Audio player and manager, plays all common media files alongside many more via p
 - Background Playback
 - File Metadata Editor
 - Automatic Metadata Fetcher Inc. Support for Cover Art
+- LRC And Synced Lyrics Support
 - A-B Loop
 - Easily Backup Your Configuration
 - Keyboard Navigation
@@ -46,9 +48,9 @@ Audio player and manager, plays all common media files alongside many more via p
 - Custom Startup/Closing Behaviour
 - Crossfade
 - Silence Skip
-- Audio Effects
+- Audio Effects: 24 Audio Effect + Support for Countless of Winamp Plugins
 - Audio Engine Modules (Add-Ons)
-- Output Switcher
+- Output Switcher: Automatic and Manual
 - Global Hotkeys
 - Audio Visualizer
   - WMP Visualizer
@@ -62,9 +64,10 @@ Audio player and manager, plays all common media files alongside many more via p
 - Cover Viewer
 - Smart Shuffle
 - TaskBar JumpList Integration: Quickly Load and Control your Music
-- Discord Integration: Display Your Music on the Fly!
+- Discord Integration: Display Your Music on the Fly With Support for Album Cover!
 - Automatic File Association
 - Reactive Seekbar!
+- Smart Library Recovery System
 
 # 📸Screenshots
 *May vary on newer versions*
