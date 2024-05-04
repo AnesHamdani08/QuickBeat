@@ -1,10 +1,12 @@
 ﻿Imports System.ComponentModel
+Imports System.Windows.Markup
+Imports QuickBeat.Classes
 Imports QuickBeat.Utilities
 
 Namespace Player
     <Serializable>
     Public Class Metadata
-        Implements ComponentModel.INotifyPropertyChanged
+        Implements ComponentModel.INotifyPropertyChanged, Classes.MemoryManager.ICleanableItem
 
         Public BlockDOWNLOADPROC As Boolean = False
 
@@ -55,6 +57,46 @@ Namespace Player
             End Set
         End Property
 
+        Private _Year As UInteger
+        Property Year As UInteger
+            Get
+                Return _Year
+            End Get
+            Set(value As UInteger)
+                _Year = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _CoverLink As String
+        Property CoverLink As String
+            Get
+                Return _CoverLink
+            End Get
+            Set(value As String)
+                _CoverLink = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _ThumbnailCoverLink As String
+        ''' <summary>
+        ''' Automatically copies to <see cref="CoverLink"/> if empty
+        ''' </summary>
+        ''' <returns></returns>
+        Property ThumbnailCoverLink As String
+            Get
+                Return _ThumbnailCoverLink
+            End Get
+            Set(value As String)
+                _ThumbnailCoverLink = value
+                If String.IsNullOrEmpty(CoverLink) Then
+                    CoverLink = value
+                End If
+                OnPropertyChanged()
+            End Set
+        End Property
+
         <NonSerialized> Private _Covers As IEnumerable(Of ImageSource)
         Property Covers As IEnumerable(Of ImageSource)
             Get
@@ -69,7 +111,7 @@ Namespace Player
 
         Private _Path As String
         ''' <summary>
-        ''' Automatically copies to <see cref="OriginalPath"/> if <see cref="Location"/> is <see cref="FileLocation.Remote"/>
+        ''' Automatically copies to <see cref="OriginalPath"/> if <see cref="Location"/> is <see cref="FileLocation.Local"/>
         ''' </summary>
         ''' <returns></returns>
         Property Path As String
@@ -78,15 +120,23 @@ Namespace Player
             End Get
             Set(value As String)
                 _Path = value
-                If Location = FileLocation.Local Then
-                    OriginalPath = value
+                If Not LockUID Then
+                    If Location = FileLocation.Local Then
+                        OriginalPath = value
+                        UID = value
+                    ElseIf Location = FileLocation.Remote Then
+                        UID = CommonFunctions.URLtoUID(value)
+                    End If
+                End If
+                If String.IsNullOrEmpty(Extension) Then
+                    Extension = IO.Path.GetExtension(value).TrimStart("."c)
                 End If
                 OnPropertyChanged()
             End Set
         End Property
 
         Private _PlayCount As Integer
-        Property PlayCount As Integer
+        Overridable Property PlayCount As Integer
             Get
                 Return _PlayCount
             End Get
@@ -97,7 +147,7 @@ Namespace Player
         End Property
 
         Private _IsFavorite As Boolean
-        Property IsFavorite As Boolean
+        Overridable Property IsFavorite As Boolean
             Get
                 Return _IsFavorite
             End Get
@@ -105,6 +155,17 @@ Namespace Player
                 _IsFavorite = value
                 OnPropertyChanged()
                 SharedProperties.Instance.Library?.OnFavoriteChanged(Me)
+            End Set
+        End Property
+
+        Private _Size As Long
+        Property Size As Long
+            Get
+                Return _Size
+            End Get
+            Set(value As Long)
+                _Size = value
+                OnPropertyChanged()
             End Set
         End Property
 
@@ -174,9 +235,79 @@ Namespace Player
             End Set
         End Property
 
+        Private _Location As FileLocation = FileLocation.Undefined
+        Overridable Property Location As FileLocation
+            Get
+                Return _Location
+            End Get
+            Set(value As FileLocation)
+                _Location = value
+                OnPropertyChanged()
+                OnPropertyChanged(NameOf(IsRemote))
+            End Set
+        End Property
+
+        Private _Bitrate As Integer
+        Property Bitrate As Integer
+            Get
+                Return _Bitrate
+            End Get
+            Set(value As Integer)
+                _Bitrate = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _Channels As Integer
+        Property Channels As Integer
+            Get
+                Return _Channels
+            End Get
+            Set(value As Integer)
+                _Channels = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _Codecs As String()
+        Property Codecs As String()
+            Get
+                Return _Codecs
+            End Get
+            Set(value As String())
+                _Codecs = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+#Region "Read-Only Properties (Helpers)"
         ReadOnly Property DefaultCover As ImageSource
             Get
-                Return If(Covers?.FirstOrDefault, New BitmapImage(New Uri("Resources/MusicRecord.png", UriKind.Relative)))
+                Dim dCover = Covers?.FirstOrDefault
+                If dCover Is Nothing Then
+                    Dim dfCover = New BitmapImage(New Uri("Resources/MusicRecord.png", UriKind.Relative))
+                    If dfCover.CanFreeze Then dfCover.Freeze()
+                    _IsCoverAvailable = False
+                    Return dfCover
+                Else
+                    _IsCoverAvailable = True
+                    Return dCover
+                End If
+                'Return If(Covers?.FirstOrDefault, New BitmapImage(New Uri("Resources/MusicRecord.png", UriKind.Relative)))
+            End Get
+        End Property
+
+        Private _IsCoverAvailable As Boolean
+        ''' <summary>
+        ''' Indicates whether or not <see cref="DefaultCover"/> returned the actual cover or the backup cover (app logo)
+        ''' </summary>
+        ''' <remarks>
+        ''' Value is updated after calling <see cref="DefaultCover"/>
+        ''' </remarks>
+        ''' <returns></returns>
+        ReadOnly Property IsCoverAvailable As Boolean
+            Get
+                Return _IsCoverAvailable
             End Get
         End Property
 
@@ -186,12 +317,20 @@ Namespace Player
             End Get
         End Property
 
+        ''' <summary>
+        ''' Joined using ";"
+        ''' </summary>
+        ''' <returns></returns>
         ReadOnly Property JoinedArtists As String
             Get
                 Return If(Artists Is Nothing, "", String.Join("; ", Artists))
             End Get
         End Property
 
+        ''' <summary>
+        ''' Joined using ";"
+        ''' </summary>
+        ''' <returns></returns>
         ReadOnly Property JoinedGenres As String
             Get
                 Return If(Genres Is Nothing, "", String.Join("; ", Genres))
@@ -234,25 +373,25 @@ Namespace Player
             End Get
         End Property
 
-        Private _Location As FileLocation = FileLocation.Undefined
-        Property Location As FileLocation
-            Get
-                Return _Location
-            End Get
-            Set(value As FileLocation)
-                _Location = value
-                OnPropertyChanged()
-                OnPropertyChanged(NameOf(IsRemote))
-            End Set
-        End Property
-
         ReadOnly Property IsRemote As Boolean
             Get
-                Return Location = FileLocation.Remote
+                'Return Location = FileLocation.Remote 'everything has changed baby!
+                Return Not (Location = FileLocation.Local OrElse Location = FileLocation.Internal)
             End Get
         End Property
 
-        Property Tag As String
+        ''' <summary>
+        ''' Joined using ";"
+        ''' </summary>
+        ''' <returns></returns>
+        ReadOnly Property JoinedCodecs As String
+            Get
+                Return If(Codecs Is Nothing, "", String.Join("; ", Codecs))
+            End Get
+        End Property
+
+#End Region
+        Property Tag As Object
 
         Private _Index As Integer
         Property Index As Integer
@@ -265,7 +404,7 @@ Namespace Player
             End Set
         End Property
 
-        Private _IsCoverLocked As Boolean = False
+        <NonSerialized> Private _IsCoverLocked As Boolean = False
         Property IsCoverLocked As Boolean
             Get
                 Return _IsCoverLocked
@@ -276,17 +415,80 @@ Namespace Player
             End Set
         End Property
 
-        Private _IsInUse As Boolean
+        Private _UID As String
         ''' <summary>
-        ''' Determines whether this instance is being used by a player
+        ''' Used to identify songs in library, mainly used in deserialization to map instance to library
         ''' </summary>
         ''' <returns></returns>
-        Property IsInUse As Boolean
+        Property UID As String
             Get
-                Return _IsInUse
+                If String.IsNullOrEmpty(_UID) Then
+                    If Location = FileLocation.Local Then
+                        _UID = Path
+                    ElseIf Location = FileLocation.Remote Then
+                        _UID = CommonFunctions.URLtoUID(Path)
+                    End If
+                End If
+                Return _UID
+            End Get
+            Set(value As String)
+                _UID = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _LockUID As Boolean
+        ''' <summary>
+        ''' Blocks <see cref="Path"/> from changing <see cref="UID"/>, Restricts <see cref="UID"/> change to its property only.
+        ''' </summary>
+        ''' <returns></returns>
+        Property LockUID As Boolean
+            Get
+                Return _LockUID
             End Get
             Set(value As Boolean)
-                _IsInUse = value
+                _LockUID = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _Extension As String
+        ''' <summary>
+        ''' Original file extension. eg: mp4,mp3,avi...
+        ''' </summary>
+        ''' <returns></returns>
+        Property Extension As String
+            Get
+                Return _Extension
+            End Get
+            Set(value As String)
+                _Extension = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Public Sub New()
+
+        End Sub
+
+        ''' <summary>
+        ''' Determines whether this instance is being used by an object
+        ''' </summary>
+        ''' <returns></returns>
+        ReadOnly Property IsInUse As Boolean
+            Get
+                Return CleanableConfiguration.IsBeingUsed
+            End Get
+        End Property
+
+        <NonSerialized> Private _CleanableConfiguration As New MemoryManager.CleanConfiguration()
+        Public Property CleanableConfiguration As MemoryManager.CleanConfiguration Implements MemoryManager.ICleanableItem.CleanableConfiguration
+            Get
+                If _CleanableConfiguration Is Nothing Then _CleanableConfiguration = New MemoryManager.CleanConfiguration
+                Return _CleanableConfiguration
+            End Get
+            Set(value As MemoryManager.CleanConfiguration)
+                _CleanableConfiguration = value
             End Set
         End Property
 
@@ -295,34 +497,34 @@ Namespace Player
             RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(CallerName))
         End Sub
 
-        Sub RefreshTagsFromFile(Optional SkipCover As Boolean = False)
+        Overridable Sub RefreshTagsFromFile(Optional SkipCover As Boolean = False)
             If Not IO.File.Exists(Path) Then Return
             Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to refresh a metadata from file, Path:=" & Path)
             Utilities.DebugMode.Instance.Log(Of Metadata)("Refreshing metadata tags...")
             Dim Tags As TagLib.File = Nothing
             Try
-                Tags = TagLib.File.Create(Path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
+                Tags = Utilities.SharedProperties.Instance.RequestTags(Path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
             Catch ex As Exception
                 Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
             End Try
-            Title = Tags.Tag.Title
-            Artists = Tags.Tag.Performers
-            Album = Tags.Tag.Album
-            Path = Path
-            Length = Tags.Properties.Duration.TotalSeconds
-            HasCover = (Tags.Tag.Pictures.Length > 0)
-            If Not SkipCover Then
+            If Tags IsNot Nothing Then
+                Title = Tags.Tag.Title
+                Artists = Tags.Tag.Performers
+                Album = Tags.Tag.Album
+                Year = Tags.Tag.Year
+                Length = Tags.Properties.Duration.TotalSeconds
+                Size = Tags.Length
+                HasCover = (Tags.Tag.Pictures.Length > 0)
+                Bitrate = Tags.Properties.AudioBitrate
+                Channels = Tags.Properties.AudioChannels
+                If Tags.Properties.Codecs?.Any Then Codecs = Tags.Properties.Codecs.Select(Of String)(Function(k) k.Description).ToArray
+            End If
+                If Not SkipCover Then
                 Dim Covers As New List(Of ImageSource)
                 If Tags IsNot Nothing Then
                     For Each picture In Tags?.Tag.Pictures
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.CacheOption = BitmapCacheOption.OnDemand
-                        'BI.DecodePixelHeight = 150
-                        'BI.DecodePixelWidth = 150
-                        BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                        BI.EndInit()
-                        Covers.Add(BI)
+                        Dim BI As BitmapImage = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.Metadata_DecodeToThumbnail), New IO.MemoryStream(picture.Data.Data).ToBitmapSource(OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelHeight)), New IO.MemoryStream(picture.Data.Data).ToBitmapSource)
+                        If BI IsNot Nothing Then Covers.Add(BI)
                     Next
                 End If
                 Covers = Covers
@@ -332,36 +534,36 @@ Namespace Player
             End If
             Utilities.DebugMode.Instance.Log(Of Metadata)("Done refreshing metadata.")
         End Sub
-        Sub RefreshTagsFromFile_ThreadSafe(Optional SkipCover As Boolean = False)
+        Overridable Sub RefreshTagsFromFile_ThreadSafe(Optional SkipCover As Boolean = False)
             If Not IO.File.Exists(Path) Then Return
             Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to refresh a metadata from file, Path:=" & Path)
             Utilities.DebugMode.Instance.Log(Of Metadata)("Refreshing metadata tags...")
             Dim Tags As TagLib.File = Nothing
             Try
-                Tags = TagLib.File.Create(Path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
+                Tags = Utilities.SharedProperties.Instance.RequestTags(Path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
             Catch ex As Exception
                 Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
             End Try
-            Application.Current.Dispatcher.Invoke(Sub()
-                                                      Title = Tags.Tag.Title
-                                                      Artists = Tags.Tag.Performers
-                                                      Album = Tags.Tag.Album
-                                                      Path = Path
-                                                      Length = Tags.Properties.Duration.TotalSeconds
-                                                      HasCover = (Tags.Tag.Pictures.Length > 0)
-                                                  End Sub)
+            If Tags IsNot Nothing Then
+                Application.Current.Dispatcher.Invoke(Sub()
+                                                          Title = Tags.Tag.Title
+                                                          Artists = Tags.Tag.Performers
+                                                          Album = Tags.Tag.Album
+                                                          Year = Tags.Tag.Year
+                                                          Length = Tags.Properties.Duration.TotalSeconds
+                                                          Size = Tags.Length
+                                                          HasCover = (Tags.Tag.Pictures.Length > 0)
+                                                          Bitrate = Tags.Properties.AudioBitrate
+                                                          Channels = Tags.Properties.AudioChannels
+                                                          If Tags.Properties.Codecs?.Any Then Codecs = Tags.Properties.Codecs.Select(Of String)(Function(k) k.Description).ToArray
+                                                      End Sub)
+            End If
             If Not SkipCover Then
                 Dim Covers As New List(Of ImageSource)
                 If Tags IsNot Nothing Then
                     For Each picture In Tags?.Tag.Pictures
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.CacheOption = BitmapCacheOption.OnDemand
-                        'BI.DecodePixelHeight = 150
-                        'BI.DecodePixelWidth = 150
-                        BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                        BI.EndInit()
-                        Covers.Add(BI)
+                        Dim BI As BitmapImage = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.Metadata_DecodeToThumbnail), New IO.MemoryStream(picture.Data.Data).ToBitmapSource(OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelHeight)), New IO.MemoryStream(picture.Data.Data).ToBitmapSource)
+                        If BI IsNot Nothing Then Covers.Add(BI)
                     Next
                 End If
                 Application.Current.Dispatcher.Invoke(Sub()
@@ -375,11 +577,11 @@ Namespace Player
                                                   End Sub)
             Utilities.DebugMode.Instance.Log(Of Metadata)("Done refreshing metadata.")
         End Sub
-        Async Sub EnsureCovers()
+        Overridable Async Sub EnsureCovers(Optional DecodeToThumbnail As Boolean = False, Optional ThumbPxWidth As Integer = 150, Optional ThumbPxHeight As Integer = 150, Optional FreezeThumbs As Boolean = False)
             If (Covers Is Nothing OrElse Covers.Count = 0) AndAlso IO.File.Exists(Path) Then
                 Dim Tags As TagLib.File = Nothing
                 Try
-                    Tags = TagLib.File.Create(Path, TagLib.ReadStyle.Average)
+                    Tags = Utilities.SharedProperties.Instance.RequestTags(Path, TagLib.ReadStyle.Average)
                 Catch ex As Exception
                     Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
                 End Try
@@ -387,81 +589,101 @@ Namespace Player
                     HasCover = True
                     Dim Covers As New List(Of ImageSource)
                     For Each picture In Tags.Tag.Pictures
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.CacheOption = BitmapCacheOption.OnDemand
-                        'BI.DecodePixelHeight = 150
-                        'BI.DecodePixelWidth = 150
-                        BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                        BI.EndInit()
+                        Dim BI As BitmapImage
+                        If OverrideProperties.Instance.Locked(OverrideProperties.LockType.Metadata_DecodeToThumbnail) Then
+                            If OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodeToThumbnail) Then
+                                BI = New IO.MemoryStream(picture.Data.Data).ToBitmapSource(OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelHeight))
+                            Else
+                                BI = New IO.MemoryStream(picture.Data.Data).ToBitmapSource
+                            End If
+                        Else
+                            If DecodeToThumbnail Then
+                                BI = New IO.MemoryStream(picture.Data.Data).ToBitmapSource(ThumbPxWidth, ThumbPxHeight)
+                            Else
+                                BI = New IO.MemoryStream(picture.Data.Data).ToBitmapSource
+                            End If
+                        End If
+                        If FreezeThumbs Then BI.Freeze()
                         Covers.Add(BI)
                     Next
                     Me.Covers = Covers
                     Tags.Dispose()
                 End If
-            ElseIf (Covers Is Nothing OrElse Covers.Count = 0) AndAlso Location = FileLocation.Remote AndAlso Provider IsNot Nothing Then
-                Dim Thumb = Await Provider.FetchThumbnail
-                If Thumb IsNot Nothing Then
-                    Me.Covers = New ImageSource() {Thumb}
+            ElseIf Not String.IsNullOrEmpty(CoverLink) Then
+                Me.Covers = New ImageSource() {New Uri(CoverLink).ToBitmapSource()}
+            ElseIf Not String.IsNullOrEmpty(ThumbnailCoverLink) Then
+                Me.Covers = New ImageSource() {New Uri(ThumbnailCoverLink).ToBitmapSource()}
+            ElseIf (Covers Is Nothing OrElse Covers.Count = 0) AndAlso (Location = FileLocation.Remote OrElse Location = FileLocation.Cached) Then
+                If Provider IsNot Nothing Then
+                    Dim Thumb = Await Provider.FetchThumbnail
+                    If Thumb IsNot Nothing Then
+                        Me.Covers = New ImageSource() {Thumb}
+                    End If
                 End If
             End If
         End Sub
-
+        ''' <summary>
+        ''' **NOT IMPLEMENTED**
+        ''' Creates a ready-to-use HStream, Must be overriden in classes that doesn't point to a local or remote file , and must instead supply the media data.
+        ''' The <see cref="Player"/> will automatically use this if <see cref="Location"/> is set to <see cref="FileLocation.Internal"/> or <see cref="FileLocation.Cached"/>
+        ''' </summary>
+        ''' <returns>An HStream Pointer to the Pre-loaded (or Late-Loaded) stream</returns>
+        Public Overridable Function CreateStream() As Integer
+            Return 0
+        End Function
         Public Sub LoadFromTFile(file As TagLib.File, Optional SkipLength As Boolean = False)
             Title = file.Tag.Title
             Artists = file.Tag.Performers
             Album = file.Tag.Album
+            Year = file.Tag.Year
             If Not SkipLength Then Length = file.Properties.Duration.TotalSeconds
+            Size = file.Length
             HasCover = (file.Tag.Pictures.Length > 0)
+            Bitrate = file.Properties.AudioBitrate
+            Channels = file.Properties.AudioChannels
+            If file.Properties.Codecs?.Any Then Codecs = file.Properties.Codecs.Select(Of String)(Function(k) k.Description).ToArray
             If HasCover Then
-                Application.Current.Dispatcher.Invoke(Sub()
-                                                          Dim Covers As New List(Of ImageSource)
-                                                          For Each picture In file.Tag.Pictures
-                                                              Dim BI As New BitmapImage
-                                                              BI.BeginInit()
-                                                              BI.CacheOption = BitmapCacheOption.OnDemand
-                                                              'BI.DecodePixelHeight = 150
-                                                              'BI.DecodePixelWidth = 150
-                                                              BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                                                              BI.EndInit()
-                                                              Covers.Add(BI)
-                                                          Next
-                                                          Me.Covers = Covers
-                                                      End Sub)
+                Dim Covers As New List(Of ImageSource)
+                For Each picture In file.Tag.Pictures
+                    Application.Current.Dispatcher.Invoke(Sub()
+                                                              Dim BI As BitmapImage = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.Metadata_DecodeToThumbnail), New IO.MemoryStream(picture.Data.Data).ToBitmapSource(OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.Metadata_DecodePixelHeight)), New IO.MemoryStream(picture.Data.Data).ToBitmapSource)
+                                                              If BI IsNot Nothing Then Covers.Add(BI)
+                                                          End Sub)
+                Next
+                Me.Covers = Covers
             End If
         End Sub
 
         Shared Function FromFile(path As String, Optional SkipCover As Boolean = False, Optional SearchLibraryOnly As Boolean = False) As Metadata
-            Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to create a metadata from file, Path:=" & path & ", SkipCover:=" & SkipCover & ", SearchLibraryOnly:=" & SearchLibraryOnly)
+            ''Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to create a metadata from file, Path:=" & path & ", SkipCover:=" & SkipCover & ", SearchLibraryOnly:=" & SearchLibraryOnly)
             If IO.File.Exists(path) Then
                 'Check if available in library                
                 Dim MData = Utilities.SharedProperties.Instance.Library.FirstOrDefault(Function(k) k.Path = path)
                 If MData IsNot Nothing Then
-                    Utilities.DebugMode.Instance.Log(Of Metadata)("Data found, Returning...")
+                    ''Utilities.DebugMode.Instance.Log(Of Metadata)("Data found, Returning...")
                     Return MData
                 End If
                 If SearchLibraryOnly Then Return Nothing
                 'Create one
-                Utilities.DebugMode.Instance.Log(Of Metadata)("Couldn't find metadata, Creating one...")
+                ''Utilities.DebugMode.Instance.Log(Of Metadata)("Couldn't find metadata, Creating one...")
                 Dim Tags As TagLib.File = Nothing
                 Try
-                    Tags = TagLib.File.Create(path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
+                    Tags = Utilities.SharedProperties.Instance.RequestTags(path, If(SkipCover, TagLib.ReadStyle.Average Or TagLib.ReadStyle.PictureLazy, TagLib.ReadStyle.Average))
                 Catch ex As Exception
                     Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
                 End Try
-                Dim MD As Metadata = If(Tags Is Nothing, New Metadata With {.Location = FileLocation.Local, .Path = path, .OriginalPath = path, .Provider = New IOMediaProvider(path)}, New Metadata With {.Location = FileLocation.Local, .OriginalPath = path, .Provider = New IOMediaProvider(path), .Title = Tags.Tag.Title, .Artists = Tags.Tag.Performers, .Album = Tags.Tag.Album, .Path = path, .Length = Tags.Properties.Duration.TotalSeconds, .HasCover = (Tags.Tag.Pictures.Length > 0)})
+                Dim MD As Metadata = If(Tags Is Nothing, New Metadata With {.Location = FileLocation.Local, .Path = path, .OriginalPath = path, .Provider = New IOMediaProvider(path)},
+                    New Metadata With {.Location = FileLocation.Local, .OriginalPath = path, .Provider = New IOMediaProvider(path), .Title = Tags.Tag.Title,
+                    .Artists = Tags.Tag.Performers, .Album = Tags.Tag.Album, .Year = Tags.Tag.Year, .Path = path, .Length = Tags.Properties.Duration.TotalSeconds,
+                    .HasCover = (Tags.Tag.Pictures.Length > 0), .Size = Tags.Length, .Bitrate = Tags.Properties.AudioBitrate, .Channels = Tags.Properties.AudioChannels})
+                If MD IsNot Nothing AndAlso Tags?.Properties.Codecs?.Any Then MD.Codecs = Tags.Properties.Codecs.Select(Of String)(Function(k) k?.Description).ToArray
+                MD.Extension = IO.Path.GetExtension(path).TrimStart("."c)
                 If Not SkipCover Then
                     Dim Covers As New List(Of ImageSource)
                     If Tags IsNot Nothing Then
                         For Each picture In Tags?.Tag.Pictures
-                            Dim BI As New BitmapImage
-                            BI.BeginInit()
-                            BI.CacheOption = BitmapCacheOption.OnDemand
-                            'BI.DecodePixelHeight = 150
-                            'BI.DecodePixelWidth = 150
-                            BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                            BI.EndInit()
-                            Covers.Add(BI)
+                            Dim BI As BitmapImage = New IO.MemoryStream(picture.Data.Data).ToBitmapSource
+                            If BI IsNot Nothing Then Covers.Add(BI)
                         Next
                     End If
                     MD.Covers = Covers
@@ -473,6 +695,44 @@ Namespace Player
                 Return MD
             End If
             Utilities.DebugMode.Instance.Log(Of Metadata)("Couldn't create a metadata.")
+            Return Nothing
+        End Function
+        ''' <summary>
+        ''' Searches Library and Local Cache for corresponding <see cref="Metadata"/>
+        ''' </summary>
+        ''' <param name="UID"></param>
+        ''' <returns></returns>
+        Shared Function FromUID(UID As String) As Metadata
+            Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to create a metadata from UID, UID:=" & UID)
+            'Check if available in library                
+            Dim MData = Utilities.SharedProperties.Instance.Library.FirstOrDefault(Function(k) k.UID = UID)
+            If MData Is Nothing Then
+                If Utilities.SharedProperties.Instance.RemoteLibrary.ContainsID(UID) Then
+                    Return Utilities.SharedProperties.Instance.RemoteLibrary.GetItem(UID)
+                ElseIf io.file.Exists(uid) Then
+                    Return Metadata.FromFile(UID, True)
+                End If
+            Else
+                Utilities.DebugMode.Instance.Log(Of Metadata)("Data found, Returning...")
+                Return MData
+            End If
+            Utilities.DebugMode.Instance.Log(Of Metadata)("Couldn't find a metadata .UID:=" & UID)
+            Return Nothing
+        End Function
+        Shared Function FromCache(originalPath As String, Optional IsUID As Boolean = False) As CachedMetadata
+            Utilities.DebugMode.Instance.Log(Of Metadata)("Attempting to create a metadata from cache, Path:=" & originalPath)
+            'Check if available in library                
+            If Utilities.SharedProperties.Instance.RemoteLibrary.ContainsID(If(IsUID, originalPath, CommonFunctions.URLtoUID(originalPath))) Then
+                Dim MData = Utilities.SharedProperties.Instance.RemoteLibrary.GetItem(If(IsUID, originalPath, CommonFunctions.URLtoUID(originalPath))) '.FirstOrDefault(Function(k) CommonFunctions.CheckUID(k.UID, originalPath))
+                If MData IsNot Nothing Then
+                    Utilities.DebugMode.Instance.Log(Of Metadata)("Data found, Returning...")
+                    If MData.Provider Is Nothing Then
+                        MData.Provider = New CacheMediaProvider(If(IsUID, originalPath, CommonFunctions.URLtoUID(originalPath)))
+                    End If
+                    Return MData
+                End If
+            End If
+            Utilities.DebugMode.Instance.Log(Of Metadata)("Couldn't create a cached metadata.")
             Return Nothing
         End Function
 
@@ -508,7 +768,7 @@ Namespace Player
                     Try
                         Dim _IsActive As Boolean
                         Try
-                            _IsActive = My.Computer.Network.Ping(Path)
+                            _IsActive = My.Computer.Network.Ping(Path) 'TODO to be changed to newer implementation
                         Catch ex As Exception
                             Utilities.DebugMode.Instance.Log(Of Metadata)(ex.ToString)
                         End Try
@@ -529,7 +789,7 @@ Namespace Player
             Return Path
         End Function
         Public Overrides Function ToString() As String
-            Return $"{Title} By {If(Artists IsNot Nothing, String.Join(";", Artists), "N/A")} From {Album} With Duration {LengthString} At {Location.ToString}:{Path}"
+            Return $"{Title} By {If(Artists IsNot Nothing, String.Join(";", Artists), "N/A")} From {Album} With Duration {LengthString} At {Location}:{Path}"
         End Function
 
         ''' <summary>
@@ -553,9 +813,62 @@ Namespace Player
         ''' </remarks>
         ''' <returns></returns>
         Public Function Clone() As Metadata
-            Return New Metadata() With {.Location = Location, .Album = Album, .Artists = Artists, .Covers = Covers, .Genres = Genres, .Index = Index, .IsFavorite = IsFavorite, .Length = Length, .Path = Path, .PlayCount = PlayCount, .Title = Title, .BlockDOWNLOADPROC = BlockDOWNLOADPROC, .OriginalPath = OriginalPath, .Provider = Provider, .HasCover = HasCover}
+            Return New Metadata() With {.Location = Location, .Album = Album, .Artists = Artists, .Covers = Covers, .Genres = Genres,
+                .Index = Index, .IsFavorite = IsFavorite, .Length = Length, .Size = Size, .Path = Path, .PlayCount = PlayCount, .Title = Title, .BlockDOWNLOADPROC = BlockDOWNLOADPROC,
+                .OriginalPath = OriginalPath, .Provider = Provider, .HasCover = HasCover}
         End Function
 
+        ''' <summary>
+        ''' Copies this instance primary metadata(only data read from tag) to another reference
+        ''' </summary>
+        ''' <param name="Metadata"></param>
+        Public Sub CopyTo(Metadata As Metadata)
+            With Metadata
+                .Album = Album
+                .Artists = Artists
+                .Covers = Covers
+                .Genres = Genres
+                .Length = Length
+                .Size = Size
+                .Extension = Extension
+                .Path = Path
+                .Title = Title
+                .OriginalPath = OriginalPath
+                .HasCover = HasCover
+                .Bitrate = Bitrate
+                .Channels = Channels
+                .Codecs = Codecs
+            End With
+        End Sub
+
+        ''' <summary>
+        ''' Copies all properties of this instance to another reference except:<see cref="Location"/>, <see cref="Provider"/>
+        ''' </summary>
+        ''' <param name="Metadata"></param>
+        Public Sub CopyAllTo(Metadata As Metadata)
+            With Metadata
+                .Album = Album
+                .Artists = Artists
+                .Bitrate = Bitrate
+                .Channels = Channels
+                .Codecs = Codecs
+                .CoverLink = CoverLink
+                .Covers = Covers
+                .Extension = Extension
+                .Genres = Genres
+                .Index = Index
+                .IsFavorite = IsFavorite
+                .Length = Length
+                .Size = Size
+                .Path = Path
+                .Title = Title
+                .ThumbnailCoverLink = ThumbnailCoverLink
+                .BlockDOWNLOADPROC = BlockDOWNLOADPROC
+                .OriginalPath = OriginalPath
+                .HasCover = HasCover
+                .CoverLink = CoverLink
+            End With
+        End Sub
 #Region "Serialization"
         <Runtime.Serialization.OnDeserialized>
         Private Sub Deserialization(context As Runtime.Serialization.StreamingContext)
@@ -565,11 +878,12 @@ Namespace Player
             End If
         End Sub
 #End Region
-
         Public Enum FileLocation
             Local
             Remote
             Undefined
+            Internal
+            Cached
         End Enum
     End Class
 End Namespace

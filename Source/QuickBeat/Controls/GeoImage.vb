@@ -121,6 +121,18 @@
         Private Command_CanExecuteChangedHandler As New EventHandler(Sub(sender As Object, e As EventArgs)
                                                                          IsEnabled = Command?.CanExecute(CommandParameter)
                                                                      End Sub)
+
+        Shared ReadOnly Property IsCheckableProperty As DependencyProperty = DependencyProperty.Register("IsCheckable", GetType(Boolean), GetType(GeoImage), New UIPropertyMetadata(False, New PropertyChangedCallback(Sub(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
+                                                                                                                                                                                                                           TryCast(d, GeoImage)?.InvalidateGeoBrush()
+                                                                                                                                                                                                                       End Sub)))
+        Property IsCheckable As Boolean
+            Get
+                Return GetValue(IsCheckableProperty)
+            End Get
+            Set(value As Boolean)
+                SetValue(IsCheckableProperty, value)
+            End Set
+        End Property
         Shared ReadOnly Property IsCheckedProperty As DependencyProperty = DependencyProperty.Register("IsChecked", GetType(Boolean), GetType(GeoImage), New UIPropertyMetadata(False, New PropertyChangedCallback(Sub(d As DependencyObject, e As DependencyPropertyChangedEventArgs)
                                                                                                                                                                                                                        If e.NewValue Then
                                                                                                                                                                                                                            If CType(d, GeoImage).CheckedBrush IsNot Nothing Then
@@ -188,7 +200,13 @@
         End Sub
 
         Private Sub GeoImage_MouseLeftButtonUp(sender As Object, e As MouseButtonEventArgs) Handles Me.MouseLeftButtonUp
-            If IsEnabled Then Command?.Execute(CommandParameter)
+            If IsEnabled Then
+                If IsCheckable Then
+                    IsChecked = Not IsChecked
+                Else
+                    Command?.Execute(CommandParameter)
+                End If
+            End If
         End Sub
         ''' <summary>
         ''' bypasses <see cref="Source"/> and directly sets the image.
@@ -206,13 +224,13 @@
             If TryCast(TryCast(Source, DrawingImage)?.Drawing, GeometryDrawing)?.IsFrozen Then
                 Dim cGeo = TryCast(TryCast(Source, DrawingImage)?.Drawing, GeometryDrawing)?.Clone
                 If cGeo IsNot Nothing Then
-                    cGeo.Brush = GeoBrush
+                    cGeo.Brush = If(IsCheckable, If(IsChecked, CheckedBrush, GeoBrush), GeoBrush)
                     cGeo.Pen = GeoPen
                     CType(Source, DrawingImage).Drawing = cGeo
                 End If
             Else
                 CType(CType(Source, DrawingImage).Drawing, GeometryDrawing).Pen = GeoPen
-                CType(CType(Source, DrawingImage).Drawing, GeometryDrawing).Brush = GeoBrush
+                CType(CType(Source, DrawingImage).Drawing, GeometryDrawing).Brush = If(IsCheckable, If(IsChecked, CheckedBrush, GeoBrush), GeoBrush)
             End If
         End Sub
     End Class

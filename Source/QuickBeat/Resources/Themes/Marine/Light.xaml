@@ -14,6 +14,7 @@
             ThirdlyRegionColor="#039BE7"
             MainContentBackgroundBrush="#FFFFFF"
             MainContentBackgroundColor="#FFFFFF"
+            VioletBrush="Transparent"
             />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

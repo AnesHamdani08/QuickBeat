@@ -6,7 +6,7 @@
     xmlns:utils="clr-namespace:QuickBeat.Utilities">
 
     <cnv:BooleanToVisibilityPlusConverter x:Key="B2V"/>
-
+    <!--Contains Preview and Play buttons, Has Context Menu: Add To List(Of Metadata),Append,Enqueue-->
     <Style x:Key="ListBoxMetadataBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
         <Setter Property="SelectionMode" Value="Extended"/>
         <Setter Property="hc:ListBoxAttach.IsOddEvenRow" Value="True"/>
@@ -14,16 +14,38 @@
         <Setter Property="ContextMenu">
             <Setter.Value>
                 <ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self},Path=PlacementTarget}">
-                    <MenuItem Header="{DynamicResource LOC_ADDTOPLAYLIST}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToPlaylistFromPickerCommand}"/>
-                    <MenuItem Header="{DynamicResource LOC_APPEND}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedPlaylistCommand}" />
-                    <MenuItem Header="{DynamicResource LOC_ENQUEUE}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedQueueCommand}" />
+                    <MenuItem Header="{DynamicResource LOC_PROPERTIES}" CommandParameter="{Binding SelectedItem}" Command="{Binding Source={x:Static utils:Commands.ShowMetadataInfoCommand}}">
+                        <MenuItem.Icon>
+                            <ctl:GeoImage GeoSource="{DynamicResource GEO_CIRCLE_INFO}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource LOC_ADDTOPLAYLIST}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToPlaylistFromPickerCommand}">
+                        <MenuItem.Icon>
+                            <ctl:GeoImage GeoSource="{StaticResource GEO_LIBRARY}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource LOC_APPEND}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedPlaylistCommand}">
+                        <MenuItem.Icon>
+                            <ctl:GeoImage GeoSource="{StaticResource GEO_ADDTOLIST_LAST}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource LOC_ENQUEUE}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.AddItemsToSharedQueueCommand}">
+                        <MenuItem.Icon>
+                            <ctl:GeoImage GeoSource="{StaticResource GEO_ADDTOLIST_FIRST}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{DynamicResource LOC_REMOVEFROMLIBRARY}" CommandParameter="{Binding Path=SelectedItems}" Command="{x:Static utils:Commands.RemoveItemsFromSharedLibraryCommand}">
+                        <MenuItem.Icon>
+                            <ctl:GeoImage GeoSource="{StaticResource GEO_CIRCLE_DELETE}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </ContextMenu>
             </Setter.Value>
         </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <ScrollViewer Background="{DynamicResource SecondaryRegionBrush}" VirtualizingPanel.IsVirtualizing="True">
+                    <ScrollViewer Background="{DynamicResource VioletBrush}" VirtualizingPanel.IsVirtualizing="True">
                         <ItemsPresenter />
                     </ScrollViewer>
                 </ControlTemplate>
@@ -64,7 +86,7 @@
                         <ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>
                         <StackPanel Margin="0,0,20,0" Grid.Column="2">
                             <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
-                            <ctl:ClickTextBlock Text="{Binding Artists[0]}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusArtistCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <ctl:ClickTextBlock Text="{Binding DefaultArtist}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusArtistCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
                         </StackPanel>
                         <ctl:ClickTextBlock Text="{Binding Album}" Margin="0,0,20,0" Grid.Column="3" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusAlbumCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
                     </Grid>
@@ -73,6 +95,8 @@
         </Setter>
     </Style>
 
+    <!--Contains Preview,Remove and Down/Up Buttons, No Context Menu, Designed for Use with List(Of Metadata) as DataContext-->
+    <!--Use only with playlist of main player for now-->
     <Style x:Key="ListBoxPlaylistBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
@@ -84,7 +108,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <ScrollViewer Background="{DynamicResource SecondaryRegionBrush}" VirtualizingPanel.IsVirtualizing="True">
+                    <ScrollViewer Background="{DynamicResource VioletBrush}" VirtualizingPanel.IsVirtualizing="True">
                         <ItemsPresenter/>
                     </ScrollViewer>
                 </ControlTemplate>
@@ -109,6 +133,7 @@
                                 <ColumnDefinition SharedSizeGroup="Col4" Width="Auto" />
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
+                                <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <ctl:ClickTextBlock Text="👁️" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.PreviewCommand}" Margin="0,0,20,0"/>
                             <!--<ctl:ClickTextBlock Text="▶" Grid.Column="1" VerticalAlignment="Center" DecorateOnMouseEnter="False" CommandParameter="{Binding Path}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.LoadAndAddCommand}" Margin="0,0,20,0" IsEnabled="False"/>-->
@@ -119,27 +144,66 @@
                             </StackPanel>
                             <ctl:ClickTextBlock Text="{Binding Album}" Margin="0,0,20,0" Grid.Column="4" CommandParameter="{Binding RelativeSource={RelativeSource Mode=Self},Path=Text}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Library.FocusAlbumCommand}" VerticalAlignment="Center" HorizontalAlignment="Left" />
                             <ctl:ClickTextBlock Grid.Column="5" Text="🔽" VerticalAlignment="Center" CommandParameter="{Binding Index}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.MoveDownCommand}"/>
-                            <ctl:ClickTextBlock Grid.Column="6" Text="🔼" VerticalAlignment="Center" CommandParameter="{Binding Index}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.MoveUpCommand}"/>
-                        </Grid>
+                            <ctl:ClickTextBlock Grid.Column="6" Text="🔼" VerticalAlignment="Center" CommandParameter="{Binding Index}" Command="{Binding Source={x:Static utils:SharedProperties.Instance},Path=Player.MoveUpCommand}" Margin="0,0,10,0"/>
+                            <ctl:GeoImage Grid.Column="7" VerticalAlignment="Center" MaxHeight="16" GeoSource="{DynamicResource GEO_INTERNET}" Visibility="{Binding IsRemote,Converter={StaticResource B2V}}">
+                                <ctl:GeoImage.CacheMode>
+                                    <BitmapCache/>
+                                </ctl:GeoImage.CacheMode>
+                            </ctl:GeoImage>
+                    </Grid>
                     </DataTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
-    <Style x:Key="ListBoxPlaylistContainerBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+    <!--No Buttons, No Context Menu, No Clickable TextBlocks, Designed for Use with List(Of Metadata), Use Only for Presenting Data-->
+    <Style x:Key="ListBoxMetadataPresenterStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+        <Setter Property="SelectionMode" Value="Single"/>
+        <Setter Property="hc:ListBoxAttach.IsOddEvenRow" Value="True"/>
+        <Setter Property="AlternationCount" Value="2"/>
         <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
-        <Setter Property="ContextMenu">
-            <Setter.Value>
-                <ContextMenu DataContext="{Binding RelativeSource={RelativeSource Mode=Self},Path=PlacementTarget}">
-                    <MenuItem Header="{DynamicResource LOC_VIEW}" CommandParameter="{Binding Path=SelectedItem}" Command="{x:Static utils:Commands.ViewPlaylistCommand}"/>
-                    <MenuItem Header="{DynamicResource LOC_REMOVE}" CommandParameter="{Binding Path=SelectedItem}" Command="{x:Static utils:Commands.RemoveCustomPlaylistCommand}"/>
-                </ContextMenu>
-            </Setter.Value>
-        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <ScrollViewer Background="{DynamicResource MainContentBackgroundBrush}" VirtualizingPanel.IsVirtualizing="True">
+                    <ScrollViewer Background="{DynamicResource SecondaryRegionBrush}" VirtualizingPanel.IsVirtualizing="True">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid Background="Transparent" Margin="10,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition SharedSizeGroup="Col0" Width="Auto" />
+                            <ColumnDefinition SharedSizeGroup="Col1" Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,20,0" Grid.Column="0">
+                            <TextBlock Text="{Binding Title}" Margin="0,0,0,5" />
+                            <TextBlock Text="{Binding DefaultArtist}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Album}" Margin="0,0,20,0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                    </Grid>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!--Has Context Menu:View,Remove, Double Click to Play, Designed for Use with List(Of Playlist) as DataContext-->
+    <Style x:Key="ListBoxPlaylistContainerBaseStyle" TargetType="ListBox" BasedOn="{StaticResource ListBoxTransparentStyle}">
+        <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ScrollViewer Background="{DynamicResource MainContentBackgroundBrush}" VirtualizingPanel.IsVirtualizing="True" VerticalScrollBarVisibility="Disabled">
                         <ItemsPresenter/>
                     </ScrollViewer>
                 </ControlTemplate>
@@ -155,7 +219,21 @@
         <Setter Property="ItemTemplate">
             <Setter.Value>
                 <DataTemplate>
-                    <Grid ToolTip="{Binding Description}">
+                    <Grid ToolTip="{Binding Description}" Margin="0,0,0,0">
+                        <Grid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{DynamicResource LOC_VIEW}" CommandParameter="{Binding .}" Command="{x:Static utils:Commands.ViewPlaylistCommand}">
+                                    <MenuItem.Icon>
+                                        <ctl:GeoImage GeoSource="{StaticResource EyeOpenGeometry}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource LOC_REMOVE}" CommandParameter="{Binding .}" Command="{x:Static utils:Commands.RemoveCustomPlaylistCommand}">
+                                    <MenuItem.Icon>
+                                        <ctl:GeoImage GeoSource="{StaticResource RemoveGeometry}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Grid.ContextMenu>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Col0"/>
                             <ColumnDefinition SharedSizeGroup="Col1"/>
@@ -165,6 +243,71 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
                         <Image Width="Auto" Height="32" Grid.RowSpan="2" Source="{Binding Cover}" Visibility="{Binding HasCover,Converter={StaticResource B2V}}" Margin="0,0,10,0"/>
+                        <ctl:ClickTextBlock Grid.Column="1" CommandTriggerMode="DoubleClick" Text="{Binding Name}" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance}, Path=Player.LoadPlaylistCommand}" FontSize="14" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1">
+                            <Run Text="{Binding Category}"/> • <Run Text="{Binding Count,Mode=OneWay}"/> <Run Text="{DynamicResource LOC_SONG}"/>
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ItemsControlPlaylistContainerBaseStyle" TargetType="ItemsControl">
+        <Setter Property="Grid.IsSharedSizeScope" Value="True"/>
+        <Setter Property="Padding" Value="5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ItemsPresenter VirtualizingPanel.IsVirtualizing="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <StackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid ToolTip="{Binding Description}" Margin="0,0,0,5">
+                        <Grid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{DynamicResource LOC_VIEW}" CommandParameter="{Binding .}" Command="{x:Static utils:Commands.ViewPlaylistCommand}">
+                                    <MenuItem.Icon>
+                                        <ctl:GeoImage GeoSource="{StaticResource EyeOpenGeometry}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource LOC_REMOVE}" CommandParameter="{Binding .}" Command="{x:Static utils:Commands.RemoveCustomPlaylistCommand}">
+                                    <MenuItem.Icon>
+                                        <ctl:GeoImage GeoSource="{StaticResource RemoveGeometry}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Grid.ContextMenu>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource MainContentBackgroundBrush}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="False">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>                            
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Col0"/>
+                            <ColumnDefinition SharedSizeGroup="Col1"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <ctl:ExpandableImage Width="Auto" Height="32" Grid.RowSpan="2" Source="{Binding Cover}" Visibility="{Binding HasCover,Converter={StaticResource B2V}}" Margin="0,0,10,0"/>
                         <ctl:ClickTextBlock Grid.Column="1" CommandTriggerMode="DoubleClick" Text="{Binding Name}" CommandParameter="{Binding .}" Command="{Binding Source={x:Static utils:SharedProperties.Instance}, Path=Player.LoadPlaylistCommand}" FontSize="14" HorizontalAlignment="Left"/>
                         <TextBlock Grid.Column="1" Grid.Row="1">
                             <Run Text="{Binding Category}"/> • <Run Text="{Binding Count,Mode=OneWay}"/> <Run Text="{DynamicResource LOC_SONG}"/>

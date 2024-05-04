@@ -10,7 +10,7 @@ Namespace Converters
             Dim recBrush As New LinearGradientBrush(New GradientStopCollection From {New GradientStop(Color.FromRgb(38, 50, 56), 0), New GradientStop(Color.FromRgb(69, 90, 100), 1)}, 45)
             dc.DrawRoundedRectangle(recBrush, Nothing, New Rect(0, 0, 100, 100), 15, 15)
 #Disable Warning
-            Dim txt = New FormattedText(value.ToString.FirstOrDefault & value.ToString.LastOrDefault, Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, New Typeface(New FontFamily("Arial"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal), 132 / 2, New SolidColorBrush(Color.FromRgb(255, 193, 7))) '2 for text length                                               
+            Dim txt = New FormattedText(If(value?.ToString.FirstOrDefault, "-") & If(value?.ToString.LastOrDefault, "-"), Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, New Typeface(New FontFamily("Arial"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal), 132 / 2, New SolidColorBrush(Color.FromRgb(255, 193, 7))) '2 for text length                                               
 #Enable Warning
             dc.DrawText(txt, New Point((100 - txt.Width) / 2, (100 - txt.Height) / 2))
             dc.Close()

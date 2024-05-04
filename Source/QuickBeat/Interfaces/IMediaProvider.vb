@@ -1,7 +1,7 @@
 ﻿Namespace Interfaces
     ''' <summary>
     ''' Provides link-refresh methods
-    ''' </summary>
+    ''' </summary>    
     Public Interface IMediaProvider
         Property Name As String
         Property Author As String

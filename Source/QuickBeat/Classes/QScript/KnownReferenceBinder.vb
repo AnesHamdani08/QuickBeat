@@ -1,4 +1,6 @@
-﻿Namespace QScript
+﻿Imports QuickBeat.Player.WPF.Commands
+
+Namespace QScript
     Public Class KnownReferenceBinder
         Implements Aqua.IReferenceBinder
 
@@ -22,6 +24,26 @@
                     Return Utilities.SharedProperties.Instance.Themes
                 Case GetType(Youtube.YoutubeDL)
                     Return Utilities.SharedProperties.Instance.YoutubeDL
+                Case GetType(Speech.Synthesis.SpeechSynthesizer)
+                    Return Utilities.SharedProperties.Instance.TTSE
+                Case GetType(ObjectModel.ObservableCollection(Of Player.Playlist))
+                    Return Utilities.SharedProperties.Instance.CustomPlaylists
+                Case GetType(ObjectModel.ObservableCollection(Of Player.Playlist))
+                    Return Utilities.SharedProperties.Instance.RecommendedPlaylists
+                Case GetType(Classes.MemoryManager)
+                    Return Utilities.SharedProperties.Instance.MemoryManager
+                Case GetType(Classes.SleepTimer)
+                    Return Utilities.SharedProperties.Instance.SleepTimer
+                Case GetType(ObjectModel.ObservableCollection(Of Type))
+                    Return Utilities.SharedProperties.Instance.Themes
+                Case GetType(DiscordRPC.DiscordRpcClient)
+                    Return Utilities.SharedProperties.Instance.DiscordClient
+                Case GetType(UPnP.HttpFileServer)
+                    Return Utilities.SharedProperties.Instance.HTTPFileServer
+                Case GetType(Utilities.SharedProperties.ShowNotificationDelegate)
+                    Return Utilities.SharedProperties.Instance.ShowNotification
+                Case GetType(Utilities.DebugMode)
+                    Return Utilities.DebugMode.Instance
             End Select
             Return Nothing
         End Function
@@ -46,12 +68,35 @@
                     Return Utilities.SharedProperties.Instance.Themes
                 Case "youtubedl"
                     Return Utilities.SharedProperties.Instance.YoutubeDL
+                Case "tts"
+                    Return Utilities.SharedProperties.Instance.TTSE
+                Case "customplaylists"
+                    Return Utilities.SharedProperties.Instance.CustomPlaylists
+                Case "recommendedplaylists"
+                    Return Utilities.SharedProperties.Instance.RecommendedPlaylists
+                Case "memorymanager"
+                    Return Utilities.SharedProperties.Instance.MemoryManager
+                Case "sleeptimer"
+                    Return Utilities.SharedProperties.Instance.SleepTimer
+                Case "themes"
+                    Return Utilities.SharedProperties.Instance.Themes
+                Case "discordclient"
+                    Return Utilities.SharedProperties.Instance.DiscordClient
+                Case "httpfileserver"
+                    Return Utilities.SharedProperties.Instance.HTTPFileServer
+                Case "shownotification"
+                    Return Utilities.SharedProperties.Instance.ShowNotification
+                Case "api"
+                    Return Utilities.SharedProperties.Instance.APIPipe
+                Case "debugmode"
+                    Return Utilities.DebugMode.Instance
             End Select
             Return Nothing
         End Function
 
         Public Function GetAvailableReferencesNames() As String() Implements Aqua.IReferenceBinder.GetAvailableReferencesNames
-            Return New String() {"Player", "Playlist", "HotkeyManager", "Library", "SharedProperties", "SettingsBrowser", "NamedPipeManager", "Themes", "YoutubeDL"}
+            Return New String() {"Player", "Playlist", "HotkeyManager", "Library", "SharedProperties", "SettingsBrowser", "NamedPipeManager", "Themes", "YoutubeDL", "TTS",
+                "CustomPlaylists", "RecommendedPlaylists", "MemoryManager", "SleepTimer", "Themes", "DiscordClient", "HTTPFileServer", "ShowNotification", "API", "DebugMode"}
         End Function
     End Class
 End Namespace

@@ -1,0 +1,101 @@
+﻿<!--
+Requires:
+PAGE_TITLE
+-->
+<html>
+  <head>
+    <meta charset="utf-16">
+    <title>PAGE_TITLE</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+      html * {
+        background-color: #121212;
+        font-family: Verdana;
+        color: white;
+      }
+
+      body * {
+        background-color: transparent;
+      }
+
+      #namanyay-search-btn {
+        background: #FFC107;
+        color: white;
+        font: 'trebuchet ms', trebuchet;
+        padding: 10px 20px;
+        border-radius: 0 10px 10px 0;
+        -moz-border-radius: 0 10px 10px 0;
+        -webkit-border-radius: 0 10px 10px 0;
+        -o-border-radius: 0 10px 10px 0;
+        border: 0 none;
+        font-weight: bold;
+      }
+
+      #namanyay-search-box {
+        background: #363636;
+        padding: 10px;
+        border-radius: 10px 0 0 10px;
+        -moz-border-radius: 10px 0 0 10px;
+        -webkit-border-radius: 10px 0 0 10px;
+        -o-border-radius: 10px 0 0 10px;
+        border: 0 none;
+        width: 280px;
+      }
+
+      table {
+        width: 100%;
+        font-family: Tahoma, Geneva, sans-serif;
+      }
+
+      table td {
+        padding: 15px;
+      }
+
+      table th {
+        padding: 10px;
+      }
+
+      table thead td {
+        background-color: #54585d;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 13px;
+        border: 1px solid #54585d;
+      }
+
+      table tbody td {
+        background-color: #363636EE;
+        color: #FFFFFF;
+        border: 1px solid #464646;
+      }
+
+      table tbody tr {
+        background-color: #f9fafb;
+      }
+
+      table tbody tr:nth-child(odd) {
+        background-color: #363636EE;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="z-index: 0;position: absolute;">
+      <img style="float: right;height: 100%;width: 100%;" src="/logo.png" />
+      <!--filter: blur(5px); -webkit-filter: blur(5px);-->
+    </div>
+    <div style="z-index: 1;position: absolute;">
+      <b style="font-size: 4em;position:relative;left: 25;top: 200;">QuickBeat</b>
+      <form style="position:relative;left: 25;top:250;" id="searchthis" action="/search" style="display:inline;" method="get">
+        <!-- Search box for blogger by Namanyay Goel //-->
+        <input id="namanyay-search-box" name="q" size="40" type="text" placeholder="  What are you looking for ? " />
+        <input id="namanyay-search-btn" value="Search" type="submit" />
+      </form>
+      <table style="position:relative;left: 25;top:260">
+        <tr>
+          <th>Parent</th>
+          <th>Name</th>
+        </tr>        
+      </table>
+    </div>
+  </body>
+</html>

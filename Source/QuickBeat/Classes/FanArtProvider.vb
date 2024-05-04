@@ -106,38 +106,16 @@ Namespace Utilities
 
             Dim BgURL = Artist.List.AImagesrtistbackground?.FirstOrDefault?.Url
             If Not String.IsNullOrEmpty(BgURL) Then
-                Using WC As New Net.WebClient()
-                    Try
-                        Dim Data = Await WC.DownloadDataTaskAsync(BgURL)
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.StreamSource = New IO.MemoryStream(Data)
-                        BI.EndInit()
-                        Background = BI
-                    Catch ex As Exception
-                        Utilities.DebugMode.Instance.Log(Of FanArtProvider)(ex.ToString)
-                        FallBack(False)
-                    End Try
-                End Using
+                Background = New Uri(BgURL).ToBitmapSource
+                If Background Is Nothing Then FallBack(False)
             Else
                 FallBack(False, True)
             End If
 
             Dim ThumbURL = Artist.List.Artistthumb?.FirstOrDefault?.Url
             If Not String.IsNullOrEmpty(ThumbURL) Then
-                Using WC As New Net.WebClient()
-                    Try
-                        Dim Data = Await WC.DownloadDataTaskAsync(ThumbURL)
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.StreamSource = New IO.MemoryStream(Data)
-                        BI.EndInit()
-                        Thumb = BI
-                    Catch ex As Exception
-                        Utilities.DebugMode.Instance.Log(Of FanArtProvider)(ex.ToString)
-                        FallBack(Background:=False)
-                    End Try
-                End Using
+                Thumb = New Uri(ThumbURL).ToBitmapSource
+                If Thumb Is Nothing Then FallBack(Background:=False)
             Else
                 FallBack(True, False)
             End If

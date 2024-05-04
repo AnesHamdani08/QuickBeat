@@ -17,6 +17,7 @@
             SecondaryRegionColor="#DD58D6"
             ThirdlyRegionBrush="#9336B4"
             ThirdlyRegionColor="#9336B4"
+            VioletBrush="Transparent"
             >
         </hc:ColorPaletteResources>
     </ResourceDictionary.MergedDictionaries>

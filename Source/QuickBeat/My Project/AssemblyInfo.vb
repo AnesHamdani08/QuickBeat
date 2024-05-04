@@ -12,10 +12,10 @@ Imports System.Windows
 ' Review the values of the assembly attributes
 
 <Assembly: AssemblyTitle("QuickBeat")>
-<Assembly: AssemblyDescription("A Generale Use Music Player and Manager")>
+<Assembly: AssemblyDescription("A General Use Music Player and Manager")>
 <Assembly: AssemblyCompany("Anes08")>
 <Assembly: AssemblyProduct("QuickBeat")>
-<Assembly: AssemblyCopyright("Copyright ©  2022 Anes08")>
+<Assembly: AssemblyCopyright("Copyright ©  2024 Anes08")>
 <Assembly: AssemblyTrademark("")>
 <Assembly: ComVisible(false)>
 
@@ -55,5 +55,5 @@ Imports System.Windows
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.1.0.14")>
-<Assembly: AssemblyFileVersion("1.1.0.14")>
+<Assembly: AssemblyVersion("1.6.0.1")>
+<Assembly: AssemblyFileVersion("1.6.0.1")>

@@ -1,0 +1,90 @@
+﻿<!--
+Requires:
+PAGE_TITLE,ROOT_URL,ROOT_NAME
+-->
+<html>
+  <head>
+    <meta charset="utf-16">
+    <title>PAGE_TITLE</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+      html * {
+        background-color: #121212;
+        font-family: Verdana;
+        color: white;
+      }
+
+      .topnav {
+        overflow: hidden;
+        background-color: #333;
+      }
+
+      .topnav p {
+        float: left;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 0px 16px;
+        text-decoration: none;
+        font-size: 17px;
+        background-color: #333;
+      }
+
+      .topnav a {
+        float: left;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+        font-size: 17px;
+        background-color: #333;
+      }
+
+      .topnav a:hover {
+        background-color: #ddd;
+        color: black;
+      }
+
+      .topnav a.active {
+        background-color: #FFC107;
+        color: white;
+      }
+
+      table {
+        border-collapse: collapse;
+        font-family: Tahoma, Geneva, sans-serif;
+      }
+
+      table td {
+        padding: 15px;
+      }
+
+      table thead td {
+        background-color: #54585d;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 13px;
+        border: 1px solid #54585d;
+      }
+
+      table tbody td {
+        color: #636363;
+        border: 1px solid #dddfe1;
+      }
+
+      table tbody tr {
+        background-color: #f9fafb;
+      }
+
+      table tbody tr:nth-child(odd) {
+        background-color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topnav">
+      <p>QuickBeat |</p>
+      <a class="active" href="/">Home</a>
+      <a href="ROOT_URL">ROOT_NAME</a>
+    </div>
+  </body>
+</html>

@@ -27,6 +27,44 @@ Namespace Classes
             MustOverride Sub Dispose()
         End Class
 
+        Public Class Debug
+            Inherits Theme
+
+            Private _Name As String
+            Public Overrides Property Name As String
+                Get
+                    Return _Name
+                End Get
+                Set(value As String)
+                    _Name = value
+                    OnPresetChanged()
+                End Set
+            End Property
+
+            Private _ColorPallete As Color() = New Color() {Color.FromRgb(255, 0, 0), Color.FromRgb(0, 255, 0), Color.FromRgb(0, 0, 255)}
+            Public Overrides Property ColorPallete As Color()
+                Get
+                    Return _ColorPallete
+                End Get
+                Set(value As Color())
+                    _ColorPallete = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _Preset As New HandyControl.Themes.PresetManager.Preset() With {.AssemblyName = Reflection.Assembly.GetExecutingAssembly.GetName.Name, .ColorPreset = "Resources\Themes\Debug"}
+
+            Public Overrides Sub OnMediaChanged(media As Player.Metadata)
+            End Sub
+
+            Public Overrides Function GetPreset() As HandyControl.Themes.PresetManager.Preset
+                Return _Preset
+            End Function
+
+            Public Overrides Sub Dispose()
+            End Sub
+        End Class
+
         Public Class [Default]
             Inherits Theme
 
@@ -53,6 +91,44 @@ Namespace Classes
             End Property
 
             Private _Preset As New HandyControl.Themes.PresetManager.Preset() With {.AssemblyName = Reflection.Assembly.GetExecutingAssembly.GetName.Name, .ColorPreset = "Resources\Themes\Default"}
+
+            Public Overrides Sub OnMediaChanged(media As Player.Metadata)
+            End Sub
+
+            Public Overrides Function GetPreset() As HandyControl.Themes.PresetManager.Preset
+                Return _Preset
+            End Function
+
+            Public Overrides Sub Dispose()
+            End Sub
+        End Class
+
+        Public Class Elegance
+            Inherits Theme
+
+            Private _Name As String
+            Public Overrides Property Name As String
+                Get
+                    Return _Name
+                End Get
+                Set(value As String)
+                    _Name = value
+                    OnPresetChanged()
+                End Set
+            End Property
+
+            Private _ColorPallete As Color() = New Color() {Colors.LimeGreen}
+            Public Overrides Property ColorPallete As Color()
+                Get
+                    Return _ColorPallete
+                End Get
+                Set(value As Color())
+                    _ColorPallete = value
+                    OnPropertyChanged()
+                End Set
+            End Property
+
+            Private _Preset As New HandyControl.Themes.PresetManager.Preset() With {.AssemblyName = Reflection.Assembly.GetExecutingAssembly.GetName.Name, .ColorPreset = "Resources\Themes\Elegance"}
 
             Public Overrides Sub OnMediaChanged(media As Player.Metadata)
             End Sub

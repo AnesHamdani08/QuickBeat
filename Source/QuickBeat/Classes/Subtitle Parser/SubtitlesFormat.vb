@@ -54,6 +54,11 @@ Namespace SubtitlesParser.Classes
             .Name = "YoutubeXml",
             .Extension = "\.xml"
             }
+        Public Shared LRCFormat As New SubtitlesFormat With
+        {
+            .Name = "LyRiCs",
+            .Extension = "\.lrc"
+            }
 
         Public Shared SupportedSubtitlesFormats As New List(Of SubtitlesFormat)(
             {
@@ -63,10 +68,15 @@ Namespace SubtitlesParser.Classes
                 SubStationAlphaFormat,
                 TtmlFormat,
                 WebVttFormat,
-                YoutubeXmlFormat
+                YoutubeXmlFormat,
+                LRCFormat
             })
 
-        Public Shared SupportedSubtitlesFormatesFileFilter As String = "Supported Formats|*.srt;*.sub;*.sbv;*.ssa;*.ass;*.ttml;*.vtt|All Files|*.*"
+        Public Shared SupportedSubtitlesFormatsFileFilter As String = "Supported Formats|*.srt;*.sub;*.sbv;*.ssa;*.ass;*.ttml;*.vtt;*.xml;*.lrc|All Files|*.*"
+        ''' <summary>
+        ''' Semi-column separated
+        ''' </summary>
+        Public Shared SupportedSubtitlesFormatsSCSV As String = ".srt;.sub;.sbv;.ssa;.ass;.ttml;.vtt;.xml;.lrc"
     End Class
 
 

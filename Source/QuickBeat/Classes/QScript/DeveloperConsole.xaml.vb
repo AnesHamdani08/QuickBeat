@@ -43,6 +43,9 @@ Namespace QScript
             End Set
         End Property
 
+        Private _BestSuggestion As String
+        Private _LoadedTypes As IEnumerable(Of Type)
+
         Property UIPalette As New Palette With {.Keyword = Brushes.LightBlue, .Method = Brushes.White, .String = Brushes.Orange, .Type = Brushes.DodgerBlue, .Argument = Brushes.White, .Text = Brushes.White, .Enum = Brushes.GreenYellow, .[Error] = Brushes.Red}
         Property MainFontFamily As FontFamily = New FontFamily("Courier New")
         Property AvailableMethods As New Dictionary(Of String, Reflection.MethodInfo())
@@ -59,10 +62,19 @@ Namespace QScript
         Private Async Sub ConsoleIn_TB_KeyUp(sender As Object, e As KeyEventArgs) Handles ConsoleIn_TB.KeyUp
             If e.Key = Key.Enter Then
                 Try
-                    Dim Result = (Await Aqua.ExecuteProxy(ConsoleIn_TB.Text))?.ToString
+                    If ConsoleIn_TB.Text.ToLower = "cls" Then
+                        ConsoleOut_TB.Clear()
+                        ConsoleIn_TB.Clear()
+                        Return
+                    End If
+                    Dim sInput = ConsoleIn_TB.Text.Split("'")
+                    Dim Result = Await Aqua.ExecuteProxy(sInput.FirstOrDefault)
                     ConsoleIn_TB.Clear()
-                    If Result Is Nothing Then Exit Try
-                    ConsoleOut_TB.AppendText(Result & Environment.NewLine)
+                    If sInput.Length > 1 Then
+                        ConsoleOut_TB.AppendText(Aqua.ObjectToString(Result, sInput(1)) & Environment.NewLine)
+                    Else
+                        ConsoleOut_TB.AppendText(Aqua.ObjectToString(Result) & Environment.NewLine)
+                    End If
                 Catch ex As Exception
                     Utilities.DebugMode.Instance.Log(Of DeveloperConsole)(ex.ToString)
                 End Try
@@ -74,6 +86,11 @@ Namespace QScript
         End Sub
 
         Private Sub DeveloperConsole_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
+            If IDE_FileDirty Then
+                If HandyControl.Controls.MessageBox.Ask(Utilities.ResourceResolver.Strings.UNSAVED_SAVENOW) = MessageBoxResult.OK Then
+                    MenuItem_File_Save_Click(sender, New RoutedEventArgs())
+                End If
+            End If
             If Not AllowClosing Then
                 Hide()
                 e.Cancel = True
@@ -101,18 +118,259 @@ Namespace QScript
         End Sub
 
         Private Sub ConsoleIn_TB_TextChanged(sender As Object, e As TextChangedEventArgs) Handles ConsoleIn_TB.TextChanged
-            PrepareAndGenerateSuggestions(ConsoleIn_TB.Text)
+            'PrepareAndGenerateSuggestions(ConsoleIn_TB.Text)
+            SuggestionsControls.Clear()
+            _BestSuggestion = ""
+            If String.IsNullOrWhiteSpace(ConsoleIn_TB.Text) Then
+                Dim AllRefs = Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                _BestSuggestion = AllRefs.FirstOrDefault()
+                Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
+                _TB.Inlines.Add(New Run With {.Text = "Aqua", .Foreground = UIPalette.Type})
+                SuggestionsControls.Add(_TB)
+                For Each ref In AllRefs
+                    Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                    TB.Inlines.Add(New Run With {.Text = "#", .Foreground = UIPalette.Keyword})
+                    TB.Inlines.Add(New Run With {.Text = ref, .Foreground = UIPalette.Text})
+                    TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                    TB.Inlines.Add(New Run With {.Text = If(Aqua.ReferenceBinder?.GetReference(ref)?.GetType.Name, "?"), .Foreground = UIPalette.Type})
+                    SuggestionsControls.Add(TB)
+                Next
+                Dim WEnu = Aqua.Workspace.GetEnumerator()
+                Do While WEnu.MoveNext
+                    If WEnu.Current.Value Is Nothing Then
+                        Continue Do
+                    End If
+                    Dim vType = WEnu.Current.Value.GetType
+                    Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                    TB.Inlines.Add(New Run With {.Text = WEnu.Current.Key, .Foreground = UIPalette.Text})
+                    TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                    TB.Inlines.Add(New Run With {.Text = vType.Name, .Foreground = UIPalette.Type})
+                    If vType.IsGenericType Then
+                        TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
+                        TB.Inlines.Add(New Run With {.Text = "Of ", .Foreground = UIPalette.Keyword})
+                        For Each genArg In vType.GetGenericArguments
+                            TB.Inlines.Add(New Run With {.Text = genArg.Name, .Foreground = UIPalette.Type})
+                        Next
+                        TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
+                    End If
+                    SuggestionsControls.Add(TB)
+                Loop
+                Return
+            End If
+            Dim sCom = ConsoleIn_TB.Text.Split(" ")
+            Select Case sCom.Length
+                Case 1
+                    If "Aqua".StartsWith(sCom.FirstOrDefault) Then
+                        _BestSuggestion = "Aqua"
+                        Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
+                        _TB.Inlines.Add(New Run With {.Text = "Aqua", .Foreground = UIPalette.Type})
+                        SuggestionsControls.Add(_TB)
+                    End If
+                    Dim AllRefs = Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                    For Each ref In AllRefs
+                        If sCom.FirstOrDefault <> "#" Then
+                            If Not ref.StartsWith(sCom.FirstOrDefault?.Substring(1)) Then Continue For
+                        End If
+                        If _BestSuggestion = "" Then _BestSuggestion = ref
+                        Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                        TB.Inlines.Add(New Run With {.Text = "#", .Foreground = UIPalette.Keyword})
+                        TB.Inlines.Add(New Run With {.Text = ref, .Foreground = UIPalette.Text})
+                        TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                        TB.Inlines.Add(New Run With {.Text = If(Aqua.ReferenceBinder?.GetReference(ref)?.GetType.Name, "?"), .Foreground = UIPalette.Type})
+                        SuggestionsControls.Add(TB)
+                    Next
+                    Dim WEnu = Aqua.Workspace.GetEnumerator()
+                    Do While WEnu.MoveNext
+                        If WEnu.Current.Value Is Nothing Then
+                            Continue Do
+                        End If
+                        If Not WEnu.Current.Key?.StartsWith(sCom.FirstOrDefault) Then Continue Do
+                        Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                        TB.Inlines.Add(New Run With {.Text = WEnu.Current.Key, .Foreground = UIPalette.Text})
+                        TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                        TB.Inlines.Add(New Run With {.Text = WEnu.Current.Value.GetType.Name, .Foreground = UIPalette.Type})
+                        SuggestionsControls.Add(TB)
+                    Loop
+                Case 2
+                    _BestSuggestion = Aqua.Operators.FirstOrDefault
+                    For Each op In Aqua.Operators
+                        Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Keyword}
+                        TB.Text = op
+                        SuggestionsControls.Add(TB)
+                    Next
+                Case Is > 2
+                    If sCom(1) = "As" Then
+                        'TODO fix execution
+                        Try
+                            Dim sType = sCom(2).TrimStart(""""c).TrimEnd(""""c).Split(".")
+                            If _LoadedTypes Is Nothing Then _LoadedTypes = Reflection.Assembly.GetAssembly(GetType(System.String)).GetTypes.Where(Function(k) k.IsClass AndAlso Not k.IsAbstract AndAlso k.IsPublic).OrderBy(Of String)(Function(k) k.FullName.Split(".").FirstOrDefault)
+                            If String.IsNullOrEmpty(sType.FirstOrDefault) Then
+                                For Each typ In _LoadedTypes
+                                    Dim ctors = typ.GetConstructors
+                                    Dim xTB As New TextBlock With {.FontFamily = MainFontFamily}
+                                    Dim sTypFName = typ.FullName.Split(".")
+                                    xTB.Inlines.Add(New Run With {.Text = String.Join(".", sTypFName.Take(sTypFName.Length - 1)) & ".", .Foreground = UIPalette.Text})
+                                    xTB.Inlines.Add(New Run With {.Text = sTypFName.LastOrDefault, .Foreground = UIPalette.Type})
+                                    If ctors.Length = 1 Then
+                                        xTB.Inlines.Add(New Run With {.Text = "()", .Foreground = UIPalette.Text})
+                                    End If
+                                    SuggestionsControls.Add(xTB)
+                                    If ctors.Length > 1 Then 'has multi. ctors
+                                        For Each ctor In ctors
+                                            Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                                            TB.Inlines.Add(New Run With {.Text = "Sub ", .Foreground = UIPalette.Keyword})
+                                            TB.Inlines.Add(New Run With {.Text = "New", .Foreground = UIPalette.Method})
+                                            TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
+                                            Dim _i = 0
+                                            For Each param In ctor.GetParameters
+                                                If _i > 0 Then TB.Inlines.Add(New Run With {.Text = ", ", .Foreground = UIPalette.Text})
+                                                If param.IsOptional Then TB.Inlines.Add(New Run With {.Text = "Optional ", .Foreground = UIPalette.Keyword})
+                                                TB.Inlines.Add(New Run With {.Text = param.Name, .Foreground = UIPalette.Text})
+                                                TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                                TB.Inlines.Add(New Run With {.Text = param.ParameterType.Name, .Foreground = UIPalette.Type})
+                                                _i += 1
+                                            Next
+                                            TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
+                                            SuggestionsControls.Add(TB)
+                                        Next
+                                    End If
+                                Next
+                            Else
+                                Dim fdTypes = _LoadedTypes.Where(Function(k) k.FullName.ToLower.StartsWith(sCom(2).TrimStart(""""c).TrimEnd(""""c).ToLower))
+                                For Each sdType In fdTypes
+                                    Dim ctors = sdType.GetConstructors
+                                    Dim xTB As New TextBlock With {.FontFamily = MainFontFamily}
+                                    Dim sTypFName = sdType.FullName.Split(".")
+                                    xTB.Inlines.Add(New Run With {.Text = String.Join(".", sTypFName.Take(sTypFName.Length - 1)) & ".", .Foreground = UIPalette.Text})
+                                    xTB.Inlines.Add(New Run With {.Text = sTypFName.LastOrDefault, .Foreground = UIPalette.Type})
+                                    If ctors.Length = 1 Then
+                                        xTB.Inlines.Add(New Run With {.Text = "()", .Foreground = UIPalette.Text})
+                                    End If
+                                    SuggestionsControls.Add(xTB)
+                                    If ctors.Length > 1 Then 'has multi. ctors
+                                        For Each ctor In ctors
+                                            Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                                            TB.Inlines.Add(New Run With {.Text = "Sub ", .Foreground = UIPalette.Keyword})
+                                            TB.Inlines.Add(New Run With {.Text = "New", .Foreground = UIPalette.Method})
+                                            TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
+                                            Dim _i = 0
+                                            For Each param In ctor.GetParameters
+                                                If _i > 0 Then TB.Inlines.Add(New Run With {.Text = ", ", .Foreground = UIPalette.Text})
+                                                If param.IsOptional Then TB.Inlines.Add(New Run With {.Text = "Optional ", .Foreground = UIPalette.Keyword})
+                                                TB.Inlines.Add(New Run With {.Text = param.Name, .Foreground = UIPalette.Text})
+                                                TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                                TB.Inlines.Add(New Run With {.Text = param.ParameterType.Name, .Foreground = UIPalette.Type})
+                                                _i += 1
+                                            Next
+                                            TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
+                                            SuggestionsControls.Add(TB)
+                                        Next
+                                    End If
+                                    Dim nTypes = sdType?.GetNestedTypes()
+                                    If nTypes IsNot Nothing Then
+                                        For Each typ In nTypes
+                                            Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                                            Dim sFNameTyp = typ.FullName.Split(".")
+                                            TB.Inlines.Add(New Run With {.Text = String.Join(".", sFNameTyp.Take(sFNameTyp.Length - 1)) & ".", .Foreground = UIPalette.Text})
+                                            TB.Inlines.Add(New Run With {.Text = typ.Name, .Foreground = UIPalette.Type})
+                                        Next
+                                    End If
+                                Next
+                            End If
+                        Catch ex As Exception
+
+                        End Try
+                    Else
+                        Try
+                        Dim Res = Aqua.FormatParameter(sCom(0))
+                        If String.IsNullOrWhiteSpace(sCom(2)) Then
+                            Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Error}
+                            TB.Inlines.Add(New Run("Expected """))
+                            SuggestionsControls.Add(TB)
+                            Return
+                        End If
+                        Dim Com = Aqua.FormatParameter(sCom(2))
+                        If TypeOf Com IsNot String Then
+                            Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Error}
+                            TB.Inlines.Add(New Run("Expected """))
+                            SuggestionsControls.Add(TB)
+                            Return
+                        End If
+                            Dim tRes = Res?.GetType
+                            If tRes IsNot Nothing Then
+                                Dim props = If(String.IsNullOrWhiteSpace(Com), tRes.GetProperties, tRes.GetProperties.Where(Function(k) k.Name.ToLower.StartsWith(Com.ToLower)))
+                                _BestSuggestion = props.FirstOrDefault?.Name
+                                For Each prop In props
+                                    Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                                    If prop.CanRead AndAlso prop.CanWrite Then
+                                        TB.Inlines.Add(New Run With {.Text = "Property ", .Foreground = UIPalette.Keyword})
+                                    ElseIf prop.CanRead AndAlso Not prop.CanWrite Then
+                                        TB.Inlines.Add(New Run With {.Text = "ReadOnly Property ", .Foreground = UIPalette.Keyword})
+                                    ElseIf Not prop.CanRead AndAlso prop.CanWrite Then
+                                        TB.Inlines.Add(New Run With {.Text = "WriteOnly Property ", .Foreground = UIPalette.Keyword})
+                                    End If
+                                    TB.Inlines.Add(New Run With {.Text = prop.Name, .Foreground = UIPalette.Method})
+                                    TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
+                                    Dim _i = 0
+                                    For Each param In prop.GetIndexParameters
+                                        If _i > 0 Then TB.Inlines.Add(New Run With {.Text = ", ", .Foreground = UIPalette.Text})
+                                        If param.IsOptional Then TB.Inlines.Add(New Run With {.Text = "Optional ", .Foreground = UIPalette.Keyword})
+                                        TB.Inlines.Add(New Run With {.Text = param.Name, .Foreground = UIPalette.Text})
+                                        TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                        TB.Inlines.Add(New Run With {.Text = param.ParameterType.Name, .Foreground = UIPalette.Type})
+                                        _i += 1
+                                    Next
+                                    TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
+                                    TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                    TB.Inlines.Add(New Run With {.Text = prop.PropertyType.Name, .Foreground = UIPalette.Type})
+                                    SuggestionsControls.Add(TB)
+                                Next
+                                Dim mets = If(String.IsNullOrWhiteSpace(Com), tRes.GetMethods, tRes.GetMethods.Where(Function(k) k.Name.ToLower.StartsWith(Com.ToLower)))
+                                If String.IsNullOrEmpty(_BestSuggestion) Then _BestSuggestion = mets.FirstOrDefault?.Name
+                                For Each met In If(String.IsNullOrWhiteSpace(Com), tRes.GetMethods, tRes.GetMethods.Where(Function(k) k.Name.ToLower.StartsWith(Com.ToLower)))
+                                    If met.Name.StartsWith("get_") OrElse met.Name.StartsWith("set_") Then Continue For 'skip property
+                                    Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
+                                    TB.Inlines.Add(New Run With {.Text = If(met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
+                                    TB.Inlines.Add(New Run With {.Text = met.Name, .Foreground = UIPalette.Method})
+                                    TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
+                                    Dim _i = 0
+                                    For Each param In met.GetParameters
+                                        If _i > 0 Then TB.Inlines.Add(New Run With {.Text = ", ", .Foreground = UIPalette.Text})
+                                        If param.IsOptional Then TB.Inlines.Add(New Run With {.Text = "Optional ", .Foreground = UIPalette.Keyword})
+                                        TB.Inlines.Add(New Run With {.Text = param.Name, .Foreground = UIPalette.Text})
+                                        TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                        TB.Inlines.Add(New Run With {.Text = param.ParameterType.Name, .Foreground = UIPalette.Type})
+                                        _i += 1
+                                    Next
+                                    TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
+                                    If met.ReturnType IsNot GetType(System.Void) Then
+                                        TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
+                                        TB.Inlines.Add(New Run With {.Text = met.ReturnType.Name, .Foreground = UIPalette.Type})
+                                    End If
+                                    SuggestionsControls.Add(TB)
+                                Next
+                            End If
+                        Catch ex As Aqua.Exceptions.CompilerException
+                        Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Error}
+                        TB.Inlines.Add(New Run($"<{ex.Type.ToString}> {ex.Message}"))
+                        SuggestionsControls.Add(TB)
+                    End Try
+                    End if
+            End Select
         End Sub
 
         Private Sub PrepareAndGenerateSuggestions(command As String)
+            _BestSuggestion = ""
             SuggestionsControls.Clear()
             Dim sCom = command.Split(New Char() {" "}, StringSplitOptions.RemoveEmptyEntries)
             Select Case sCom.Length
-                Case 0 'Generate all available references and variables
+                Case 0 'Generate all available references and variables                    
+                    Dim AllRefs = Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                    _BestSuggestion = AllRefs.FirstOrDefault()
                     Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                     _TB.Inlines.Add(New Run With {.Text = "Aqua", .Foreground = UIPalette.Type})
                     SuggestionsControls.Add(_TB)
-                    For Each ref In Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                    For Each ref In AllRefs
                         Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
                         TB.Inlines.Add(New Run With {.Text = "#", .Foreground = UIPalette.Keyword})
                         TB.Inlines.Add(New Run With {.Text = ref, .Foreground = UIPalette.Text})
@@ -131,16 +389,19 @@ Namespace QScript
                         TB.Inlines.Add(New Run With {.Text = WEnu.Current.Value.GetType.Name, .Foreground = UIPalette.Type})
                         SuggestionsControls.Add(TB)
                     Loop
-                Case 1 'Generate specific reference or variable
+                Case 1 'Generate specific reference or variable                                        
                     If "Aqua".StartsWith(sCom.FirstOrDefault) Then
+                        _BestSuggestion = "Aqua"
                         Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                         _TB.Inlines.Add(New Run With {.Text = "Aqua", .Foreground = UIPalette.Type})
                         SuggestionsControls.Add(_TB)
                     End If
-                    For Each ref In Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                    Dim AllRefs = Aqua.ReferenceBinder?.GetAvailableReferencesNames
+                    For Each ref In AllRefs
                         If sCom.FirstOrDefault <> "#" Then
                             If Not ref.StartsWith(sCom.FirstOrDefault?.Substring(1)) Then Continue For
                         End If
+                        If _BestSuggestion = "" Then _BestSuggestion = ref
                         Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
                         TB.Inlines.Add(New Run With {.Text = "#", .Foreground = UIPalette.Keyword})
                         TB.Inlines.Add(New Run With {.Text = ref, .Foreground = UIPalette.Text})
@@ -161,6 +422,7 @@ Namespace QScript
                         SuggestionsControls.Add(TB)
                     Loop
                 Case 2 'Generate operators
+                    _BestSuggestion = Aqua.Operators.FirstOrDefault
                     For Each op In Aqua.Operators
                         Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Keyword}
                         TB.Text = op
@@ -251,6 +513,7 @@ Namespace QScript
                             If Aqua.GetSetting("auto") Then
                                 Dim Met = AvailableMethods("Aqua").FirstOrDefault(Function(k) k.Name = sCom(2).Remove(0, 1).Remove(sCom(2).Length - 2, 1))
                                 If Met Is Nothing Then Return
+                                _BestSuggestion = Met.Name
                                 Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                                 _TB.Inlines.Add(New Run With {.Text = If(Met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
                                 _TB.Inlines.Add(New Run With {.Text = Met.Name, .Foreground = UIPalette.Method})
@@ -285,6 +548,7 @@ Namespace QScript
                                 End If
                             Else
                                 If sCom.Length = 4 Then
+                                    _BestSuggestion = "get"
                                     For Each op In New String() {"get", "set", "let", "method"}
                                         Dim TB As New TextBlock With {.FontFamily = MainFontFamily, .Foreground = UIPalette.Keyword}
                                         TB.Text = op
@@ -294,6 +558,7 @@ Namespace QScript
                                 If sCom.Length < 5 Then Return
                                 Dim Met = AvailableMethods("Aqua").FirstOrDefault(Function(k) k.Name = sCom(2).Remove(0, 1).Remove(sCom(2).Length - 2, 1))
                                 If Met IsNot Nothing Then
+                                    _BestSuggestion = Met.Name
                                     Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                                     _TB.Inlines.Add(New Run With {.Text = If(Met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
                                     _TB.Inlines.Add(New Run With {.Text = Met.Name, .Foreground = UIPalette.Method})
@@ -331,6 +596,7 @@ Namespace QScript
                             If Aqua.GetSetting("auto") Then
                                 Dim Met = If(Ref, Aqua.GetVariable(sCom.FirstOrDefault))?.GetType.GetMethods.FirstOrDefault(Function(k) k.Name = sCom(2).Remove(0, 1).Remove(sCom(2).Length - 2, 1))
                                 If Met IsNot Nothing Then
+                                    _BestSuggestion = Met.Name
                                     Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                                     _TB.Inlines.Add(New Run With {.Text = If(Met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
                                     _TB.Inlines.Add(New Run With {.Text = Met.Name, .Foreground = UIPalette.Method})
@@ -366,6 +632,7 @@ Namespace QScript
                                 If sCom.Length < 5 Then Return
                                 Dim Met = If(Ref, Aqua.GetVariable(sCom.FirstOrDefault))?.GetType.GetMethods.FirstOrDefault(Function(k) k.Name = sCom(2).Remove(0, 1).Remove(sCom(2).Length - 2, 1))
                                 If Met IsNot Nothing Then
+                                    _BestSuggestion = Met.Name
                                     Dim _TB As New TextBlock With {.FontFamily = MainFontFamily}
                                     _TB.Inlines.Add(New Run With {.Text = If(Met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
                                     _TB.Inlines.Add(New Run With {.Text = Met.Name, .Foreground = UIPalette.Method})
@@ -405,15 +672,16 @@ Namespace QScript
         Private Sub GenerateSuggestions(query As String, method As Reflection.MethodInfo())
             SuggestionsControls.Clear()
             If method Is Nothing Then Return
-            Dim _Mets = method.Where(Function(k) k.Name.StartsWith(query))
-            For Each _Met In _Mets
-                If _Met IsNot Nothing Then
+            Dim mets = method.Where(Function(k) k.Name.StartsWith(query))
+            _BestSuggestion = mets.FirstOrDefault?.Name
+            For Each met In mets
+                If met IsNot Nothing Then
                     Dim TB As New TextBlock With {.FontFamily = MainFontFamily}
-                    TB.Inlines.Add(New Run With {.Text = If(_Met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
-                    TB.Inlines.Add(New Run With {.Text = _Met.Name, .Foreground = UIPalette.Method})
+                    TB.Inlines.Add(New Run With {.Text = If(met.ReturnType Is GetType(System.Void), "Sub ", "Function "), .Foreground = UIPalette.Keyword})
+                    TB.Inlines.Add(New Run With {.Text = met.Name, .Foreground = UIPalette.Method})
                     TB.Inlines.Add(New Run With {.Text = "(", .Foreground = UIPalette.Text})
                     Dim _i = 0
-                    For Each param In _Met.GetParameters
+                    For Each param In met.GetParameters
                         If _i > 0 Then TB.Inlines.Add(New Run With {.Text = ", ", .Foreground = UIPalette.Text})
                         If param.IsOptional Then TB.Inlines.Add(New Run With {.Text = "Optional ", .Foreground = UIPalette.Keyword})
                         TB.Inlines.Add(New Run With {.Text = param.Name, .Foreground = UIPalette.Text})
@@ -422,17 +690,19 @@ Namespace QScript
                         _i += 1
                     Next
                     TB.Inlines.Add(New Run With {.Text = ")", .Foreground = UIPalette.Text})
-                    If _Met.ReturnType IsNot GetType(System.Void) Then
+                    If met.ReturnType IsNot GetType(System.Void) Then
                         TB.Inlines.Add(New Run With {.Text = " As ", .Foreground = UIPalette.Keyword})
-                        TB.Inlines.Add(New Run With {.Text = _Met.ReturnType.Name, .Foreground = UIPalette.Type})
+                        TB.Inlines.Add(New Run With {.Text = met.ReturnType.Name, .Foreground = UIPalette.Type})
                     End If
                     SuggestionsControls.Add(TB)
                 End If
             Next
         End Sub
+
         Private Sub LockMethod(method As Reflection.MethodInfo)
             LockedMethod = method
         End Sub
+
         Private Sub LockMethods(typename As String, methods As Reflection.MethodInfo())
             LockedMethods = New KeyValuePair(Of String, Reflection.MethodInfo())(typename, methods)
         End Sub
@@ -577,9 +847,12 @@ Namespace QScript
             End If
         End Sub
 
-        Private Sub MenuItem_File_Run_Click(sender As Object, e As RoutedEventArgs)
+        Private Async Sub MenuItem_File_Run_Click(sender As Object, e As RoutedEventArgs)
             Aqua.Reset()
-            Aqua.RunScriptProxy(IDE_FileText)
+            Dim r = Await Aqua.RunScriptProxy(IDE_FileText)
+            If r.Item1 Then
+                ConsoleOut_TB.AppendText(Environment.NewLine & r.Item2.ToString & Environment.NewLine)
+            End If
         End Sub
 
         Private Sub IDEIn_TB_TextChanged(sender As Object, e As TextChangedEventArgs) Handles IDEIn_TB.TextChanged
@@ -683,6 +956,22 @@ Namespace QScript
             Dim AddChange = ConsoleOut_TB_SV.Height + Change
             ConsoleOut_TB_SV.Height = If(AddChange > Me.Height / 2, Me.Height / 2, If(AddChange < 150, 150, AddChange))
         End Sub
+
+        Private Sub DeveloperConsole_PreviewKeyDown(sender As Object, e As KeyEventArgs) Handles Me.PreviewKeyDown
+            If e.Key = Key.Tab AndAlso SuggestionsControls.Count > 0 AndAlso _BestSuggestion <> "" Then
+                Dim sIn = ConsoleIn_TB.Text.Split(" ")
+                Dim xTBA = sIn.LastOrDefault.Replace("""", "").Replace("#", "")
+                Dim TBA = _BestSuggestion.Substring(xTBA.Length)
+                If ConsoleIn_TB.Text.EndsWith("""") Then
+                    ConsoleIn_TB.Text = ConsoleIn_TB.Text.TrimEnd("""") & String.Join("", TBA) & """" & Space(1)
+                Else
+                    ConsoleIn_TB.AppendText(TBA & If(sIn.LastOrDefault?.StartsWith(""""), """", "") & Space(1))
+                End If
+                ConsoleIn_TB.CaretIndex = ConsoleIn_TB.Text.Length
+                e.Handled = True
+            End If
+        End Sub
+
 #End Region
     End Class
 End Namespace

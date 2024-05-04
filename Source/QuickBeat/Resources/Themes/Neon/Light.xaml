@@ -16,6 +16,7 @@
             SecondaryRegionColor="#F6FA70"
             ThirdlyRegionBrush="#00DFA2"
             ThirdlyRegionColor="#00DFA2"
+            VioletBrush="Transparent"
             />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

@@ -80,10 +80,14 @@ Namespace SubtitlesParser.Classes.Parsers
                     End If
                 Next vttSubPart
 
-                Return items
-            Else
-                Throw New FormatException("Parsing as VTT returned no VTT part.")
-            End If
+				If items.Count = 0 Then
+					Throw New FormatException("Parsing as VTT returned no VTT part.")
+				Else
+					Return items
+				End If
+			Else
+				Throw New FormatException("Parsing as VTT returned no VTT part.")
+			End If
         End Function
 
         ''' <summary>

@@ -1,0 +1,60 @@
+﻿<UserControl x:Class="Controls.RandomizeGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:QuickBeat"
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="500">
+    <Grid x:Name="Grid_Main" Background="{DynamicResource RegionBrush}" IsEnabled="False">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.Resources>
+            <Style TargetType="Rectangle">
+                <Setter Property="Opacity" Value="0.3"/>
+                <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation To="1" Duration="0:0:0.25" DecelerationRatio="0.9" Storyboard.TargetProperty="Opacity">
+                                    <DoubleAnimation.EasingFunction>
+                                        <PowerEase Power="3" EasingMode="EaseInOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
+        <Rectangle x:Name="Rect_00" Tag="00" Grid.Row="0" Grid.Column="0" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_01" Tag="01" Grid.Row="0" Grid.Column="1" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_02" Tag="02" Grid.Row="0" Grid.Column="2" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_03" Tag="03" Grid.Row="0" Grid.Column="3" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+
+        <Rectangle x:Name="Rect_10" Tag="10" Grid.Row="1" Grid.Column="0" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_11" Tag="11" Grid.Row="1" Grid.Column="1" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_12" Tag="12" Grid.Row="1" Grid.Column="2" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_13" Tag="13" Grid.Row="1" Grid.Column="3" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+
+        <Rectangle x:Name="Rect_20" Tag="20" Grid.Row="2" Grid.Column="0" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_21" Tag="21" Grid.Row="2" Grid.Column="1" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_22" Tag="22" Grid.Row="2" Grid.Column="2" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_23" Tag="23" Grid.Row="2" Grid.Column="3" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+
+        <Rectangle x:Name="Rect_30" Tag="30" Grid.Row="3" Grid.Column="0" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_31" Tag="31" Grid.Row="3" Grid.Column="1" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_32" Tag="32" Grid.Row="3" Grid.Column="2" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+        <Rectangle x:Name="Rect_33" Tag="33" Grid.Row="3" Grid.Column="3" Fill="{DynamicResource PrimaryBrush}" RadiusX="10" RadiusY="10" Margin="2"/>
+    </Grid>
+</UserControl>

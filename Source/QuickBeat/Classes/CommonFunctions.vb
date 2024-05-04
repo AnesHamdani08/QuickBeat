@@ -12,7 +12,278 @@ Namespace Utilities
 
         'windows message id for hotkey
         Public Const WM_HOTKEY_MSG_ID = &H312
+#Region "File Associations"
+        '----------Imported directly from AUDX-------------------
+        ' Create the new file association
+        '
+        ' Extension is the extension to be registered (eg ".cad"
+        ' ClassName is the name of the associated class (eg "CADDoc")
+        ' Description is the textual description (eg "CAD Document"
+        ' ExeProgram is the app that manages that extension (eg "c:\Cad\MyCad.exe")
 
+        <System.Runtime.InteropServices.DllImport("shell32.dll")> Sub _
+     SHChangeNotify(ByVal wEventId As Integer, ByVal uFlags As Integer, ByVal dwItem1 As Integer, ByVal dwItem2 As Integer)
+        End Sub
+
+        ''' <summary>
+        ''' Create the new file association
+        ''' </summary>
+        ''' <param name="extension">Extension is the extension to be registered (eg ".cad")</param>
+        ''' <param name="className">ClassName is the name of the associated class (eg "CADDoc")</param>
+        ''' <param name="description">Description is the textual description (eg "CAD Document"</param>
+        ''' <param name="exeProgram">ExeProgram is the app that manages that extension (eg "c:\Cad\MyCad.exe")</param>
+        ''' <returns></returns>
+        Public Function CreateFileAssociation(ByVal extension As String,
+    ByVal className As String, ByVal description As String,
+    ByVal exeProgram As String) As Exception
+            Const SHCNE_ASSOCCHANGED = &H8000000
+            Const SHCNF_IDLIST = 0
+
+            ' ensure that there is a leading dot
+            If extension.Substring(0, 1) <> "." Then
+                extension = "." & extension
+            End If
+
+            Dim key1, key2, key3 As Microsoft.Win32.RegistryKey
+            Try
+                ' create a value for this key that contains the classname
+                key1 = Microsoft.Win32.Registry.ClassesRoot.CreateSubKey(extension)
+                key1.SetValue("", className)
+                ' create a new key for the Class name
+                key2 = Microsoft.Win32.Registry.ClassesRoot.CreateSubKey(className)
+                key2.SetValue("", description)
+                ' associate the program to open the files with this extension
+                key3 = Microsoft.Win32.Registry.ClassesRoot.CreateSubKey(className &
+            "\Shell\Open\Command")
+                key3.SetValue("", exeProgram & " ""%1""")
+            Catch ex As Exception
+                Return ex
+            Finally
+#Disable Warning
+                If Not key1 Is Nothing Then key1.Close()
+                If Not key2 Is Nothing Then key2.Close()
+                If Not key3 Is Nothing Then key3.Close()
+#Enable Warning
+            End Try
+
+            ' notify Windows that file associations have changed
+            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0)
+            Return Nothing
+        End Function
+        ''' <summary>
+        ''' Delete the exisiting file association
+        ''' </summary>
+        ''' <param name="extension">Extension is the extension to be registered (eg ".cad")</param>
+        ''' <param name="className">ClassName is the name of the associated class (eg "CADDoc")</param>        
+        ''' <returns></returns>
+        Public Function DeleteFileAssociation(ByVal extension As String,
+   ByVal className As String) As Exception
+            Const SHCNE_ASSOCCHANGED = &H8000000
+            Const SHCNF_IDLIST = 0
+
+            ' ensure that there is a leading dot
+            If extension.Substring(0, 1) <> "." Then
+                extension = extension.Insert(0, ".")
+            End If
+            Try
+                ' delete the key for the Class name
+                Microsoft.Win32.Registry.ClassesRoot.DeleteSubKeyTree(className)
+            Catch ex As Exception
+                Return ex
+            End Try
+
+            ' notify Windows that file associations have changed
+            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0)
+            Return Nothing
+        End Function
+        ''' <summary>
+        ''' Check for the file association
+        ''' </summary>
+        ''' <param name="extension">Extension is the extension to be registered (eg ".cad")</param>
+        ''' <param name="className">ClassName is the name of the associated class (eg "CADDoc")</param>        
+        ''' <param name="exeProgram">ExeProgram is the app that manages that extension (eg "c:\Cad\MyCad.exe")</param>
+        ''' <returns></returns>
+        Public Function CheckFileAssociation(ByVal extension As String,
+    ByVal className As String, ByVal exeProgram As String) As Boolean
+
+            ' ensure that there is a leading dot
+            If extension.Substring(0, 1) <> "." Then
+                extension = extension.Insert(0, ".")
+            End If
+
+            Dim key2 As Microsoft.Win32.RegistryKey = Nothing
+            Try
+                ' open a new key for the Class name
+                key2 = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(className &
+            "\Shell\Open\Command")
+                If key2.GetValue("") = exeProgram & " ""%1""" Then
+                    Return True
+                End If
+            Catch
+                Return False
+            Finally
+                If key2 IsNot Nothing Then key2.Close()
+            End Try
+
+            Return True
+        End Function
+        Public Function IsUserAdministrator() As Boolean
+            Dim isAdmin As Boolean
+            Try
+                Dim principal As New Security.Principal.WindowsPrincipal(Security.Principal.WindowsIdentity.GetCurrent())
+                isAdmin = principal.IsInRole(Security.Principal.WindowsBuiltInRole.Administrator)
+            Catch
+                isAdmin = False
+            End Try
+            Return isAdmin
+        End Function
+        '-----------------------------------------------------
+        'For Convenience
+        ''' <summary>
+        ''' Method to manage all supported files at once
+        ''' </summary>
+        ''' <param name="type">
+        ''' 0: Create
+        ''' 1: Delete
+        ''' 2: Check
+        ''' </param>
+        Public Function ManageAssociations(type As Integer) As Boolean()
+            Select Case type
+                Case 0
+                    Return New Boolean() {
+                    CreateFileAssociation(".mp1", "QuickBeat.mp1", "MPEG-1 Audio Layer I", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".mp2", "QuickBeat.mp2", "MPEG-1 Audio Layer II", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".mp3", "QuickBeat.mp3", "MPEG-1 Audio Layer 3", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".mp4", "QuickBeat.mp4", "MPEG-4 Part 14", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".m4a", "QuickBeat.m4a", "MPEG 4 Audio", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".wav", "QuickBeat.wav", "Waveform Audio File Format", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".aiff", "QuickBeat.aiff", "Audio Interchange File Format", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".ogg", "QuickBeat.ogg", "Vorbis", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".wma", "QuickBeat.wma", "Windows Media Audio", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".flac", "QuickBeat.flac", "Free Lossless Audio Codec", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".alac", "QuickBeat.alac", "Apple Lossless Audio Codec", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".webm", "QuickBeat.webm", "WebM", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".midi", "QuickBeat.midi", "Musical Instrument Digital Interface", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing,
+                    CreateFileAssociation(".mid", "QuickBeat.mid", "Musical Instrument Digital Interface", IO.Path.Combine(My.Application.Info.DirectoryPath, "QuickBeat.exe")) Is Nothing
+                   }
+                Case 1
+                    Return New Boolean() {
+                    DeleteFileAssociation(".mp1", "QuickBeat.mp1") Is Nothing,
+                    DeleteFileAssociation(".mp2", "QuickBeat.mp2") Is Nothing,
+                    DeleteFileAssociation(".mp3", "QuickBeat.mp3") Is Nothing,
+                    DeleteFileAssociation(".mp4", "QuickBeat.mp4") Is Nothing,
+                    DeleteFileAssociation(".m4a", "QuickBeat.m4a") Is Nothing,
+                    DeleteFileAssociation(".wav", "QuickBeat.wav") Is Nothing,
+                    DeleteFileAssociation(".aiff", "QuickBeat.aiff") Is Nothing,
+                    DeleteFileAssociation(".ogg", "QuickBeat.ogg") Is Nothing,
+                    DeleteFileAssociation(".wma", "QuickBeat.wma") Is Nothing,
+                    DeleteFileAssociation(".flac", "QuickBeat.flac") Is Nothing,
+                    DeleteFileAssociation(".alac", "QuickBeat.alac") Is Nothing,
+                    DeleteFileAssociation(".webm", "QuickBeat.webm") Is Nothing,
+                    DeleteFileAssociation(".midi", "QuickBeat.midi") Is Nothing,
+                    DeleteFileAssociation(".mid", "QuickBeat.mid") Is Nothing
+                   }
+                Case 2
+                    Return New Boolean() {
+                    CheckFileAssociation(".mp1", "QuickBeat.mp1", "MPEG-1 Audio Layer I"),
+                    CheckFileAssociation(".mp2", "QuickBeat.mp2", "MPEG-1 Audio Layer II"),
+                    CheckFileAssociation(".mp3", "QuickBeat.mp3", "MPEG-1 Audio Layer 3"),
+                    CheckFileAssociation(".mp4", "QuickBeat.mp4", "MPEG-4 Part 14"),
+                    CheckFileAssociation(".m4a", "QuickBeat.m4a", "MPEG 4 Audio"),
+                    CheckFileAssociation(".wav", "QuickBeat.wav", "Waveform Audio File Format"),
+                    CheckFileAssociation(".aiff", "QuickBeat.aiff", "Audio Interchange File Format"),
+                    CheckFileAssociation(".ogg", "QuickBeat.ogg", "Vorbis"),
+                    CheckFileAssociation(".wma", "QuickBeat.wma", "Windows Media Audio"),
+                    CheckFileAssociation(".flac", "QuickBeat.flac", "Free Lossless Audio Codec"),
+                    CheckFileAssociation(".alac", "QuickBeat.alac", "Apple Lossless Audio Codec"),
+                    CheckFileAssociation(".webm", "QuickBeat.webm", "WebM"),
+                    CheckFileAssociation(".midi", "QuickBeat.midi", "Musical Instrument Digital Interface"),
+                    CheckFileAssociation(".mid", "QuickBeat.mid", "Musical Instrument Digital Interface")
+                    }
+                Case Else
+                    Return Nothing
+            End Select
+        End Function
+        '-----------------------------------------------------
+#End Region
+        ''' <summary>
+        ''' Returns a path specific app data path
+        ''' </summary>
+        ''' <returns></returns>        
+        Public Function GetEncodedSpecialAppName() As String
+            Return $"QuickBeat_{My.Application.Info.Version.Major}_{My.Application.Info.Version.Minor}_{My.Application.Info.Version.Build}_{My.Application.Info.Version.Revision}_{My.Application.Info.DirectoryPath.GetHashCode}"
+        End Function
+        ''' <summary>
+        ''' Returns a HostFileName joined string from provided <paramref name="URL"/>, if failed return the <paramref name="URL"/>.
+        ''' </summary>
+        ''' <param name="URL">The URL to generate UID from.</param>
+        ''' <returns></returns>
+        Public Function URLtoUID(URL As String) As String
+            'e.g. https://free-mp3-download.net/tmp/8e25573a6b06ee94a1eb92ad52f43130/Reol%20-%20Agitate.mp3
+            Try
+                Dim uri As New Uri(URL)
+                If URL.Contains("youtube.com/watch?v=") OrElse URL.ToLower.Contains("youtu.be") Then
+                    Return uri.Host & IO.Path.GetFileName(uri.LocalPath) & uri.Query
+                Else
+                    Return uri.Host & IO.Path.GetFileName(uri.LocalPath)
+                End If
+            Catch ex As Exception 'failed
+                Return URL
+            End Try
+        End Function
+        Public Function CheckUID(UID As String, URL As String) As Boolean
+            Dim uri As New Uri(URL)
+            Return (uri.Host & IO.Path.GetFileName(uri.LocalPath)) = UID
+        End Function
+        Public Function GetInternalFileContent(Path As String) As String
+            Dim ResStream = Application.GetResourceStream(New Uri(Path, UriKind.Relative))
+            If ResStream Is Nothing Then Return Nothing
+            Dim sData As String
+            Using _sr As New IO.StreamReader(ResStream.Stream)
+                sData = _sr.ReadToEnd()
+            End Using
+            Return sData
+        End Function
+        Public Async Function GetInternalFileContentAsync(Path As String) As Task(Of String)
+            Dim ResStream = Application.GetResourceStream(New Uri(Path, UriKind.Relative))
+            If ResStream Is Nothing Then Return Nothing
+            Dim sData As String
+            Using _sr As New IO.StreamReader(ResStream.Stream)
+                sData = Await _sr.ReadToEndAsync
+            End Using
+            Return sData
+        End Function
+        Public Function GenerateDLNAMetadata(metadata As Player.Metadata, uri As String) As String
+            Dim XDoc As New XDocument
+            Dim NSurn As XNamespace = "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
+            Dim Root As New XElement(NSurn + "item", New XAttribute("xmlns", "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"))
+            Dim NSdc As XNamespace = "http://purl.org/dc/elements/1.1/"
+            Root.Add(New XElement(NSdc + "title", New XAttribute(XNamespace.Xmlns + "dc", NSdc)) With {.Value = (metadata.Title)})
+            Dim NSupnp As XNamespace = "urn:schemas-upnp-org:metadata-1-0/upnp/"
+            Root.Add(New XElement(NSupnp + "class", New XAttribute(XNamespace.Xmlns + "upnp", NSupnp)) With {.Value = "object.item.audioItem.musicTrack"})
+            Root.Add(New XElement(NSupnp + "genre", New XAttribute(XNamespace.Xmlns + "upnp", NSupnp)) With {.Value = (metadata.JoinedGenres)})
+            Root.Add(New XElement(NSupnp + "artist", New XAttribute(XNamespace.Xmlns + "upnp", NSupnp)) With {.Value = (metadata.JoinedArtists)})
+            Root.Add(New XElement(NSupnp + "album", New XAttribute(XNamespace.Xmlns + "upnp", NSupnp)) With {.Value = (metadata.Album)})
+            Dim iFile = New IO.FileInfo(metadata.Path)
+            Dim tag = Utilities.SharedProperties.Instance.RequestTags(metadata.Path, TagLib.ReadStyle.PictureLazy)
+            Dim res As New XElement(XName.Get("res")) With {.Value = System.Web.HttpUtility.UrlEncode(If(uri.StartsWith("http"), "", "http://") & (uri.Replace("\"c, "/"c)))} 'Xml.XmlConvert.EncodeName
+            res.SetAttributeValue(XName.Get("nrAudioChannels"), If(tag.Properties?.AudioChannels, metadata.Channels))
+            res.SetAttributeValue(XName.Get("bitsPerSample"), tag.Properties?.BitsPerSample)
+            res.SetAttributeValue(XName.Get("sampleFrequency"), tag.Properties?.AudioSampleRate)
+            res.SetAttributeValue(XName.Get("protocolInfo"), $"http-get:*:audio/mpeg:DLNA.ORG_PN=MP3;DLNA.ORG_OP=01;DLNA.ORG_FLAGS=01700000000000000000000000000000")
+            res.SetAttributeValue(XName.Get("bitrate"), If(tag.Properties?.AudioBitrate, metadata.Bitrate) * 100)
+            res.SetAttributeValue(XName.Get("duration"), If(tag.Properties?.Duration.ToString("g"), metadata.LengthTS.ToString("g")))
+            res.SetAttributeValue(XName.Get("size"), iFile.Length)
+            Root.Add(res)
+            XDoc.Add(Root)
+            Return XDoc.ToString
+        End Function
+        Public Async Function RunProccessAsAdminAndWait(path As String, args As String, Optional timeout As Integer = 0) As Task
+            Dim PSI As New ProcessStartInfo With {.FileName = path, .UseShellExecute = True, .Verb = "runas", .Arguments = args}
+            Await Task.Run(Sub()
+                               If timeout > 0 Then Process.Start(PSI).WaitForExit(timeout) Else Process.Start(PSI).WaitForExit()
+                           End Sub)
+        End Function
         Public Async Function SaveCoverToFile(path As String, data As Byte()) As Task
             Using fs As New IO.FileStream(path, IO.FileMode.OpenOrCreate, IO.FileAccess.Write)
                 Dim Enco As New PngBitmapEncoder
@@ -23,16 +294,29 @@ Namespace Utilities
             End Using
         End Function
 
+        Public Function SaveCoverToData(bitmap As BitmapSource) As IO.MemoryStream
+            Dim mem As New IO.MemoryStream
+            Dim Enco As New PngBitmapEncoder
+            Enco.Frames.Add(BitmapFrame.Create(bitmap))
+            Enco.Save(mem)
+            Return mem
+        End Function
+
         <Extension>
-        Public Function ToCoverImage(text As String) As DrawingImage
+        Public Function IsURL(text As String) As Boolean
+            Return text.StartsWith("http://") OrElse text.StartsWith("https://") OrElse text.StartsWith("ftp://")
+        End Function
+
+        <Extension>
+        Public Function ToCoverImage(text As String, Optional FullText As Boolean = False) As DrawingImage
             Dim dv As New DrawingVisual()
             Dim dc = dv.RenderOpen
             Dim recBrush As New LinearGradientBrush(New GradientStopCollection From {New GradientStop(Color.FromRgb(38, 50, 56), 0), New GradientStop(Color.FromRgb(69, 90, 100), 1)}, 45)
-            dc.DrawRoundedRectangle(recBrush, Nothing, New Rect(0, 0, 100, 100), 15, 15)
 #Disable Warning
-            Dim txt = New FormattedText(text.FirstOrDefault & text.LastOrDefault, Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, New Typeface(New FontFamily("Arial"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal), 132 / 2, New SolidColorBrush(Color.FromRgb(255, 193, 7))) '2 for text length                        
+            Dim txt = New FormattedText(If(FullText, text, text.FirstOrDefault & text.LastOrDefault), Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, New Typeface(New FontFamily("Arial"), FontStyles.Normal, FontWeights.DemiBold, FontStretches.Normal), 132 / 2, New SolidColorBrush(Color.FromRgb(255, 193, 7))) '2 for text length                        
 #Enable Warning
-            dc.DrawText(txt, New Point((100 - txt.Width) / 2, (100 - txt.Height) / 2))
+            dc.DrawRoundedRectangle(recBrush, Nothing, New Rect(0, 0, If(FullText, txt.Width + 50, 100), 100), 15, 15)
+            dc.DrawText(txt, New Point((If(FullText, txt.Width + 50, 100) - txt.Width) / 2, (100 - txt.Height) / 2))
             dc.Close()
             Return New DrawingImage(dv.Drawing)
         End Function
@@ -42,6 +326,7 @@ Namespace Utilities
             Dim dc = dv.RenderOpen
             Dim recBrush As New LinearGradientBrush(New GradientStopCollection From {New GradientStop(Color.FromRgb(38, 50, 56), 0), New GradientStop(Color.FromRgb(69, 90, 100), 1)}, 45)
             dc.DrawRoundedRectangle(recBrush, Nothing, New Rect(0, 0, 100, 100), 15, 15)
+            'dc.DrawGeometry(New SolidColorBrush(Color.FromRgb(255, 193, 7)), Nothing, geometry)
             dc.DrawImage(geometry.ToImageSource(New SolidColorBrush(Color.FromRgb(255, 193, 7)), Nothing), New Rect(10, 10, 80, 80))
             dc.Close()
             Return New DrawingImage(dv.Drawing)
@@ -49,11 +334,11 @@ Namespace Utilities
 
         Public Function GetFiles(Path As String, Optional Filters As String = "*.mp3|*.m4a|*.mp4|*.wav|*.aiff|*.mp2|*.mp1|*.ogg|*.wma|*.flac|*.alac|*.webm|*.midi|*.mid") As IEnumerable(Of String)
             If Not IO.Directory.Exists(Path) Then Return Nothing
-            Return Filters.Split("|"c).SelectMany(Function(filter) System.IO.Directory.GetFiles(Path, filter, IO.SearchOption.AllDirectories)).ToArray()
+            Return Filters.Split("|"c).SelectMany(Function(filter) System.IO.Directory.GetFiles(Path, filter, IO.SearchOption.AllDirectories))
         End Function
 
         Public Function GetFiles(Paths As IEnumerable(Of String), Optional Filters As String = "*.mp3|*.m4a|*.mp4|*.wav|*.aiff|*.mp2|*.mp1|*.ogg|*.wma|*.flac|*.alac|*.webm|*.midi|*.mid") As IEnumerable(Of String)
-            Return Paths.SelectMany(Function(Path) Filters.Split("|"c).SelectMany(Function(filter) If(IO.Directory.Exists(Path), System.IO.Directory.GetFiles(Path, filter, IO.SearchOption.AllDirectories).ToArray(), New String() {})))
+            Return Paths.SelectMany(Function(Path) Filters.Split("|"c).SelectMany(Function(filter) If(IO.Directory.Exists(Path), System.IO.Directory.GetFiles(Path, filter, IO.SearchOption.AllDirectories), New String() {})))
         End Function
 
         <Extension>
@@ -117,6 +402,60 @@ Namespace Utilities
             Next
 
             Return DomiColors
+        End Function
+
+        <Extension>
+        Public Function ToBitmapSource(StreamSource As IO.Stream) As BitmapSource
+            Dim bi As New BitmapImage
+            bi.BeginInit()
+            bi.CacheOption = BitmapCacheOption.OnDemand
+            If OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth) Then bi.DecodePixelWidth = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth)
+            If OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight) Then bi.DecodePixelHeight = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight)
+            bi.StreamSource = StreamSource
+            bi.EndInit()
+            Return bi
+        End Function
+        <Extension>
+        Public Function ToBitmapSource(StreamSource As IO.Stream, PxWidth As Integer, PxHeight As Integer) As BitmapSource
+            Dim bi As New BitmapImage
+            bi.BeginInit()
+            bi.CacheOption = BitmapCacheOption.OnDemand
+            bi.DecodePixelWidth = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth), PxWidth)
+            bi.DecodePixelHeight = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight), OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight), PxHeight)
+            bi.StreamSource = StreamSource
+            bi.EndInit()
+            Return bi
+        End Function
+        <Extension>
+        Public Function ToBitmapSource(URISource As Uri) As BitmapSource
+            Dim bi As New BitmapImage
+            bi.BeginInit()
+            bi.CacheOption = BitmapCacheOption.OnDemand
+            If OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth) Then bi.DecodePixelWidth = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth)
+            If OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight) Then bi.DecodePixelHeight = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight)
+            bi.UriSource = URISource
+            bi.EndInit()
+            Return bi
+        End Function
+        <Extension>
+        Public Function ToBitmapSource(URISource As Uri, PxWidth As Integer, PxHeight As Integer) As BitmapSource
+            Dim bi As New BitmapImage
+            bi.BeginInit()
+            bi.CacheOption = BitmapCacheOption.OnDemand
+            bi.DecodePixelWidth = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth), OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelWidth), PxWidth)
+            bi.DecodePixelHeight = If(OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight), OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToBitmapSource_DecodePixelHeight), PxHeight)
+            bi.UriSource = URISource
+            bi.EndInit()
+            Return bi
+        End Function
+
+        <Extension>
+        Public Function Save(Image As BitmapSource) As IO.MemoryStream
+            Dim mem As New IO.MemoryStream
+            Dim pngEnco As New PngBitmapEncoder()
+            pngEnco.Frames.Add(BitmapFrame.Create(Image))
+            pngEnco.Save(mem)
+            Return mem
         End Function
 
         ''' <summary>
@@ -209,10 +548,6 @@ Namespace Utilities
             Catch
                 Return False
             End Try
-        End Function
-
-        Public Function CheckInternet() As Boolean
-            Return HandyControl.Tools.ApplicationHelper.IsConnectedToInternet
         End Function
 
         <Extension>
@@ -313,6 +648,12 @@ Namespace Utilities
 
         <Extension>
         Public Function ToImageSource(ByVal bmp As System.Drawing.Bitmap, Optional ChangeRes As Boolean = False, Optional ResX As Integer = 0, Optional ResY As Integer = 0) As BitmapSource
+            If bmp Is Nothing Then Return Nothing
+            If OverrideProperties.Instance.Locked(OverrideProperties.LockType.CommonFunctions_ToImageSource_ChangeResolution) Then
+                ChangeRes = True
+                ResX = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToImageSource_DecodePixelWidth)
+                ResY = OverrideProperties.Instance.Value(OverrideProperties.LockType.CommonFunctions_ToImageSource_DecodePixelHeight)
+            End If
             If ChangeRes = False Then
                 Try
                     Dim handle = bmp.GetHbitmap()
@@ -428,6 +769,164 @@ Namespace Utilities
                 x.Add(meta)
             Next
             Return x
+        End Function
+
+        ''' <summary>
+        ''' Check matching percentage between two strings
+        ''' </summary>
+        ''' <param name="arg0">Base string</param>
+        ''' <param name="arg1">Compate string</param>
+        ''' <returns>a single (0->1) indicating how much similarity between the two arguments</returns>
+        <Extension>
+        Public Function GetSimilarity(arg0 As String, arg1 As String) As Single
+            If String.IsNullOrEmpty(arg0) OrElse String.IsNullOrEmpty(arg1) Then Return 0
+            Dim string1 = arg0.ToLower : Dim string2 = arg1.ToLower
+            Dim dis As Single = ComputeDistance(string1, string2)
+            Dim maxLen As Single = string1.Length
+            If maxLen < string2.Length Then
+                maxLen = string2.Length
+            End If
+            If maxLen = 0.0F Then
+                Return 1.0F
+            Else
+                Return 1.0F - dis / maxLen
+            End If
+        End Function
+
+        ''' <summary>
+        ''' Compares every part of <paramref name="sArg0"/> and <paramref name="sArg1"/> split by a space and sums the result
+        ''' </summary>
+        ''' <param name="sArg0"></param>
+        ''' <param name="sArg1"></param>
+        ''' <returns></returns>
+        <Extension>
+        Public Function GetSplitSimilarity(sArg0 As String, sArg1 As String) As Single
+            If String.IsNullOrEmpty(sArg0) OrElse String.IsNullOrEmpty(sArg1) Then Return 0
+            If sArg0.Split(New Char() {" "}, StringSplitOptions.RemoveEmptyEntries).Length = 1 AndAlso sArg1.Split(New Char() {" "}, StringSplitOptions.RemoveEmptyEntries).Length = 1 Then
+                Return GetSimilarity(sArg0, sArg1)
+            End If
+            Dim r As Single = 0
+            For Each string1 In sArg0.Split(New Char() {" "}, StringSplitOptions.RemoveEmptyEntries)
+                Dim string2 = sArg1.ToLower
+                Dim dis As Single = ComputeDistance(string1, string2)
+                Dim maxLen As Single = string1.Length
+                If maxLen < string2.Length Then
+                    maxLen = string2.Length
+                End If
+                If maxLen = 0.0F Then
+                    r += 1.0F
+                Else
+                    r += 1.0F - dis / maxLen
+                End If
+            Next
+            For Each string2 In sArg1.Split(New Char() {" "}, StringSplitOptions.RemoveEmptyEntries)
+                Dim string1 = sArg0.ToLower
+                Dim dis As Single = ComputeDistance(string1, string2)
+                Dim maxLen As Single = string1.Length
+                If maxLen < string2.Length Then
+                    maxLen = string2.Length
+                End If
+                If maxLen = 0.0F Then
+                    r += 1.0F
+                Else
+                    r += 1.0F - dis / maxLen
+                End If
+            Next
+            Return r
+        End Function
+
+        ''' <summary>
+        ''' Limits the <see cref="String"/> to a specific byte count in UTF-8
+        ''' </summary>
+        ''' <param name="str">Item</param>
+        ''' <param name="Limit">Bytes Count Limit</param>
+        ''' <param name="AddTrailingDots">Wheter or not to add 3 trailing dots to a limited string. e.g: "Hello Wo..."</param>
+        ''' <returns></returns>
+        <Extension>
+        Public Function LimitBytes(str As String, Limit As Integer, Optional AddTrailingDots As Boolean = False) As String
+            If str Is Nothing Then Return str
+            Dim sBytes = Text.Encoding.UTF8.GetBytes(str)
+            If sBytes.Length > Limit Then
+                If AddTrailingDots Then
+                    Dim dot As Byte = 46
+                    sBytes(Limit - 4) = dot
+                    sBytes(Limit - 3) = dot
+                    sBytes(Limit - 2) = dot
+                End If
+                Array.Resize(sBytes, Limit - 1)
+                Return Text.Encoding.UTF8.GetString(sBytes)
+            Else
+                Return str
+            End If
+        End Function
+
+        ''' <summary>
+        ''' Limits the <see cref="String"/> to a specific byte count in the specified encoding
+        ''' </summary>
+        ''' <param name="str">Item</param>
+        ''' <param name="Limit">Bytes Count Limit</param>
+        ''' <param name="AddTrailingDots">Wheter or not to add 3 trailing dots to a limited string. e.g: "Hello Wo..."</param>
+        ''' <returns></returns>
+        <Extension>
+        Public Function LimitBytes(str As String, Limit As Integer, Encoding As Text.Encoding, Optional AddTrailingDots As Boolean = False) As String
+            Dim sBytes = Encoding.GetBytes(str)
+            If sBytes.Length > Limit Then
+                If AddTrailingDots Then
+                    Dim dot As Byte = 46
+                    sBytes(Limit - 4) = dot
+                    sBytes(Limit - 3) = dot
+                    sBytes(Limit - 2) = dot
+                End If
+                Array.Resize(sBytes, Limit - 1)
+                Return Encoding.GetString(sBytes)
+            Else
+                Return str
+            End If
+        End Function
+
+        Private Function ComputeDistance(s As String, t As String) As Integer
+            Dim n As Integer = s.Length
+            Dim m As Integer = t.Length
+            Dim distance As Integer(,) = New Integer(n, m) {}
+            ' matrix
+            Dim cost As Integer
+            If n = 0 Then
+                Return m
+            End If
+            If m = 0 Then
+                Return n
+            End If
+            'init1
+
+            Dim i As Integer = 0
+            While i <= n
+                distance(i, 0) = System.Math.Min(System.Threading.Interlocked.Increment(i), i - 1)
+            End While
+            Dim j As Integer = 0
+            While j <= m
+                distance(0, j) = System.Math.Min(System.Threading.Interlocked.Increment(j), j - 1)
+            End While
+            'find min distance
+
+            For i = 1 To n
+                For j = 1 To m
+                    cost = (If(t.Substring(j - 1, 1) = s.Substring(i - 1, 1), 0, 1))
+                    distance(i, j) = Math.Min(distance(i - 1, j) + 1, Math.Min(distance(i, j - 1) + 1, distance(i - 1, j - 1) + cost))
+                Next
+            Next
+            Return distance(n, m)
+        End Function
+
+        Public Function RemoteFileExists(ByVal url As String) As Boolean
+            Try
+                Dim request As System.Net.HttpWebRequest = TryCast(System.Net.WebRequest.Create(url), System.Net.HttpWebRequest)
+                request.Method = "HEAD"
+                Dim response As System.Net.HttpWebResponse = TryCast(request.GetResponse(), System.Net.HttpWebResponse)
+                response.Close()
+                Return (response.StatusCode = System.Net.HttpStatusCode.OK)
+            Catch
+                Return False
+            End Try
         End Function
 
         Public Structure EditableKeyValuePair(Of Tkey, Tvalue)

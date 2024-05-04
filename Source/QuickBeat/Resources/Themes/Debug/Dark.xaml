@@ -1,0 +1,31 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:hc="https://handyorg.github.io/handycontrol">
+    <ResourceDictionary.MergedDictionaries>
+        <hc:ColorPaletteResources
+            TargetTheme="Dark"           
+            BackgroundBrush="#FFFFFF"
+            BorderBrush="#7F0000"
+            DangerBrush="#007F00"
+            DefaultBrush="#7F007F"
+            InfoBrush="#7F7F00"
+            MainContentBackgroundBrush="#7F7F7F"
+            MainContentForegroundBrush="Pink"
+            OddEvenRegionBrush="Wheat"
+            PrimaryBrush="Lime"
+            PrimaryTextBrush="Brown"
+            RegionBrush="CadetBlue"
+            ReverseTextBrush="Chocolate"
+            SecondaryBorderBrush="DodgerBlue"
+            SecondaryRegionBrush="AliceBlue"
+            SecondaryTextBrush="IndianRed"
+            SuccessBrush="#00FF00"
+            TextIconBrush="#FF0000"
+            ThirdlyRegionBrush="#00FFFF"
+            ThirdlyTextBrush="#FFFF00"
+            TitleBrush="#FF00FF"
+            VioletBrush="Violet"
+            WarningBrush="Orange"            
+            />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

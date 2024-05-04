@@ -21,6 +21,249 @@ Namespace Utilities
                     Application.Current.Resources("LOC_ABOUT") = value
                 End Set
             End Property
+
+            Public Shared Property LIBRARYUPDATE_RESULT_HINT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_LIBRARYUPDATE_RESULT_HINT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_LIBRARYUPDATE_RESULT_HINT") = value
+                End Set
+            End Property
+
+            Public Shared Property LIBRARYUPDATE_HINT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_LIBRARYUPDATE_HINT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_LIBRARYUPDATE_HINT") = value
+                End Set
+            End Property
+
+            Public Shared Property QUALITY As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUALITY")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUALITY") = value
+                End Set
+            End Property
+            Public Shared Property ERROR_NOTIMPLEMENTED As System.String
+                Get
+                    Return Application.Current.Resources("LOC_ERROR_NOTIMPLEMENTED")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_ERROR_NOTIMPLEMENTED") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_CONFIRM As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_CONFIRM")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_CONFIRM") = value
+                End Set
+            End Property
+            Public Shared Property NEWPLAYLIST As System.String
+                Get
+                    Return Application.Current.Resources("LOC_NEWPLAYLIST")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_NEWPLAYLIST") = value
+                End Set
+            End Property
+            Public Shared Property NEWPLAYLIST_HINT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_NEWPLAYLIST_HINT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_NEWPLAYLIST_HINT") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_SYNCHRONISEDLYRICSDETECTED As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_SYNCHRONISEDLYRICSDETECTED")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_SYNCHRONISEDLYRICSDETECTED") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_REPLACEDATA As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_REPLACEDATA")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_REPLACEDATA") = value
+                End Set
+            End Property
+            Public Shared Property PARSESYNCHRONISEDLYRICS As System.String
+                Get
+                    Return Application.Current.Resources("LOC_PARSESYNCHRONISEDLYRICS")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_PARSESYNCHRONISEDLYRICS") = value
+                End Set
+            End Property
+            Public Shared Property PARSETEXTLYRICS As System.String
+                Get
+                    Return Application.Current.Resources("LOC_PARSETEXTLYRICS")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_PARSETEXTLYRICS") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_ERROR_EXISTING_LANGUAGE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_ERROR_EXISTING_LANGUAGE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_ERROR_EXISTING_LANGUAGE") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_WRITETOCURRENTFILE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_WRITETOCURRENTFILE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_WRITETOCURRENTFILE") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_ERROR_TAGVERSION As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_ERROR_TAGVERSION")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_ERROR_TAGVERSION") = value
+                End Set
+            End Property
+            Public Shared Property EXISTING As System.String
+                Get
+                    Return Application.Current.Resources("LOC_EXISTING")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_EXISTING") = value
+                End Set
+            End Property
+            Public Shared Property REPLACE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_REPLACE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_REPLACE") = value
+                End Set
+            End Property
+            Public Shared Property LANGUAGE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_LANGUAGE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_LANGUAGE") = value
+                End Set
+            End Property
+            Public Shared Property OFFSET As System.String
+                Get
+                    Return Application.Current.Resources("LOC_OFFSET")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_OFFSET") = value
+                End Set
+            End Property
+            Public Shared Property DISCLAIMER As System.String
+                Get
+                    Return Application.Current.Resources("LOC_DISCLAIMER")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_DISCLAIMER") = value
+                End Set
+            End Property
+            Public Shared Property DUMPSTREAM_DISCLAIMER As System.String
+                Get
+                    Return Application.Current.Resources("LOC_DUMPSTREAM_DISCLAIMER")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_DUMPSTREAM_DISCLAIMER") = value
+                End Set
+            End Property
+            Public Shared Property WEBVIEW2_HINT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_WEBVIEW2_HINT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_WEBVIEW2_HINT") = value
+                End Set
+            End Property
+            Public Shared Property CAPTCHA_VALIDATE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_CAPTCHA_VALIDATE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_CAPTCHA_VALIDATE") = value
+                End Set
+            End Property
+            Public Shared Property FIREWALL_HINT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_FIREWALL_HINT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_FIREWALL_HINT") = value
+                End Set
+            End Property
+            Public Shared Property HINT_OPERATION_SUCCESS As System.String
+                Get
+                    Return Application.Current.Resources("LOC_HINT_OPERATION_SUCCESS")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_HINT_OPERATION_SUCCESS") = value
+                End Set
+            End Property
+            Public Shared Property HINT_FORCESTOP_OPERATION_MUST As System.String
+                Get
+                    Return Application.Current.Resources("LOC_HINT_FORCESTOP_OPERATION_MUST")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_HINT_FORCESTOP_OPERATION_MUST") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_FOUND_MUTIPLE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_FOUND_MUTIPLE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_FOUND_MUTIPLE") = value
+                End Set
+            End Property
+            Public Shared Property QUERY_ERROR_UNKOWN_MULTIPLE As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_ERROR_UNKOWN_MULTIPLE")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_ERROR_UNKOWN_MULTIPLE") = value
+                End Set
+            End Property
+            Public Shared Property DESCRIPTION As System.String
+                Get
+                    Return Application.Current.Resources("LOC_DESCRIPTION")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_DESCRIPTION") = value
+                End Set
+            End Property
+            Public Shared Property UNSAVED_SAVENOW As System.String
+                Get
+                    Return Application.Current.Resources("LOC_UNSAVED_SAVENOW")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_UNSAVED_SAVENOW") = value
+                End Set
+            End Property
+            Public Shared Property HINT_CALLREDIRECTION As System.String
+                Get
+                    Return Application.Current.Resources("LOC_HINT_CALLREDIRECTION")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_HINT_CALLREDIRECTION") = value
+                End Set
+            End Property
             Public Shared Property QUERY_APP_RESTART As System.String
                 Get
                     Return Application.Current.Resources("LOC_QUERY_APP_RESTART")
@@ -77,6 +320,14 @@ Namespace Utilities
                     Application.Current.Resources("LOC_QUERY_PLAYLIST_IMPORT") = value
                 End Set
             End Property
+            Public Shared Property QUERY_PROFILE_IMPORT As System.String
+                Get
+                    Return Application.Current.Resources("LOC_QUERY_PROFILE_IMPORT")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_QUERY_PROFILE_IMPORT") = value
+                End Set
+            End Property
             Public Shared Property QUERY_PLAYLIST_LOAD As System.String
                 Get
                     Return Application.Current.Resources("LOC_QUERY_PLAYLIST_LOAD")
@@ -85,12 +336,12 @@ Namespace Utilities
                     Application.Current.Resources("LOC_QUERY_PLAYLIST_LOAD") = value
                 End Set
             End Property
-            Public Shared Property LOC_QUERY_UPDATES_NOTFOUND As System.String
+            Public Shared Property QUERY_UPDATES_NOTFOUND As System.String
                 Get
-                    Return Application.Current.Resources("LOC_LOC_QUERY_UPDATES_NOTFOUND")
+                    Return Application.Current.Resources("LOC_QUERY_UPDATES_NOTFOUND")
                 End Get
                 Set(value As System.String)
-                    Application.Current.Resources("LOC_LOC_QUERY_UPDATES_NOTFOUND") = value
+                    Application.Current.Resources("LOC_QUERY_UPDATES_NOTFOUND") = value
                 End Set
             End Property
             Public Shared Property QUERY_UPDATES_FOUND As System.String
@@ -99,6 +350,14 @@ Namespace Utilities
                 End Get
                 Set(value As System.String)
                     Application.Current.Resources("LOC_QUERY_UPDATES_FOUND") = value
+                End Set
+            End Property
+            Public Shared Property HINT_INFOTIP_KEYBOARD_NAVIGATION As System.String
+                Get
+                    Return Application.Current.Resources("LOC_HINT_INFOTIP_KEYBOARD_NAVIGATION")
+                End Get
+                Set(value As System.String)
+                    Application.Current.Resources("LOC_HINT_INFOTIP_KEYBOARD_NAVIGATION") = value
                 End Set
             End Property
             Public Shared Property ADD As System.String

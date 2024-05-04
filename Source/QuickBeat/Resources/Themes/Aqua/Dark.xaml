@@ -3,7 +3,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol">
     <ResourceDictionary.MergedDictionaries>
         <hc:ColorPaletteResources
-            TargetTheme="Dark"
+            TargetTheme="Dark"           
             BackgroundBrush="Transparent"
             BackgroundColor="Transparent"
             PrimaryBrush="#658431"
@@ -11,9 +11,10 @@
             SecondaryRegionBrush="#15160C"
             SecondaryRegionColor="#15160C"
             ThirdlyRegionBrush="#222313"            
-            ThirdlyRegionColor="#222313"
-            MainContentBackgroundBrush="#060604"
+            ThirdlyRegionColor="#222313"               
             MainContentBackgroundColor="#060604"
+            MainContentBackgroundBrush="#060604"
+            VioletBrush="Transparent"
             />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

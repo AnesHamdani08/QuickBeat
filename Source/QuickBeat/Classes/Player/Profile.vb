@@ -33,12 +33,24 @@ Namespace Player
                 ''' Ignored if <see cref="ValueType"/> is not a numeric.
                 ''' </summary>
                 ''' <returns></returns>
-                Property Minimum As Double = Double.MinValue
+                Property Minimum As Double = 0.0001
                 ''' <summary>
                 ''' Ignored if <see cref="ValueType"/> is not a numeric.
                 ''' </summary>
                 ''' <returns></returns>
                 Property Maximum As Double = Double.MaxValue
+
+                ''' <summary>
+                ''' Whether or not to snap to fixed values based on interval (<see cref="Frequency"/>)
+                ''' </summary>
+                ''' <returns></returns>
+                Property SnapToTicks As Boolean = False
+
+                ''' <summary>
+                ''' Ignored if <see cref="SnapToTicks"/> is false
+                ''' </summary>
+                ''' <returns></returns>
+                Property Frequency As Double = 1
 
                 Sub New(DisplayName As String, ValueType As Type)
                     Me.DisplayName = DisplayName
@@ -130,6 +142,7 @@ Namespace Player
             MustOverride Property IsEnabled As Boolean
             MustOverride Property HEffect As Integer
             MustOverride Property HStream As Integer
+            MustOverride Property Priority As Integer
             MustOverride Sub Apply(Optional Force As Boolean = False)
             Overridable Sub Clean()
 
@@ -174,6 +187,7 @@ Namespace Player
         Protected Overrides Sub InsertItem(index As Integer, item As AudioEffect)
             If Parent IsNot Nothing Then
                 item.HStream = Parent?.Stream
+                item.Priority = index
                 item.Apply()
             End If
             MyBase.InsertItem(index, item)

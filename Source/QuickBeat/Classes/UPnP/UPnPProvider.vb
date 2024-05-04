@@ -4,6 +4,7 @@ Imports UPNPLib
 Imports QuickBeat.Interfaces
 Imports QuickBeat.Classes
 Imports QuickBeat.UPnP.ContentDirectory
+Imports QuickBeat.Utilities
 
 Namespace UPnP
     Public Class UPnPProvider
@@ -144,7 +145,7 @@ Namespace UPnP
             End Set
         End Property
 
-        Private _SelectedRenderer As MediaRenderer
+        Private WithEvents _SelectedRenderer As MediaRenderer
         Property SelectedRenderer As MediaRenderer
             Get
                 Return _SelectedRenderer
@@ -153,11 +154,18 @@ Namespace UPnP
                 If _SelectedRenderer IsNot Nothing Then
                     _SelectedRenderer.StopMonitoring()
                 End If
-                _SelectedRenderer = value
-                OnPropertyChanged()
-                _SelectedRenderer?.StartMonitoring()
-                _SelectedRenderer?.ForceInfoPass()
-                IsUsingRenderer = SelectedRenderer IsNot Nothing
+                If value Is Nothing Then
+                    _SelectedRenderer?.StopMonitoring()
+                    _SelectedRenderer?.Dispose()
+                    _SelectedRenderer = Nothing
+                    IsUsingRenderer = False
+                Else
+                    _SelectedRenderer = value
+                    OnPropertyChanged()
+                    _SelectedRenderer?.StartMonitoring()
+                    _SelectedRenderer?.ForceInfoPass()
+                    IsUsingRenderer = SelectedRenderer IsNot Nothing
+                End If
             End Set
         End Property
 
@@ -245,7 +253,7 @@ Namespace UPnP
             Init()
         End Sub
         Public Sub Init() Implements IStartupItem.Init
-            Utilities.SharedProperties.Instance.ItemsConfiguration.Add(Configuration)
+            If Not Utilities.SharedProperties.Instance.ItemsConfiguration.Contains(Configuration) Then Utilities.SharedProperties.Instance.ItemsConfiguration.Add(Configuration)
             Configuration.SetStatus("All Good", 100)
         End Sub
 
@@ -352,11 +360,7 @@ Namespace UPnP
                     If image Is Nothing Then
                         myTreeNode.Icon = Utilities.CommonFunctions.GenerateCoverImage(Utilities.ResourceResolver.Images.MUSICNOTE)
                     Else
-                        Dim bi As New BitmapImage
-                        bi.BeginInit()
-                        bi.UriSource = image.URI
-                        bi.EndInit()
-                        myTreeNode.Icon = bi
+                        myTreeNode.Icon = image.URI.ToBitmapSource
                     End If
                 End If
             Next
@@ -429,6 +433,11 @@ Namespace UPnP
                 Return HttpLessProtocol.Substring(0, ix0)
             End If
         End Function
+        Private Sub _SelectedRenderer_CombinedErrorCountReachedThreshold() Handles _SelectedRenderer.CombinedErrorCountReachedThreshold
+            Me.SelectedRenderer = Nothing
+            DebugMode.Instance.Log(Of UPnPProvider)("Combined Error Count Reached Threshold for " & SelectedRenderer?.ToString)
+            Configuration.SetStatus("Too Much Error for The Selected Renderer", 20, 3000)
+        End Sub
 #End Region
 #Region "WPF Support"
         Public Class DelegateSearchCommand

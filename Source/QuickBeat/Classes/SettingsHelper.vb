@@ -5,12 +5,23 @@
 
         Private _Items As New Dictionary(Of String, String)
         Private _Sections As New List(Of KeyValuePair(Of String, List(Of KeyValuePair(Of String, String))))
+        ReadOnly Property RawSections As List(Of KeyValuePair(Of String, List(Of KeyValuePair(Of String, String))))
+            Get
+                Return _Sections
+            End Get
+        End Property
 
         ReadOnly Property Metadata As New Dictionary(Of String, String)
 
         ReadOnly Property SectionsCount As Integer
             Get
                 Return _Sections.Count
+            End Get
+        End Property
+
+        ReadOnly Property Sections As IEnumerable(Of String)
+            Get
+                Return _Sections.Select(Of String)(Function(k) k.Key)
             End Get
         End Property
 
@@ -66,7 +77,7 @@
             If Not String.IsNullOrEmpty(_CurrentSectionKey) AndAlso _CurrentSection IsNot Nothing Then
                 _CurrentSection.Add(New KeyValuePair(Of String, String)(key, value))
             Else
-                _Items.Add(key, value)
+                If Not _Items.ContainsKey(key) Then _Items.Add(key, value) 'TODO pay this a visit
             End If
         End Sub
 
@@ -101,6 +112,10 @@
             If _CurrentSectionKey = "Items" Then
                 For Each _item In _CurrentSection
                     _Items.Add(_item.Key, _item.Value)
+                Next
+            ElseIf _CurrentSectionKey = "Metadata" Then
+                For Each _item In _CurrentSection
+                    Metadata.Add(_item.Key, _item.Value)
                 Next
             Else
                 _Sections.Add(New KeyValuePair(Of String, List(Of KeyValuePair(Of String, String)))(_CurrentSectionKey, _CurrentSection))
@@ -158,6 +173,11 @@
             Return _Items.FirstOrDefault(Function(k) k.Key = key).Value
         End Function
 
+        ''' <summary>
+        ''' Gets the first occurence of a specific section
+        ''' </summary>
+        ''' <param name="key">Section key</param>
+        ''' <returns></returns>
         Function GetSection(key As String) As List(Of KeyValuePair(Of String, String))
             Return _Sections.FirstOrDefault(Function(k) k.Key = key).Value
         End Function

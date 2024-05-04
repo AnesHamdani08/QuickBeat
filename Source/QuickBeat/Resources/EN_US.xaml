@@ -59,7 +59,8 @@
     <sys:String x:Key="LOC_QUERY_SELECTFROMBELOW">Select From Below...</sys:String>
     <sys:String x:Key="LOC_SONG">Song</sys:String>
     <sys:String x:Key="LOC_NEW">New</sys:String>
-    <sys:String x:Key="LOC_HINT_KEYBOARD_NAVIGATION" xml:space="preserve">Play/Pause: Ctrl + Space&#10;Next: Ctrl + Right Arrow&#10;Previous Ctrl + Left Arrow&#10;Seek Forward: Shift + Right Arrow&#10;Seek Backward: Ctrl + Left Arrow&#10;Repeate(Player): Shift + R&#10;Repeate(Playilst): Shift+R&#10;Shuffle: Ctrl+S&#10;Volume Up: Ctrl + Up Arrow&#10;Volume Down: Ctrl + Down Arrow&#10;Favorite: Ctrl+F</sys:String>
+    <sys:String x:Key="LOC_HINT_KEYBOARD_NAVIGATION" xml:space="preserve">Play/Pause: Ctrl + Space&#10;Next: Ctrl + Right Arrow&#10;Previous Ctrl + Left Arrow&#10;Seek Forward: Shift + Right Arrow&#10;Seek Backward: Ctrl + Left Arrow&#10;Repeat(Player): Ctrl + R&#10;Repeat(Playlist): Shif t +R&#10;Shuffle: Ctrl+S&#10;Volume Up: Ctrl + Up Arrow&#10;Volume Down: Ctrl + Down Arrow&#10;Favorite: Ctrl+F&#10;Tab Control: Ctrl + Number&#10;The Next Hotkeys are for InfoTip: &#10;Image Left Click: Expand&#10;Ctrl + Image Left Click: Seek Backward&#10;Shift + Image Left Click: Previous&#10;Image Double Left Click: Show Main Window&#10;Image Right Click: Play/Pause&#10;Ctrl + Image Right Click: Seek Forward&#10;Shift + Image Right Click: Next</sys:String>
+    <sys:String x:Key="LOC_HINT_INFOTIP_KEYBOARD_NAVIGATION" xml:space="preserve">Image Left Click: Expand&#10;Ctrl + Image Left Click: Seek Backward&#10;Shift + Image Left Click: Previous&#10;Image Double Left Click: Show Main Window&#10;Image Right Click: Play/Pause&#10;Ctrl + Image Right Click: Seek Forward&#10;Shift + Image Right Click: Next&#10;Buttons Functionality(In Order): Help, Show Main Window, Collapse, Close</sys:String>
     <sys:String x:Key="LOC_FAVORITES">Favorites</sys:String>
     <sys:String x:Key="LOC_CUSTOM">Custom</sys:String>
     <sys:String x:Key="LOC_RETURN">Return</sys:String>
@@ -171,8 +172,10 @@
     <sys:String x:Key="LOC_EXPORT">Export</sys:String>
     <sys:String x:Key="LOC_QUERY_ERROR_UNKNOWN">An Unknown Error Occured.</sys:String>
     <sys:String x:Key="LOC_QUERY_ERROR_PARSE">One or more values couldn't be parsed.</sys:String>
+    <sys:String x:Key="LOC_QUERY_ERROR_UNKOWN_MULTIPLE">One or more operations couldn't be completed.</sys:String>
     <sys:String x:Key="LOC_QUERY_PLAYLIST_IMPORT">You're About to Import %n with %c Song(s), Continue?</sys:String>
     <sys:String x:Key="LOC_QUERY_PLAYLIST_LOAD">You're About to Load %n with %c Song(s), Continue?</sys:String>
+    <sys:String x:Key="LOC_QUERY_PROFILE_IMPORT">You're About to Import %n with %c Effect(s), Continue?</sys:String>
     <sys:String x:Key="LOC_QUERY_REMOVE">You're About to Remove %n, Continue?</sys:String>
     <sys:String x:Key="LOC_NAME">Name</sys:String>
     <sys:String x:Key="LOC_QUERY_INTERNET_DISCONNECTED">Couldn't Connect to the Internet</sys:String>
@@ -188,6 +191,130 @@
     <sys:String x:Key="LOC_INTERNET">Internet</sys:String>
     <sys:String x:Key="LOC_LAN">Local Network</sys:String>
     <sys:String x:Key="LOC_STOPSTREAM">Stop Stream</sys:String>
-</ResourceDictionary>    
+    <sys:String x:Key="LOC_UNSAVED_SAVENOW">You Have Unsaved Changes. Save Now ?</sys:String>
+    <sys:String x:Key="LOC_TOPMATCH">Top Match</sys:String>
+    <sys:String x:Key="LOC_AVAILABLEIN">Available In</sys:String>
+    <sys:String x:Key="LOC_HINT_WHATAREYOULOOKINGFOR">What are you looking for ?</sys:String>
+    <sys:String x:Key="LOC_HINT_LOOKINGFORSOMETHING">Looking for something ?</sys:String>
+    <sys:String x:Key="LOC_ACTIVEVOLUMELEVELING">Active Volume Leveling</sys:String>
+    <sys:String x:Key="LOC_ALLGOOD">All Good</sys:String>
+    <sys:String x:Key="LOC_HINT_CALLREDIRECTION">Choose a Song to Complete the Operation</sys:String>
+    <sys:String x:Key="LOC_POSITION">Position</sys:String>
+    <sys:String x:Key="LOC_PLAYPAUSE">Play/Pause</sys:String>
+    <sys:String x:Key="LOC_VOLUME">Volume</sys:String>
+    <sys:String x:Key="LOC_PLAYER_POWERSAVING">Video Effect Auto Stop</sys:String>
+    <sys:String x:Key="LOC_REACTIVESEEKBAR">Reactive Seekbar</sys:String>
+    <sys:String x:Key="LOC_BUFFERING">Buffering</sys:String>
+    <sys:String x:Key="LOC_AUTONEXT">Auto Next</sys:String>
+    <sys:String x:Key="LOC_WAVE">Wave</sys:String>
+    <sys:String x:Key="LOC_BARS">Bars</sys:String>
+    <sys:String x:Key="LOC_SPECTRUM">Spectrum</sys:String>
+    <sys:String x:Key="LOC_LINES">Lines</sys:String>
+    <sys:String x:Key="LOC_WAVEFORM">Waveform</sys:String>
+    <sys:String x:Key="LOC_SPECTRUMWAVE">Spectrum Wave</sys:String>
+    <sys:String x:Key="LOC_DOTS">Dots</sys:String>
+    <sys:String x:Key="LOC_TIMEOUT">Timeout</sys:String>
+    <sys:String x:Key="LOC_BUFFER">Buffer</sys:String>
+    <sys:String x:Key="LOC_AGENT">Agent</sys:String>
+    <sys:String x:Key="LOC_PROXY">Proxy</sys:String>
+    <sys:String x:Key="LOC_FTPPASSIVEMODE">FTP Passive Mode</sys:String>
+    <sys:String x:Key="LOC_MAXFORWARDSEEK">Max Forward Seek</sys:String>
+    <sys:String x:Key="LOC_RATE">Rate</sys:String>
+    <sys:String x:Key="LOC_SPEEDLIMIT">Speed Limit</sys:String>
+    <sys:String x:Key="LOC_NETWORK">Network</sys:String>
+    <sys:String x:Key="LOC_FILEASSOCIATIONS">File Assocations</sys:String>
+    <sys:String x:Key="LOC_CREATE">Create</sys:String>
+    <sys:String x:Key="LOC_CHECK">Check</sys:String>
+    <sys:String x:Key="LOC_DELETE">Delete</sys:String>
+    <sys:String x:Key="LOC_QUERY_FOUND_MUTIPLE">Found one or more values.</sys:String>
+    <sys:String x:Key="LOC_DISCORDINTEGRATION">Discord Integration</sys:String>
+    <sys:String x:Key="LOC_ALLOWDUPLICATEDITEMS">Allow Duplicated Items</sys:String>
+    <sys:String x:Key="LOC_JUMPLISTRECENTLYPLAYED">Jump List Recently Played</sys:String>
+    <sys:String x:Key="LOC_HINT_JUMPLIST_RECENTLYPLAYED">Use in case QuickBeat isn't your windows default player, Adds a "Recently Played" category in taskbar jump list</sys:String>
+    <sys:String x:Key="LOC_JUMPLISTTASKS">Jump List Tasks</sys:String>
+    <sys:String x:Key="LOC_JUMPLISTFREQUENT">Jump List Frequent</sys:String>
+    <sys:String x:Key="LOC_HINT_JUMPLIST_FREQUENT">Will be applied only if QuickBeat is your windows default player</sys:String>
+    <sys:String x:Key="LOC_JUMPLISTMEDIALINK">Jump List Media Link</sys:String>
+    <sys:String x:Key="LOC_PROXYMEDIALINK">Proxy Media Link</sys:String>
+    <sys:String x:Key="LOC_HINT_PROXYMEDIALINK">Controls the load behaviour when passing a single file as arguments e.g: "Open With" in file context menu</sys:String>
+    <sys:String x:Key="LOC_HINT_SETTINGS_SAVE">All settings are saved on exit</sys:String>
+    <sys:String x:Key="LOC_INFOTIP">InfoTip</sys:String>
+    <sys:String x:Key="LOC_HINT_INFOTIP">Informational Popup that Shows the Current Media Details and Basic Controls</sys:String>
+    <sys:String x:Key="LOC_ALWAYSONINFOTIP">Always-On InfoTip</sys:String>
+    <sys:String x:Key="LOC_HINT_LUCENE_SYNTAX" xml:space="preserve">Exact Search Example: title:"Utena" AND artist:Reol AND album:Bunmei EP. Searches for Utena by Reol part of Bunmei Album&#10;Similarity Search Example: Bumei~0.6. Searches for Bunmei Album, the "~" at the End Indicates a Similarity Search, the "0.6" Indicates the Similarity Between 0 and 1</sys:String>
+    <sys:String x:Key="LOC_LIVECONTROLBARBACKGROUND">Live Control Bar Background</sys:String>
+    <sys:String x:Key="LOC_COMINGNEXT">Coming Next</sys:String>
+    <sys:String x:Key="LOC_PREVIOUSLY">Previously</sys:String>
+    <sys:String x:Key="LOC_SCANATSTARTUP">Scan At Startup</sys:String>
+    <sys:String x:Key="LOC_PLAYBACK">Playback</sys:String>
+    <sys:String x:Key="LOC_SEEKFORWARD">Seek Forward</sys:String>
+    <sys:String x:Key="LOC_SEEKBACKWARD">Seek Backward</sys:String>
+    <sys:String x:Key="LOC_LOOPONE">Loop One</sys:String>
+    <sys:String x:Key="LOC_SHUFFLE">Shuffle</sys:String>
+    <sys:String x:Key="LOC_HINT_CONFIGFILE_NOTFOUND">Config File Not Found</sys:String>
+    <sys:String x:Key="LOC_HINT_OPERATION_SUCCESS">Operation Completed Successfully</sys:String>
+    <sys:String x:Key="LOC_HINT_FORCESTOP_OPERATION_MUST">You Must Use "Force Stop" for this Operation</sys:String>
+    <sys:String x:Key="LOC_DEEZER_GRATITUDE">Powered by Deezer</sys:String>
+    <sys:String x:Key="LOC_ABOUT_QUICKBEAT" xml:space="preserve">Built with ♥ from Anes&#10;Huge Thanks to:&#10;Windows Presentation Foundation Team&#10;Un4seen Developments&#10;Handy Controls&#10;Deezer&#10;Fanart.tv&#10;MusicBrainz&#10;Lucene.NET&#10;Newtonsoft&#10;Taglib-Sharp&#10;Icons8</sys:String>
+    <sys:String x:Key="LOC_LANMUSICSHARING">LAN Music Sharing</sys:String>
+    <sys:String x:Key="LOC_SERVER">Server</sys:String>
+    <sys:String x:Key="LOC_PUSHCURRENTMEDIATOSELECTEDRENDERER">Push Current Media to Selected Renderer</sys:String>
+    <sys:String x:Key="LOC_START">Start</sys:String>
+    <sys:String x:Key="LOC_STOP">Stop</sys:String>
+    <sys:String x:Key="LOC_PATTERNSELECTION">Pattern Selection</sys:String>
+    <sys:String x:Key="LOC_FIREWALL">Firewall</sys:String>
+    <sys:String x:Key="LOC_ADDRULE">Add Rule</sys:String>
+    <sys:String x:Key="LOC_DELETERULE">Delete Rule</sys:String>
+    <sys:String x:Key="LOC_FIREWALL_HINT" xml:space="preserve">By Default Windows Firewall Blocks Incoming Connections Unless a Rule is Set to Allow Them, If you're Experiencing Issues Where Music Sharing is Accessible from This Machine but Not from Other Machines in Your Local Network Use the Add Rule Menu Item (File -> Remote -> LAN Music Sharing -> Firewall -> Add Rule) to Fix the Problem.&#10;If the Issue Persists:&#10;- Check your Firewall Settings and See if Outbound Connection are Allowed by Default, If Not Add a Rule to TCP Port 80 and Test the Server Again.&#10;- Disable your Firewall for Private Network and Test the Server (Make Sure to Turn it Back On)&#10;- If the Issue Persists Open an Issue at the Gitub Repo.</sys:String>
+    <sys:String x:Key="LOC_FIREWALL_REGARDING">Regarding the Firewall</sys:String>
+    <sys:String x:Key="LOC_CAPTCHA_VALIDATE">Please Validate Captcha.</sys:String>
+    <sys:String x:Key="LOC_NAVIGATE">Navigate</sys:String>
+    <sys:String x:Key="LOC_GOBACK">Go Back</sys:String>
+    <sys:String x:Key="LOC_GOFORWARD">Go Forward</sys:String>
+    <sys:String x:Key="LOC_BlOCKPOPUS">Block Popups</sys:String>
+    <sys:String x:Key="LOC_BlOCKFRAMES">Block Frames</sys:String>
+    <sys:String x:Key="LOC_WEBVIEW2_HINT" xml:space="preserve">Use as a Normal Web Browser, Navigate to the Desired File and Attemp to Download it, We'll Capture the Request and Play the File for You.</sys:String>
+    <sys:String x:Key="LOC_DUMPSTREAM">Dump Stream</sys:String>
+    <sys:String x:Key="LOC_DUMPSTREAM_DISCLAIMER" xml:space="preserve">By Using This Feature (Dump Stream) You Agree To:&#10;Not To Use This Feature (Dump Stream) for Unlawful Purposes, Including but Not Limited to Copyright Infringement, Unauthorized Access, or Distribution of Illegal Materials.&#10;You Are Solely Responsible for Your Actions and Decisions, and You Acknowledge That Any Consequences Arising From Those Actions Are Your Own Responsibility."</sys:String>
+    <sys:String x:Key="LOC_DISCLAIMER">Disclaimer</sys:String>
+    <sys:String x:Key="LOC_QUERY_ERROR_TAGVERSION">This Media Doesn't Support This Operation Due to Tag Version Mismatch</sys:String>
+    <sys:String x:Key="LOC_QUERY_ERROR_EXISTING_LANGUAGE">This Media Already Have the Selected Language</sys:String>
+    <sys:String x:Key="LOC_EXISTING">Existing</sys:String>
+    <sys:String x:Key="LOC_REPLACE">Replace</sys:String>
+    <sys:String x:Key="LOC_LANGUAGE">Language</sys:String>
+    <sys:String x:Key="LOC_OFFSET">Offset</sys:String>
+    <sys:String x:Key="LOC_QUERY_WRITETOCURRENTFILE">Do You Want To Write to Current File?</sys:String>
+    <sys:String x:Key="LOC_REMOVEFROMLIBRARY">Remove From Library</sys:String>
+    <sys:String x:Key="LOC_PARSESYNCHRONISEDLYRICS">Parse Synchronised Lyrics</sys:String>
+    <sys:String x:Key="LOC_PARSETEXTLYRICS">Parse Text Lyrics</sys:String>
+    <sys:String x:Key="LOC_QUERY_REPLACEDATA">Do You Want To Replace the Current Instance Data With the New Data?</sys:String>
+    <sys:String x:Key="LOC_QUERY_SYNCHRONISEDLYRICSDETECTED">Synchronised Lyrics Data Detected</sys:String>
+    <sys:String x:Key="LOC_IMPORTSYNCHRONISEDLYRICS">Import Synchronised Lyrics</sys:String>
+    <sys:String x:Key="LOC_NEWPLAYLIST">New Playlist</sys:String>
+    <sys:String x:Key="LOC_NEWPLAYLIST_HINT">Create a New Playlist</sys:String>
+    <sys:String x:Key="LOC_LOCALCACHE">Local Cache</sys:String>
+    <sys:String x:Key="LOC_CLUSTER">Cluster</sys:String>
+    <sys:String x:Key="LOC_SIZE">Size</sys:String>
+    <sys:String x:Key="LOC_QUERY_CONFIRM">Are You Sure You Want To Continue?</sys:String>
+    <sys:String x:Key="LOC_REMOTETAGSREADING_HINT">Disabling This Will Also Disable Adding to Local Cache, Dump Stream and All Operations That Relies on Remote Stream Buffer</sys:String>
+    <sys:String x:Key="LOC_SETTINGS_PLAYERONLY_HINT">The Following Settings Will Be Applied to the Player Only</sys:String>
+    <sys:String x:Key="LOC_ERROR_NOTIMPLEMENTED">This Feature Is Currently Not Implemented</sys:String>
+    <sys:String x:Key="LOC_CONTROLLEDBY">Controlled By</sys:String>
+    <sys:String x:Key="LOC_CONTROLLING">Controlling</sys:String>
+    <sys:String x:Key="LOC_UNLINK">Unlink</sys:String>
+    <sys:String x:Key="LOC_LINK">Link</sys:String>
+    <sys:String x:Key="LOC_DEVICES">Devices</sys:String>
+    <sys:String x:Key="LOC_CONFIG">Config</sys:String>
+    <sys:String x:Key="LOC_REMEMBERSTATE">Remember State</sys:String>
+    <sys:String x:Key="LOC_REMEMBERPOSITION">Remember Position</sys:String>
+    <sys:String x:Key="LOC_IMAGE">Image</sys:String>
+    <sys:String x:Key="LOC_UPDATE">Update</sys:String>
+    <sys:String x:Key="LOC_LIBRARYUPDATE_HINT">Use This Feature if You Moved Your Library to Another Folder While Keeping the Same File Names or Tags (Title, Artist and Album), the New Path Will Automatically Be Added to Library Sources. To Begin the Update Process Select From Below</sys:String>
+    <sys:String x:Key="LOC_LIBRARYUPDATE_RESULT_HINT">Updated %n(%p%) Song(s)</sys:String>
+    <sys:String x:Key="LOC_PARSESYNCEDLYRICSFROMUNSYNCEDLYRICS">Try Parse Synced Lyrics from Unsynced Lyrics</sys:String>
+    <sys:String x:Key="LOC_LIBRARY_CLEAN_HINT">Deletes All Non-Existent Files</sys:String>
+    <sys:String x:Key="LOC_CLEAN">Clean</sys:String>
+    <sys:String x:Key="LOC_INDEXED">Indexed</sys:String>
+</ResourceDictionary>        
     
 

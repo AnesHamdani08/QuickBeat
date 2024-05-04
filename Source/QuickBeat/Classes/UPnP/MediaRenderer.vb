@@ -1,4 +1,5 @@
 Imports System.ComponentModel
+Imports HandyControl.Tools.Interop.InteropValues
 Imports UPNPLib
 
 Namespace UPnP
@@ -7,7 +8,7 @@ Namespace UPnP
 
         Public MediaRendererDevice As UPnPDevice = Nothing
 
-        Private AVTransport As AVTransportService = Nothing
+        Private WithEvents AVTransport As AVTransportService = Nothing
         Public RendererControl As RendererControlService = Nothing
 
         Private WithEvents _Timer_Progress As New Forms.Timer With {.Interval = 1000}
@@ -49,15 +50,23 @@ Namespace UPnP
                     Exit For 'end the for-loop
                 End If
             Next
+            If AVTransport Is Nothing Then
+                Throw New InvalidOperationException("Couldn't find a valid renderer.")
+            End If
         End Sub
 
         Public Sub ForceInfoPass()
             OnStateRequested()
         End Sub
 
+        Public Event CombinedErrorCountReachedThreshold()
         Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
         Public Sub OnPropertyChanged(<Runtime.CompilerServices.CallerMemberName> Optional CallerName As String = Nothing)
             RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(CallerName))
+        End Sub
+
+        Private Sub AVTransport_CombinedErrorCountReachedThreshold() Handles AVTransport.CombinedErrorCountReachedThreshold
+            RaiseEvent CombinedErrorCountReachedThreshold()
         End Sub
 
         'ServiceTypeIdentifier = urn:schemas-upnp-org:service:AVTransport:1
@@ -108,7 +117,22 @@ Namespace UPnP
                 REL_FRAME
             End Enum
 
+            Public Event CombinedErrorCountReachedThreshold()
+
             Dim AVTransportService As UPnPService = Nothing
+            Public Property CombinedErrorThreshold As Integer = 20
+            Private _CombinedErrorCount As Integer = 0
+            Public Property CombinedErrorCount As Integer
+                Get
+                    Return _CombinedErrorCount
+                End Get
+                Set(value As Integer)
+                    _CombinedErrorCount = value
+                    If value >= CombinedErrorThreshold Then
+                        RaiseEvent CombinedErrorCountReachedThreshold()
+                    End If
+                End Set
+            End Property
 
             Public Sub New(ByRef AVTransportService As UPnPService)
                 Me.AVTransportService = AVTransportService
@@ -127,6 +151,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("SetAVTransportURI", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:SetAVTransportURI :" & ex.ToString)
                 End Try
             End Sub
@@ -151,6 +176,7 @@ Namespace UPnP
                     tmpPosInfo.RelativeCount = CInt(outObject(6))
                     tmpPosInfo.AbsoluteCount = CInt(outObject(7))
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:GetPositionInfo :" & ex.ToString)
                 End Try
 
@@ -173,6 +199,7 @@ Namespace UPnP
                     tmpTransInfo.CurrentTransportStatus = [Enum].Parse(GetType(TransportStatusEnum), CStr(outObject(1)).ToUpper)
                     tmpTransInfo.CurrentSpeed = CStr(outObject(2))
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:GetTransportInfo :" & ex.ToString)
                 End Try
 
@@ -192,6 +219,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Seek", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Seek :" & ex.ToString)
                 End Try
             End Sub
@@ -207,6 +235,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Stop", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Stop :" & ex.ToString)
                 End Try
             End Sub
@@ -222,6 +251,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Next", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Next :" & ex.ToString)
                 End Try
             End Sub
@@ -237,6 +267,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Previous", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Previous :" & ex.ToString)
                 End Try
             End Sub
@@ -259,6 +290,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Play", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Play :" & ex.ToString)
                 End Try
             End Sub
@@ -274,6 +306,7 @@ Namespace UPnP
                 Try
                     Me.AVTransportService.InvokeAction("Pause", inObject, outObject)
                 Catch ex As Exception
+                    CombinedErrorCount += 1
                     Debug.WriteLine("Error in AVTransportService:Pause :" & ex.ToString)
                 End Try
             End Sub
@@ -345,6 +378,7 @@ Namespace UPnP
                     Try
                         Return Me.AVTransportService.QueryStateVariable("TransportPlaySpeed")
                     Catch ex As Exception
+                        CombinedErrorCount += 1
                         Debug.WriteLine("Error in QueryStateVariable:TransportPlaySpeed :" & ex.ToString)
                     End Try
                     Return "1"
@@ -356,6 +390,7 @@ Namespace UPnP
                     Try
                         Return [Enum].Parse(GetType(TransportStateEnum), CStr(Me.AVTransportService.QueryStateVariable("TransportState")))
                     Catch ex As Exception
+                        CombinedErrorCount += 1
                         Return TransportStateEnum.PLAYING
                     End Try
                 End Get
@@ -366,6 +401,7 @@ Namespace UPnP
                     Try
                         Return [Enum].Parse(GetType(TransportStatusEnum), CStr(Me.AVTransportService.QueryStateVariable("TransportStatus")))
                     Catch ex As Exception
+                        CombinedErrorCount += 1
                         Debug.WriteLine("Error in QueryStateVariable:TransportStatus :" & ex.ToString)
                     End Try
                     Return TransportStatusEnum.ERROR_OCCURRED
@@ -377,6 +413,7 @@ Namespace UPnP
                     Try
                         Return Me.AVTransportService.QueryStateVariable("CurrentPlayMode")
                     Catch ex As Exception
+                        CombinedErrorCount += 1
                         Debug.WriteLine("Error in QueryStateVariable:CurrentPlayMode :" & ex.ToString)
                     End Try
                     Return "ERROR"
@@ -388,6 +425,7 @@ Namespace UPnP
                     Try
                         Return CStr(Me.AVTransportService.QueryStateVariable("RelativeTimePosition"))
                     Catch ex As Exception
+                        CombinedErrorCount += 1
                         Debug.WriteLine("Error in QueryStateVariable:RelativeTimePosition :" & ex.ToString)
                     End Try
                     Return "00:00:00"
@@ -606,10 +644,38 @@ Namespace UPnP
             _Timer_Progress.Stop()
         End Sub
         Private Sub _Timer_Progress_Tick(sender As Object, e As EventArgs) Handles _Timer_Progress.Tick
+            Dim sw As New Stopwatch : sw.Start()
             OnProgressRequested()
+            sw.Stop()
+            If sw.ElapsedMilliseconds > 10000 Then
+                StopProgressMonitoring()
+                Debug.WriteLine("Extreme Progress Latency on " & Info.ToString & ", Progress Monitoring Stopped.")
+            ElseIf sw.ElapsedMilliseconds > 5000 Then
+                _Timer_Progress.Interval = 5000
+                Debug.WriteLine("High Progress Latency on " & Info.ToString & ", Interval Increased to 5000.")
+            Else
+                If _Timer_Progress.Interval <> 1000 Then
+                    _Timer_Progress.Interval = 1000
+                    Debug.WriteLine("Normal Progress Latency on " & Info.ToString & ", Interval Decreased to 1000.")
+                End If
+            End If
         End Sub
         Private Sub _Timer_State_Tick(sender As Object, e As EventArgs) Handles _Timer_State.Tick
+            Dim sw As New Stopwatch : sw.Start()
             OnStateRequested()
+            SW.Stop()
+            If sw.ElapsedMilliseconds > 10000 Then
+                StopProgressMonitoring()
+                Debug.WriteLine("Extreme State Latency on " & Info.ToString & ", State Monitoring Stopped.")
+            ElseIf sw.ElapsedMilliseconds > 5000 Then
+                _Timer_State.Interval = 10000
+                Debug.WriteLine("High State Latency on " & Info.ToString & ", Interval Increased to 10000.")
+            Else
+                If _Timer_State.Interval <> 5000 Then
+                    _Timer_State.Interval = 5000
+                    Debug.WriteLine("Normal State Latency on " & Info.ToString & ", Interval Decreased to 5000.")
+                End If
+            End If
         End Sub
         Protected Overridable Sub OnProgressRequested()
             Dim pos As Date = Date.MinValue

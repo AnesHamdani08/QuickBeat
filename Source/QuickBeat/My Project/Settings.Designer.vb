@@ -12,15 +12,16 @@ Option Strict On
 Option Explicit On
 
 
-
-<Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute(),  _
- Global.System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0"),  _
- Global.System.ComponentModel.EditorBrowsableAttribute(Global.System.ComponentModel.EditorBrowsableState.Advanced)>  _
-Partial Friend NotInheritable Class MySettings
-    Inherits Global.System.Configuration.ApplicationSettingsBase
+Namespace My
     
-    Private Shared defaultInstance As MySettings = CType(Global.System.Configuration.ApplicationSettingsBase.Synchronized(New MySettings()),MySettings)
-    
+    <Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute(),  _
+     Global.System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.4.0.0"),  _
+     Global.System.ComponentModel.EditorBrowsableAttribute(Global.System.ComponentModel.EditorBrowsableState.Advanced)>  _
+    Partial Friend NotInheritable Class MySettings
+        Inherits Global.System.Configuration.ApplicationSettingsBase
+        
+        Private Shared defaultInstance As MySettings = CType(Global.System.Configuration.ApplicationSettingsBase.Synchronized(New MySettings()),MySettings)
+        
 #Region "My.Settings Auto-Save Functionality"
 #If _MyType = "WindowsForms" Then
     Private Shared addedHandler As Boolean
@@ -35,10 +36,10 @@ Partial Friend NotInheritable Class MySettings
     End Sub
 #End If
 #End Region
-    
-    Public Shared ReadOnly Property [Default]() As MySettings
-        Get
-            
+        
+        Public Shared ReadOnly Property [Default]() As MySettings
+            Get
+                
 #If _MyType = "WindowsForms" Then
                If Not addedHandler Then
                     SyncLock addedHandlerLockObject
@@ -49,230 +50,425 @@ Partial Friend NotInheritable Class MySettings
                     End SyncLock
                 End If
 #End If
-            Return defaultInstance
-        End Get
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-    Public Property APP_HOTKEYS() As String
-        Get
-            Return CType(Me("APP_HOTKEYS"),String)
-        End Get
-        Set
-            Me("APP_HOTKEYS") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-    Public Property APP_PLAYER_PLAYLIST() As String
-        Get
-            Return CType(Me("APP_PLAYER_PLAYLIST"),String)
-        End Get
-        Set
-            Me("APP_PLAYER_PLAYLIST") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-    Public Property APP_PLAYER_SETTINGS() As String
-        Get
-            Return CType(Me("APP_PLAYER_SETTINGS"),String)
-        End Get
-        Set
-            Me("APP_PLAYER_SETTINGS") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsi=""http://www.w3."& _ 
-        "org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" />")>  _
-    Public Property APP_LIBRARY() As Global.System.Collections.Specialized.StringCollection
-        Get
-            Return CType(Me("APP_LIBRARY"),Global.System.Collections.Specialized.StringCollection)
-        End Get
-        Set
-            Me("APP_LIBRARY") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsi=""http://www.w3."& _ 
-        "org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" />")>  _
-    Public Property APP_LIBRARY_PATHS() As Global.System.Collections.Specialized.StringCollection
-        Get
-            Return CType(Me("APP_LIBRARY_PATHS"),Global.System.Collections.Specialized.StringCollection)
-        End Get
-        Set
-            Me("APP_LIBRARY_PATHS") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsi=""http://www.w3."& _ 
-        "org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" />")>  _
-    Public Property APP_PLAYER_PLAYLIST_CUSTOM() As Global.System.Collections.Specialized.StringCollection
-        Get
-            Return CType(Me("APP_PLAYER_PLAYLIST_CUSTOM"),Global.System.Collections.Specialized.StringCollection)
-        End Get
-        Set
-            Me("APP_PLAYER_PLAYLIST_CUSTOM") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
-    Public Property APP_CLOSINGBEHAVIOUR() As Integer
-        Get
-            Return CType(Me("APP_CLOSINGBEHAVIOUR"),Integer)
-        End Get
-        Set
-            Me("APP_CLOSINGBEHAVIOUR") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
-    Public Property APP_STARTUPBEHAVIOUR() As Integer
-        Get
-            Return CType(Me("APP_STARTUPBEHAVIOUR"),Integer)
-        End Get
-        Set
-            Me("APP_STARTUPBEHAVIOUR") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("Visible")>  _
-    Public Property APP_VIEW_SIDEBAR_RIGHT_VISIBILITY() As Global.System.Windows.Visibility
-        Get
-            Return CType(Me("APP_VIEW_SIDEBAR_RIGHT_VISIBILITY"),Global.System.Windows.Visibility)
-        End Get
-        Set
-            Me("APP_VIEW_SIDEBAR_RIGHT_VISIBILITY") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-    Public Property APP_YOUTUBEDL_PATH() As String
-        Get
-            Return CType(Me("APP_YOUTUBEDL_PATH"),String)
-        End Get
-        Set
-            Me("APP_YOUTUBEDL_PATH") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsi=""http://www.w3."& _ 
-        "org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" />")>  _
-    Public Property APP_PLAYER_RECENT() As Global.System.Collections.Specialized.StringCollection
-        Get
-            Return CType(Me("APP_PLAYER_RECENT"),Global.System.Collections.Specialized.StringCollection)
-        End Get
-        Set
-            Me("APP_PLAYER_RECENT") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("15")>  _
-    Public Property APP_PLAYER_RECENT_LIMIT() As Integer
-        Get
-            Return CType(Me("APP_PLAYER_RECENT_LIMIT"),Integer)
-        End Get
-        Set
-            Me("APP_PLAYER_RECENT_LIMIT") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
-    Public Property APP_THEME_INDEX() As Integer
-        Get
-            Return CType(Me("APP_THEME_INDEX"),Integer)
-        End Get
-        Set
-            Me("APP_THEME_INDEX") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
-    Public Property APP_VIEW_BIGCOVER() As Boolean
-        Get
-            Return CType(Me("APP_VIEW_BIGCOVER"),Boolean)
-        End Get
-        Set
-            Me("APP_VIEW_BIGCOVER") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
-    Public Property APP_THEME_LIGHT() As Boolean
-        Get
-            Return CType(Me("APP_THEME_LIGHT"),Boolean)
-        End Get
-        Set
-            Me("APP_THEME_LIGHT") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
-    Public Property APP_FIRSTRUN() As Boolean
-        Get
-            Return CType(Me("APP_FIRSTRUN"),Boolean)
-        End Get
-        Set
-            Me("APP_FIRSTRUN") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
-    Public Property APP_VIEW_BOTTOMCONTROLS() As Boolean
-        Get
-            Return CType(Me("APP_VIEW_BOTTOMCONTROLS"),Boolean)
-        End Get
-        Set
-            Me("APP_VIEW_BOTTOMCONTROLS") = value
-        End Set
-    End Property
-    
-    <Global.System.Configuration.UserScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-    Public Property AQUA_STARTUP_SCRIPT() As String
-        Get
-            Return CType(Me("AQUA_STARTUP_SCRIPT"),String)
-        End Get
-        Set
-            Me("AQUA_STARTUP_SCRIPT") = value
-        End Set
-    End Property
-End Class
+                Return defaultInstance
+            End Get
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property APP_HOTKEYS() As String
+            Get
+                Return CType(Me("APP_HOTKEYS"),String)
+            End Get
+            Set
+                Me("APP_HOTKEYS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property APP_PLAYER_PLAYLIST() As String
+            Get
+                Return CType(Me("APP_PLAYER_PLAYLIST"),String)
+            End Get
+            Set
+                Me("APP_PLAYER_PLAYLIST") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property APP_PLAYER_SETTINGS() As String
+            Get
+                Return CType(Me("APP_PLAYER_SETTINGS"),String)
+            End Get
+            Set
+                Me("APP_PLAYER_SETTINGS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property APP_CLOSINGBEHAVIOUR() As Integer
+            Get
+                Return CType(Me("APP_CLOSINGBEHAVIOUR"),Integer)
+            End Get
+            Set
+                Me("APP_CLOSINGBEHAVIOUR") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property APP_STARTUPBEHAVIOUR() As Integer
+            Get
+                Return CType(Me("APP_STARTUPBEHAVIOUR"),Integer)
+            End Get
+            Set
+                Me("APP_STARTUPBEHAVIOUR") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("Visible")>  _
+        Public Property APP_VIEW_SIDEBAR_RIGHT_VISIBILITY() As Global.System.Windows.Visibility
+            Get
+                Return CType(Me("APP_VIEW_SIDEBAR_RIGHT_VISIBILITY"),Global.System.Windows.Visibility)
+            End Get
+            Set
+                Me("APP_VIEW_SIDEBAR_RIGHT_VISIBILITY") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property APP_YOUTUBEDL_PATH() As String
+            Get
+                Return CType(Me("APP_YOUTUBEDL_PATH"),String)
+            End Get
+            Set
+                Me("APP_YOUTUBEDL_PATH") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("15")>  _
+        Public Property APP_PLAYER_RECENT_LIMIT() As Integer
+            Get
+                Return CType(Me("APP_PLAYER_RECENT_LIMIT"),Integer)
+            End Get
+            Set
+                Me("APP_PLAYER_RECENT_LIMIT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("1")>  _
+        Public Property APP_THEME_INDEX() As Integer
+            Get
+                Return CType(Me("APP_THEME_INDEX"),Integer)
+            End Get
+            Set
+                Me("APP_THEME_INDEX") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_VIEW_BIGCOVER() As Boolean
+            Get
+                Return CType(Me("APP_VIEW_BIGCOVER"),Boolean)
+            End Get
+            Set
+                Me("APP_VIEW_BIGCOVER") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property APP_THEME_LIGHT() As Boolean
+            Get
+                Return CType(Me("APP_THEME_LIGHT"),Boolean)
+            End Get
+            Set
+                Me("APP_THEME_LIGHT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_FIRSTRUN() As Boolean
+            Get
+                Return CType(Me("APP_FIRSTRUN"),Boolean)
+            End Get
+            Set
+                Me("APP_FIRSTRUN") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_VIEW_BOTTOMCONTROLS() As Boolean
+            Get
+                Return CType(Me("APP_VIEW_BOTTOMCONTROLS"),Boolean)
+            End Get
+            Set
+                Me("APP_VIEW_BOTTOMCONTROLS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property AQUA_STARTUP_SCRIPT() As String
+            Get
+                Return CType(Me("AQUA_STARTUP_SCRIPT"),String)
+            End Get
+            Set
+                Me("AQUA_STARTUP_SCRIPT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_LIBRARY() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_LIBRARY"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_LIBRARY") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_LIBRARY_PATHS() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_LIBRARY_PATHS"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_LIBRARY_PATHS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_PLAYER_PLAYLIST_CUSTOM() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_PLAYER_PLAYLIST_CUSTOM"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_PLAYER_PLAYLIST_CUSTOM") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_PLAYER_RECENT() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_PLAYER_RECENT"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_PLAYER_RECENT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property AQUA_CLOSING_SCRIPT() As String
+            Get
+                Return CType(Me("AQUA_CLOSING_SCRIPT"),String)
+            End Get
+            Set
+                Me("AQUA_CLOSING_SCRIPT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property APP_PLAYER_CONFIG() As String
+            Get
+                Return CType(Me("APP_PLAYER_CONFIG"),String)
+            End Get
+            Set
+                Me("APP_PLAYER_CONFIG") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property APP_VIEW_SEEKBAR() As Integer
+            Get
+                Return CType(Me("APP_VIEW_SEEKBAR"),Integer)
+            End Get
+            Set
+                Me("APP_VIEW_SEEKBAR") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("30")>  _
+        Public Property APP_VIEW_SEEKBAR_FPS() As Integer
+            Get
+                Return CType(Me("APP_VIEW_SEEKBAR_FPS"),Integer)
+            End Get
+            Set
+                Me("APP_VIEW_SEEKBAR_FPS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property APP_DISCORD() As Boolean
+            Get
+                Return CType(Me("APP_DISCORD"),Boolean)
+            End Get
+            Set
+                Me("APP_DISCORD") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property APP_JUMPLIST_CUSTOMRECENT() As Boolean
+            Get
+                Return CType(Me("APP_JUMPLIST_CUSTOMRECENT"),Boolean)
+            End Get
+            Set
+                Me("APP_JUMPLIST_CUSTOMRECENT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_JUMPLIST_SHOWTASKS() As Boolean
+            Get
+                Return CType(Me("APP_JUMPLIST_SHOWTASKS"),Boolean)
+            End Get
+            Set
+                Me("APP_JUMPLIST_SHOWTASKS") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property APP_JUMPLIST_SHOWFREQUENT() As Boolean
+            Get
+                Return CType(Me("APP_JUMPLIST_SHOWFREQUENT"),Boolean)
+            End Get
+            Set
+                Me("APP_JUMPLIST_SHOWFREQUENT") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property APP_JUMPLIST_ARGTYPE() As Integer
+            Get
+                Return CType(Me("APP_JUMPLIST_ARGTYPE"),Integer)
+            End Get
+            Set
+                Me("APP_JUMPLIST_ARGTYPE") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property APP_NEXTINSTANCE_ARGTYPE() As Integer
+            Get
+                Return CType(Me("APP_NEXTINSTANCE_ARGTYPE"),Integer)
+            End Get
+            Set
+                Me("APP_NEXTINSTANCE_ARGTYPE") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_PLAYER_MEDIALOADED_SHOWPOPUP() As Boolean
+            Get
+                Return CType(Me("APP_PLAYER_MEDIALOADED_SHOWPOPUP"),Boolean)
+            End Get
+            Set
+                Me("APP_PLAYER_MEDIALOADED_SHOWPOPUP") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_VIEW_CONTROLS_COVERBACKGROUND() As Boolean
+            Get
+                Return CType(Me("APP_VIEW_CONTROLS_COVERBACKGROUND"),Boolean)
+            End Get
+            Set
+                Me("APP_VIEW_CONTROLS_COVERBACKGROUND") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("True")>  _
+        Public Property APP_LIBRARY_STARTUPSCAN() As Boolean
+            Get
+                Return CType(Me("APP_LIBRARY_STARTUPSCAN"),Boolean)
+            End Get
+            Set
+                Me("APP_LIBRARY_STARTUPSCAN") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("5000")>  _
+        Public Property APP_TAG_HOLDTIME() As Integer
+            Get
+                Return CType(Me("APP_TAG_HOLDTIME"),Integer)
+            End Get
+            Set
+                Me("APP_TAG_HOLDTIME") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_INTEGRATIONS_DISCORD_CACHE() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_INTEGRATIONS_DISCORD_CACHE"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_INTEGRATIONS_DISCORD_CACHE") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("<?xml version=""1.0"" encoding=""utf-16""?>"&Global.Microsoft.VisualBasic.ChrW(13)&Global.Microsoft.VisualBasic.ChrW(10)&"<ArrayOfString xmlns:xsd=""http://www.w3."& _ 
+            "org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" />")>  _
+        Public Property APP_LIBRARY_REMOTE() As Global.System.Collections.Specialized.StringCollection
+            Get
+                Return CType(Me("APP_LIBRARY_REMOTE"),Global.System.Collections.Specialized.StringCollection)
+            End Get
+            Set
+                Me("APP_LIBRARY_REMOTE") = value
+            End Set
+        End Property
+    End Class
+End Namespace
 
 Namespace My
     
@@ -282,9 +478,9 @@ Namespace My
     Friend Module MySettingsProperty
         
         <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>  _
-        Friend ReadOnly Property Settings() As Global.QuickBeat.MySettings
+        Friend ReadOnly Property Settings() As Global.QuickBeat.My.MySettings
             Get
-                Return Global.QuickBeat.MySettings.Default
+                Return Global.QuickBeat.My.MySettings.Default
             End Get
         End Property
     End Module

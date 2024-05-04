@@ -119,9 +119,18 @@
                 <ItemsControl ItemsSource="{Binding SuggestionsControls,ElementName=YourOwner}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <VirtualizingStackPanel/>
+                            <VirtualizingStackPanel VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
+                    <ItemsControl.Template>
+                        <ControlTemplate TargetType="ItemsControl">
+                            <Border BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}">
+                                <ScrollViewer CanContentScroll="True" Padding="{TemplateBinding Padding}" Focusable="False">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
                 </ItemsControl>
             </ScrollViewer>
             <Thumb Grid.RowSpan="2" HorizontalAlignment="Left" VerticalAlignment="Center" DragDelta="Thumb_SideBar_Right_DragDelta" Style="{StaticResource ToolBarThumbHorizontalStyle}"/>

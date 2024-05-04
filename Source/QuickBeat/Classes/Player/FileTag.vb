@@ -21,7 +21,7 @@ Namespace Player
             Set(value As String)
                 _Path = value
                 _File?.Dispose()
-                _File = TagLib.File.Create(value)
+                _File = Utilities.SharedProperties.Instance.RequestTags(value)
                 EnsureCovers(_File)
                 OnPropertyChanged()
             End Set
@@ -177,7 +177,7 @@ Namespace Player
                 Dim Tags As TagLib.File = _Tag
                 If Tags Is Nothing Then
                     Try
-                        Tags = TagLib.File.Create(Path, TagLib.ReadStyle.Average)
+                        Tags = Utilities.SharedProperties.Instance.RequestTags(Path, TagLib.ReadStyle.Average)
                     Catch ex As Exception
                         Utilities.DebugMode.Instance.Log(Of Metadata)("Error while reading tags: " & ex.ToString)
                     End Try

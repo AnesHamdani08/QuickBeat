@@ -104,6 +104,7 @@ Namespace Classes
         End Sub
 
         Sub SetStatus(Status As String, Progress As Double)
+            If _IsWaiting Then CancelTemporaryStatus()
             Me.Status = Status
             Me.Progress = Progress
             Me.IsLoading = (Progress < 100)
@@ -112,6 +113,8 @@ Namespace Classes
                 Me.IsErrored = False
             End If
         End Sub
+        <NonSerialized> Private _IsWaiting As Boolean = False
+        <NonSerialized> Private _WaitingCTS As Threading.CancellationTokenSource
         ''' <summary>
         ''' Set a temporary status and clears after a timeout
         ''' </summary>
@@ -119,6 +122,9 @@ Namespace Classes
         ''' <param name="Progress"></param>
         ''' <param name="Timeout">Delay in milliseconds</param>
         Async Sub SetStatus(Status As String, Progress As Double, Timeout As Double)
+            If _IsWaiting Then CancelTemporaryStatus()
+            _IsWaiting = True
+            _WaitingCTS = New System.Threading.CancellationTokenSource()
             Dim oStatus = _Status
             Dim oProgress = _Progress
             Me.Status = Status
@@ -128,8 +134,46 @@ Namespace Classes
             If Progress = 100 Then
                 Me.IsErrored = False
             End If
-            Await Task.Delay(Timeout)
+            Try
+                Await Task.Delay(Timeout, _WaitingCTS.Token)
+            Catch
+            End Try
+            _WaitingCTS?.Dispose() : _WaitingCTS = Nothing
+            _IsWaiting = False
             SetStatus(oStatus, oProgress)
+        End Sub
+
+        ''' <summary>
+        ''' Set a temporary status and clears after a timeout
+        ''' </summary>
+        ''' <param name="Status"></param>
+        ''' <param name="Progress"></param>
+        ''' <param name="Timeout">Delay in milliseconds</param>
+        ''' <param name="NewStatus">The status to set after timeout</param>
+        ''' <param name="NewProgress">The progress to set after timeout</param>
+        Async Sub SetStatus(Status As String, Progress As Double, Timeout As Double, NewStatus As String, NewProgress As Double)
+            If _IsWaiting Then CancelTemporaryStatus()
+            _IsWaiting = True
+            _WaitingCTS = New System.Threading.CancellationTokenSource()
+            Me.Status = Status
+            Me.Progress = Progress
+            Me.IsLoading = (Progress < 100)
+            Me.IsLoaded = (Progress = 100)
+            If Progress = 100 Then
+                Me.IsErrored = False
+            End If
+            Try
+                Await Task.Delay(Timeout, _WaitingCTS.Token)
+            Catch
+            End Try
+            _WaitingCTS?.Dispose() : _WaitingCTS = Nothing
+            _IsWaiting = False
+            SetStatus(NewStatus, NewProgress)
+        End Sub
+
+        Public Sub CancelTemporaryStatus()
+            _WaitingCTS?.Cancel()
+            _WaitingCTS?.Dispose() : _WaitingCTS = Nothing
         End Sub
         Sub SetError(IsErrored As Boolean, Exception As Exception)
             Me.IsErrored = IsErrored

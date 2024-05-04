@@ -39,7 +39,7 @@ Namespace UPnP
                     End Select
                 Next
 
-                Me.URI = New Uri(xmlNode.Value) 'the url which we wil send to the media renderer to play it                
+                Me.URI = New Uri(Xml.XmlConvert.DecodeName(System.Web.HttpUtility.UrlDecode(xmlNode.Value))) 'the url which we wil send to the media renderer to play it                
             End Sub
 
             Public Overrides Function ToString() As String

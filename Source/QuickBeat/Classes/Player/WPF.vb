@@ -1,6 +1,8 @@
 ﻿Imports System.Reflection
 Imports QuickBeat.Utilities
 Imports Un4seen.Bass
+Imports QuickBeat.Player.VFX
+Imports Microsoft.Win32
 
 Namespace Player.WPF.Commands
     Module Constants
@@ -22,7 +24,9 @@ Namespace Player.WPF.Commands
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
             Dim path As String = ""
             If IO.File.Exists(parameter?.ToString) Then
-                path = parameter?.ToString
+                path = parameter.ToString
+            ElseIf parameter?.ToString.IsURL Then
+                path = parameter.ToString
             Else
                 Dim Ofd As New Microsoft.Win32.OpenFileDialog() With {.CheckFileExists = True, .Multiselect = False, .Filter = "Supported Files|*.mp3;*.m4a;*.mp4;*.wav;*.aiff;*.mp2;*.mp1;*.ogg;*.wma;*.flac;*.alac;*.webm;*.midi;*.mid|Playlist|*.qbo;*.m3u;*.m3u8|All files|*.*"}
                 If Ofd.ShowDialog Then
@@ -52,7 +56,11 @@ Namespace Player.WPF.Commands
                         _Player.LoadPlaylist(pM3U)
                     End If
                 Else
-                    _Player.LoadSong(path)
+#Disable Warning
+                    _Player.LoadSong(If(path.IsURL,
+                                     New Metadata With {.Path = path, .Location = Metadata.FileLocation.Remote},
+                                     Metadata.FromFile(path))) 'to ensure tags
+#Enable Warning
                 End If
             End If
         End Sub
@@ -79,14 +87,45 @@ Namespace Player.WPF.Commands
                 _Player.LoadSong(parameter?.ToString)
                 Return
             End If
-            Dim url = Dialogs.InputBox.ShowSingle("URL")
+            Dim url = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, "URL")
             If Not String.IsNullOrEmpty(url) Then
                 Await _Player.LoadSong(New Metadata() With {.Location = Metadata.FileLocation.Remote, .Path = url, .OriginalPath = url})
             End If
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
-            Return _Player.IsInitialized
+            Return _Player.IsInitialized AndAlso SharedProperties.Instance.IsInternetConnected
+        End Function
+    End Class
+    Public Class DumpDownloadedDataCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Private _Player As Player
+
+        Sub New(player As Player)
+            _Player = player
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim filepath = parameter
+            If parameter Is Nothing Then
+                Dim info = Bass.BASS_ChannelGetInfo(_Player.Stream)
+                Dim sfd As New SaveFileDialog() With {.Filter = "Detected Type|" & "*." & Un4seen.Bass.Utils.BASSChannelTypeToString(info.ctype) & "|All Files|*.*", .FileName = System.Web.HttpUtility.UrlDecode(IO.Path.GetFileNameWithoutExtension(info.filename)), .AddExtension = True}
+                If sfd.ShowDialog Then
+                    filepath = sfd.FileName
+                Else
+                    Return
+                End If
+            End If
+            _Player.DumpDownloadedData(filepath)
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return _Player.IsInitialized AndAlso _Player.IsDownloadFinished
         End Function
     End Class
     Public Class LoadPlaylistCommand
@@ -329,6 +368,17 @@ Namespace Player.WPF.Commands
             With CType(parameter, Playlist)
                 If .Parent Is Nothing OrElse .Parent.Position < 5 Then
                     CType(parameter, Playlist).Previous()
+                    If .Parent.Position >= (.Parent.Length * 3 / 4) Then
+                        Application.Current.Dispatcher.Invoke(Sub()
+                                                                  If IO.File.Exists(.Parent.Path) Then
+#Disable Warning
+                                                                      SharedProperties.Instance.Library.IncreasePlaycountAsync(.Parent.Path, 1)
+#Enable Warning
+                                                                  Else
+                                                                      If .Parent.StreamMetadata IsNot Nothing Then .Parent.StreamMetadata.PlayCount += 1
+                                                                  End If
+                                                              End Sub)
+                    End If
                 Else
                     .Parent.Position = 0
                 End If
@@ -396,13 +446,17 @@ Namespace Player.WPF.Commands
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
             If TypeOf parameter Is Metadata Then
                 _Player?.Preview(TryCast(parameter, Metadata))
-            ElseIf IO.File.Exists(parameter?.ToString) Then
-                _Player?.Preview(Metadata.FromFile(parameter))
+            ElseIf TypeOf parameter Is Integer Then 'Index
+                _Player?.Preview(SharedProperties.Instance.Library(parameter))
+            Else
+                If IO.File.Exists(parameter?.ToString) Then
+                    _Player?.Preview(If(parameter?.ToString.IsURL, New Metadata With {.Path = parameter, .Location = Metadata.FileLocation.Remote}, Metadata.FromFile(parameter)))
+                End If
             End If
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
-            Return _Player.IsInitialized AndAlso parameter IsNot Nothing AndAlso (TypeOf parameter Is Metadata Or TypeOf parameter Is String)
+            Return _Player.IsInitialized AndAlso parameter IsNot Nothing AndAlso (TypeOf parameter Is Metadata OrElse TypeOf parameter Is String OrElse TypeOf parameter Is Integer)
         End Function
     End Class
     Public Class SwitchStreamCommand
@@ -771,6 +825,10 @@ Namespace Player.WPF.Commands
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
                                     Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    If PropAttr.SnapToTicks Then
+                                        PropSlider.IsSnapToTickEnabled = True
+                                        PropSlider.TickFrequency = PropAttr.Frequency
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -858,8 +916,10 @@ Namespace Player.WPF.Commands
                                 GroupBoxContent.Children.Add(MetButton)
                             Next
                             If group.Scroll Then
-                                Dim SV As New ScrollViewer With {.VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility}
-                                SV.Content = GroupBoxContent
+                                Dim SV As New ScrollViewer With {
+                                    .VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility,
+                                    .Content = GroupBoxContent
+                                }
                                 GroupBox.Content = SV
                             Else
                                 GroupBox.Content = GroupBoxContent
@@ -871,6 +931,10 @@ Namespace Player.WPF.Commands
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
                                     Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    If PropAttr.SnapToTicks Then
+                                        PropSlider.IsSnapToTickEnabled = True
+                                        PropSlider.TickFrequency = PropAttr.Frequency
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -966,8 +1030,10 @@ Namespace Player.WPF.Commands
                                 GroupBoxContent.Children.Add(MetButton)
                             Next
                             If group.Scroll Then
-                                Dim SV As New ScrollViewer With {.VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility}
-                                SV.Content = GroupBoxContent
+                                Dim SV As New ScrollViewer With {
+                                    .VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility,
+                                    .Content = GroupBoxContent
+                                }
                                 GroupBox.Content = SV
                             Else
                                 GroupBox.Content = GroupBoxContent
@@ -979,6 +1045,10 @@ Namespace Player.WPF.Commands
                                 Dim PropAttr = TryCast(prop.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.FieldAttribute), Profile.AudioEffect.FieldAttribute)
                                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
                                     Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True, .TickPlacement = Primitives.TickPlacement.BottomRight, .TickFrequency = PropAttr.Maximum / 100}
+                                    If PropAttr.SnapToTicks Then
+                                        PropSlider.IsSnapToTickEnabled = True
+                                        PropSlider.TickFrequency = PropAttr.Frequency
+                                    End If
                                     If MarginAttr IsNot Nothing Then
                                         PropSlider.HorizontalAlignment = MarginAttr.HorizontalAlignment
                                         PropSlider.VerticalAlignment = MarginAttr.VerticalAlignment
@@ -1074,8 +1144,10 @@ Namespace Player.WPF.Commands
                                 GroupBoxContent.Children.Add(MetButton)
                             Next
                             If group.Scroll Then
-                                Dim SV As New ScrollViewer With {.VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility}
-                                SV.Content = GroupBoxContent
+                                Dim SV As New ScrollViewer With {
+                                    .VerticalScrollBarVisibility = group.VerticalScrollBarVisibility, .HorizontalScrollBarVisibility = group.HorizontalScrollBarVisibility,
+                                    .Content = GroupBoxContent
+                                }
                                 GroupBox.Content = SV
                             Else
                                 GroupBox.Content = GroupBoxContent
@@ -1091,6 +1163,10 @@ Namespace Player.WPF.Commands
                 If PropAttr.Group <> "" Then Continue For
                 If PropAttr.ValueType.IsNumericType AndAlso Not PropAttr.ValueType.IsEnum Then
                     Dim PropSlider As New Slider With {.ToolTip = PropAttr.DisplayName & If(String.IsNullOrEmpty(PropAttr?.Unit), "", "(" & PropAttr.Unit & ")") & Environment.NewLine & PropAttr.Description, .IsMoveToPointEnabled = True}
+                    If PropAttr.SnapToTicks Then
+                        PropSlider.IsSnapToTickEnabled = True
+                        PropSlider.TickFrequency = PropAttr.Frequency
+                    End If
                     PropSlider.Margin = New Thickness(0, 0, 10, 10)
                     PropSlider.Minimum = PropAttr.Minimum : PropSlider.Maximum = PropAttr.Maximum
                     AddHandler PropSlider.ValueChanged, New RoutedPropertyChangedEventHandler(Of Double)(Sub(s, e)
@@ -1105,8 +1181,10 @@ Namespace Player.WPF.Commands
                     PropSlider.Value = prop.Key.GetValue(parameter)
                     WindowContent.Children.Add(New Controls.ValueSlider(Nothing, PropSlider, PropAttr?.DisplayName, PropAttr?.UnitShortForm))
                 ElseIf PropAttr.ValueType.IsEnum Then
-                    Dim PropCBox As New ComboBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
-                    PropCBox.Margin = New Thickness(0, 0, 10, 10)
+                    Dim PropCBox As New ComboBox With {
+                        .ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description,
+                        .Margin = New Thickness(0, 0, 10, 10)
+                    }
                     Dim Res = Application.Current.TryFindResource("ComboBoxExtend")
                     If Res IsNot Nothing Then
                         PropCBox.Style = Res
@@ -1127,8 +1205,10 @@ Namespace Player.WPF.Commands
                     PropCBox.SelectedIndex = prop.Key.GetValue(parameter)
                     WindowContent.Children.Add(PropCBox)
                 ElseIf Type.GetTypeCode(PropAttr.ValueType) = TypeCode.Boolean Then
-                    Dim PropToggleButton As New Primitives.ToggleButton With {.Content = PropAttr.DisplayName, .ToolTip = PropAttr.Description}
-                    PropToggleButton.Margin = New Thickness(0, 0, 10, 10)
+                    Dim PropToggleButton As New Primitives.ToggleButton With {
+                        .Content = PropAttr.DisplayName, .ToolTip = PropAttr.Description,
+                        .Margin = New Thickness(0, 0, 10, 10)
+                    }
                     AddHandler PropToggleButton.Checked, Sub()
                                                              CallByName(parameter, prop.Key.Name, CallType.Set, {True})
                                                          End Sub
@@ -1137,8 +1217,10 @@ Namespace Player.WPF.Commands
                                                            End Sub
                     WindowContent.Children.Add(PropToggleButton)
                 ElseIf Type.GetTypeCode(PropAttr.ValueType) = TypeCode.String Then
-                    Dim PropTextBox As New TextBox With {.ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description}
-                    PropTextBox.Margin = New Thickness(0, 0, 10, 10)
+                    Dim PropTextBox As New TextBox With {
+                        .ToolTip = PropAttr.DisplayName & Environment.NewLine & PropAttr.Description,
+                        .Margin = New Thickness(0, 0, 10, 10)
+                    }
                     AddHandler PropTextBox.TextChanged, New TextChangedEventHandler(Sub(e, d)
                                                                                         CallByName(parameter, prop.Key.Name, CallType.Set, {PropTextBox.Text})
                                                                                     End Sub)
@@ -1151,8 +1233,10 @@ Namespace Player.WPF.Commands
                 Dim MarginAttr = TryCast(met.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.MarginAttribute), Profile.AudioEffect.MarginAttribute)
                 Dim MetAttr = TryCast(met.Value.FirstOrDefault(Function(k) TypeOf k Is Profile.AudioEffect.MethodAttribute), Profile.AudioEffect.MethodAttribute)
                 If MetAttr IsNot Nothing AndAlso MetAttr.Group <> "" Then Continue For
-                Dim MetButton As New Button With {.Content = MetAttr.DisplayName, .ToolTip = MetAttr.Description}
-                MetButton.Margin = New Thickness(0, 0, 10, 10)
+                Dim MetButton As New Button With {
+                    .Content = MetAttr.DisplayName, .ToolTip = MetAttr.Description,
+                    .Margin = New Thickness(0, 0, 10, 10)
+                }
                 AddHandler MetButton.Click, Sub()
                                                 CallByName(parameter, met.Key.Name, CallType.Method, Nothing)
                                             End Sub
@@ -1234,7 +1318,9 @@ Namespace Player.WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            SharedProperties.Instance?.Player?.Modules.Remove(TryCast(parameter, QuickBeat.Player.EngineModule))
+            If SharedProperties.Instance?.Player?.Modules.Remove(TryCast(parameter, QuickBeat.Player.EngineModule)) Then
+                TryCast(parameter, QuickBeat.Player.EngineModule).Free()
+            End If
         End Sub
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
@@ -1258,26 +1344,6 @@ Namespace Player.WPF.Commands
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
             Return (Not IsNothing(parameter) AndAlso TypeOf parameter Is QuickBeat.Player.EngineModule)
-        End Function
-    End Class
-    Public Class ShowMetadataInfoCommand
-        Implements ICommand
-
-        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
-        Sub New()
-            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
-                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
-                                                                         End Sub)
-        End Sub
-
-        Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            With CType(parameter, Metadata)
-                HandyControl.Controls.MessageBox.Info($"Title: { .Title}{Environment.NewLine}Artists: {String.Join(";", .Artists)}{Environment.NewLine}Album: { .Album}{Environment.NewLine}Genres: {String.Join(";", If(.Genres, New String() {}))}{Environment.NewLine}Length: { .LengthString}{Environment.NewLine}Path: { .Path}{Environment.NewLine}Playcount: { .PlayCount}", ResourceResolver.Strings.APPNAME)
-            End With
-        End Sub
-
-        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
-            Return (TypeOf parameter Is Metadata) AndAlso (parameter IsNot Nothing)
         End Function
     End Class
     Public Class SavePlaylistCommand
@@ -1311,7 +1377,7 @@ Namespace Player.WPF.Commands
         End Sub
 
         Public Sub Execute(parameter As Object) Implements ICommand.Execute
-            Dim psname = Dialogs.InputBox.ShowSingle(Utilities.ResourceResolver.Strings.NAME)
+            Dim psname = Dialogs.InputBox.ShowSingle(Application.Current.MainWindow, Utilities.ResourceResolver.Strings.NAME)
             If Not String.IsNullOrEmpty(psname) Then
                 TryCast(parameter, Playlist).Name = psname
                 TryCast(parameter, Playlist).Cover = psname.ToCoverImage
@@ -1341,6 +1407,24 @@ Namespace Player.WPF.Commands
                 Return IsNothing(CType(parameter, Metadata).Covers)
             End If
             Return False
+        End Function
+    End Class
+    Public Class RefreshMetadataTagsCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Sub New()
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            TryCast(parameter, Metadata)?.RefreshTagsFromFile_ThreadSafe()
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return parameter IsNot Nothing AndAlso TypeOf parameter Is Metadata AndAlso (TryCast(parameter, Metadata).Location = Metadata.FileLocation.Local OrElse TryCast(parameter, Metadata).Location = Metadata.FileLocation.Cached OrElse TryCast(parameter, Metadata).Location = Metadata.FileLocation.Internal)
         End Function
     End Class
     Public Class AddToPlaylistFromPickerCommand
@@ -1492,6 +1576,30 @@ Namespace Player.WPF.Commands
 
         Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
             Return parameter.ToString.ToLower.Split("x").Length = 2
+        End Function
+    End Class
+    Public Class SetFramerateLimitCommand
+        Implements ICommand
+
+        Public Event CanExecuteChanged As EventHandler Implements ICommand.CanExecuteChanged
+        Private _vfx As VideoEffects.VideoEffect
+
+        Sub New(vfx As VideoEffects.VideoEffect)
+            _vfx = vfx
+            AddHandler CommandManager.RequerySuggested, New EventHandler(Sub(sender As Object, e As EventArgs)
+                                                                             RaiseEvent CanExecuteChanged(Me, New EventArgs())
+                                                                         End Sub)
+        End Sub
+
+        Public Sub Execute(parameter As Object) Implements ICommand.Execute
+            Dim _limit As Integer = -1
+            If Integer.TryParse(parameter, _limit) Then
+                _vfx.FramerateLimit = parameter
+            End If
+        End Sub
+
+        Public Function CanExecute(parameter As Object) As Boolean Implements ICommand.CanExecute
+            Return Not IsNothing(parameter)
         End Function
     End Class
     Public Class MoveUpCommand
@@ -1770,10 +1878,7 @@ Namespace Player.WPF.Commands
             If Integer.TryParse(_i, i) Then
                 If i < 0 OrElse i >= TryCast(parameter, FileTag)?.Covers?.Count Then Return
                 Dim Cover = CType(parameter, FileTag).Covers.Item(i)
-                Dim BI As New BitmapImage
-                BI.BeginInit()
-                BI.StreamSource = New IO.MemoryStream(Cover.Data.Data)
-                BI.EndInit()
+                Dim BI As BitmapImage = New IO.MemoryStream(Cover.Data.Data).ToBitmapSource
                 Clipboard.SetImage(BI)
             End If
         End Sub
@@ -1803,10 +1908,7 @@ Namespace Player.WPF.Commands
             If Integer.TryParse(_i, i) Then
                 If i < 0 OrElse i >= TryCast(parameter, FileTag)?.Covers?.Count Then Return
                 Dim Cover = CType(parameter, FileTag).Covers.Item(i)
-                Dim BI As New BitmapImage
-                BI.BeginInit()
-                BI.StreamSource = New IO.MemoryStream(Cover.Data.Data)
-                BI.EndInit()
+                Dim BI As BitmapImage = New IO.MemoryStream(Cover.Data.Data).ToBitmapSource
                 Utilities.Commands.ViewImageCommand.Execute(BI)
             End If
         End Sub

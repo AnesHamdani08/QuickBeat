@@ -1,4 +1,5 @@
 ﻿Imports System.ComponentModel
+Imports QuickBeat.Utilities
 
 Namespace UPnP
     Public Class UPnPInfo
@@ -105,11 +106,7 @@ Namespace UPnP
             Me.Description = Device.Description
             Dim IconURL As String = Device.IconURL("image/png", 32, 32, 16)
             If Not String.IsNullOrEmpty(IconURL) Then
-                Dim BI As New BitmapImage
-                BI.BeginInit()
-                BI.UriSource = New Uri(IconURL, UriKind.Absolute)
-                BI.EndInit()
-                Me.Icon = BI
+                Me.Icon = If(New Uri(IconURL, UriKind.Absolute).ToBitmapSource, New BitmapImage(New Uri("Resources/CircledPlay.png", UriKind.Relative)))
             End If
             Me.ManufacturerName = Device.ManufacturerName
             Me.ManufacturerURL = Device.ManufacturerURL
@@ -117,5 +114,9 @@ Namespace UPnP
             Me.ModelNumber = Device.ModelNumber
             Me.ModelURL = Device.ModelURL
         End Sub
+
+        Public Overrides Function ToString() As String
+            Return $"{Me.Name}[{ModelName}.{ModelNumber}]"
+        End Function
     End Class
 End Namespace

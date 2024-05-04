@@ -1,4 +1,7 @@
-﻿Namespace Player
+﻿Imports QuickBeat.Utilities
+
+Namespace Player
+    <Serializable>
     Public Class MetadataGroup
         Inherits ObjectModel.ObservableCollection(Of Metadata)
 
@@ -24,7 +27,7 @@
             End Set
         End Property
 
-        Private _Cover As ImageSource
+        <NonSerialized> Private _Cover As ImageSource
         Property Cover As ImageSource
             Get
                 Return _Cover
@@ -47,13 +50,24 @@
             End Set
         End Property
 
+        Private _Type As GroupType
+        Property Type As GroupType
+            Get
+                Return _Type
+            End Get
+            Set(value As GroupType)
+                _Type = value
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Type)))
+            End Set
+        End Property
+
         ReadOnly Property TotalDurationString As String
             Get
                 Return If(TotalDuration.Hours > 0, TotalDuration.ToString("hh\:mm\:ss"), TotalDuration.ToString("mm\:ss"))
             End Get
         End Property
 
-        Property _TotalFavorite As Integer
+        Private _TotalFavorite As Integer
         Property TotalFavorite As Integer
             Get
                 Return _TotalFavorite
@@ -64,6 +78,19 @@
             End Set
         End Property
 
+        Private _UID As String
+        Property UID As String
+            Get
+                Return _UID
+            End Get
+            Set(value As String)
+                _UID = value
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(UID)))
+            End Set
+        End Property
+
+        Public Property Tag As Object
+
         Private _PlayCount As Integer
         Property PlayCount As Integer
             Get
@@ -72,6 +99,19 @@
             Set(value As Integer)
                 _PlayCount = value
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(PlayCount)))
+            End Set
+        End Property
+
+        Private _IsFavorite As Boolean
+        'TODO Not Implemented
+        Property IsFavorite As Boolean
+            Get
+                Return _IsFavorite
+            End Get
+            Set(value As Boolean)
+                _IsFavorite = value
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(IsFavorite)))
+                SharedProperties.Instance.Library?.OnGroupFavoriteChanged(Me)
             End Set
         End Property
 
@@ -109,16 +149,10 @@
                 If Not IO.File.Exists(_Metadata?.Path) Then Return
                 'Fetch covers            
                 Dim Covers As New List(Of ImageSource)
-                Dim Tags = TagLib.File.Create(_Metadata.Path)
+                Dim Tags = Utilities.SharedProperties.Instance.RequestTags(_Metadata.Path)
                 For Each picture In Tags.Tag.Pictures
-                    Dim BI As New BitmapImage
-                    BI.BeginInit()
-                    BI.CacheOption = BitmapCacheOption.OnDemand
-                    'BI.DecodePixelHeight = 150
-                    'BI.DecodePixelWidth = 150
-                    BI.StreamSource = New IO.MemoryStream(picture.Data.Data)
-                    BI.EndInit()
-                    Covers.Add(BI)
+                    Dim BI As BitmapImage = New IO.MemoryStream(picture.Data.Data).ToBitmapSource
+                    If BI IsNot Nothing Then Covers.Add(BI)
                 Next
                 Tags.Dispose()
                 Cover = Covers.First
@@ -131,6 +165,22 @@
             End If
         End Sub
 
+        ''' <summary>
+        ''' Copies this instance data to a new one and return in.
+        ''' </summary>
+        ''' <remarks>
+        ''' Only properties are cloned, items references are copied.
+        ''' <see cref="IsCoverLocked"/>, <see cref="IsInUse"/> and <see cref="Tag"/> are ignored.
+        ''' </remarks>
+        ''' <returns></returns>
+        Public Function Clone() As MetadataGroup
+            Dim MDG As New MetadataGroup With {.Category = Category, .Cover = Cover, .Name = Name, .PlayCount = PlayCount, .TotalDuration = TotalDuration, .TotalFavorite = TotalFavorite, .Type = Type}
+            For Each _Item In Me
+                MDG.Add(_Item)
+            Next
+            Return MDG
+        End Function
+
         Shared Narrowing Operator CType(group As MetadataGroup) As Playlist
             Dim x As New Playlist() With {.Category = group.Category, .Name = group.Name, .TotalDuration = group.TotalDuration}
             For Each meta In group
@@ -139,5 +189,15 @@
             Return x
         End Operator
 
+
+        Public Enum GroupType
+            Undefined
+            Custom
+            Playlist
+            Artist
+            Album
+            Genre
+            Year
+        End Enum
     End Class
 End Namespace

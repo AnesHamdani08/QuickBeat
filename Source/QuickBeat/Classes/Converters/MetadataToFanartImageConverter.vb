@@ -1,5 +1,6 @@
 ﻿Imports System.Globalization
 Imports MetaBrainz.MusicBrainz.Interfaces
+Imports QuickBeat.Utilities
 
 Namespace Converters
     Public Class MetadataToFanartImageConverter
@@ -29,40 +30,19 @@ Namespace Converters
             If parameter Is Nothing Then
                 Dim BgURL = Artist.List.AImagesrtistbackground?.FirstOrDefault?.Url
                 If Not String.IsNullOrEmpty(BgURL) Then
-                    Using WC As New Net.WebClient()
-                        Dim Data = WC.DownloadData(BgURL)
-                        Dim BI As New BitmapImage
-                        BI.BeginInit()
-                        BI.StreamSource = New IO.MemoryStream(Data)
-                        BI.EndInit()
-                        Return BI
-                    End Using
+                    Return New Uri(BgURL).ToBitmapSource
                 End If
             Else
                 Select Case parameter.ToString.ToLower
                     Case "bg", "background"
                         Dim BgURL = Artist.List.AImagesrtistbackground?.FirstOrDefault?.Url
                         If Not String.IsNullOrEmpty(BgURL) Then
-                            Using WC As New Net.WebClient()
-                                Dim Data = WC.DownloadData(BgURL)
-                                Dim BI As New BitmapImage
-                                BI.BeginInit()
-                                BI.StreamSource = New IO.MemoryStream(Data)
-                                BI.EndInit()
-                                Return BI
-                            End Using
+                            Return New Uri(BgURL).ToBitmapSource
                         End If
                     Case "pic", "thumb"
                         Dim ThumbURL = Artist.List.Artistthumb?.FirstOrDefault?.Url
                         If Not String.IsNullOrEmpty(ThumbURL) Then
-                            Using WC As New Net.WebClient()
-                                Dim Data = WC.DownloadData(ThumbURL)
-                                Dim BI As New BitmapImage
-                                BI.BeginInit()
-                                BI.StreamSource = New IO.MemoryStream(Data)
-                                BI.EndInit()
-                                Return BI
-                            End Using
+                            Return New Uri(ThumbURL).ToBitmapSource
                         End If
                 End Select
             End If

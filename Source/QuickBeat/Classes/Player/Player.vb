@@ -1,9 +1,14 @@
 ﻿Imports System.ComponentModel
+Imports System.Runtime.InteropServices
+Imports System.Security.Cryptography
+Imports System.Windows.Forms
+Imports Newtonsoft.Json.Linq
 Imports QuickBeat.Classes
 Imports QuickBeat.Interfaces
 Imports QuickBeat.Utilities
 Imports Un4seen.Bass
 Imports Windows.Media
+Imports Windows.Media.Control
 
 Namespace Player
     <Serializable>
@@ -19,7 +24,7 @@ Namespace Player
             Public Event OnStop(sender As StreamControlHandle)
             Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
 
-            Private _Handle As Integer
+            Private ReadOnly _Handle As Integer
             ReadOnly Property Handle As Integer
                 Get
                     Return _Handle
@@ -148,7 +153,6 @@ Namespace Player
                 OnPropertyChanged(NameOf(Length))
             End Sub
         End Class
-
         Public Class ABLoopHandle
             Implements INotifyPropertyChanged
 
@@ -234,7 +238,6 @@ Namespace Player
             End Sub
 
         End Class
-
         Public Class PeakLevels
             Implements INotifyPropertyChanged
 
@@ -285,7 +288,7 @@ Namespace Player
                 End Set
             End Property
 
-            Property _Right As Double
+            Private _Right As Double
             ''' <summary>
             ''' The right channel's peak level, 0->32
             ''' </summary>
@@ -310,6 +313,19 @@ Namespace Player
                     OnPropertyChanged()
                 End Set
             End Property
+
+            ''' <summary>
+            ''' Returns the peak levels at the exact moment this method is called.
+            ''' </summary>
+            ''' <param name="Stream">HStream</param>
+            ''' <returns>Instance of <see cref="PeakLevels"/> with <see cref="PeakLevels.Left"/> ,<see cref="PeakLevels.Right"/> already filled.</returns>
+            Shared Function FromStream(Stream As Integer) As PeakLevels
+                Dim PL As New PeakLevels With {.Stream = Stream}
+                Dim _Level = Bass.BASS_ChannelGetLevel(Stream)
+                PL.Left = Utils.LowWord32(_Level) / 1000
+                PL.Right = Utils.HighWord32(_Level) / 1000
+                Return PL
+            End Function
         End Class
         Public Class BassStream
             Implements INotifyPropertyChanged
@@ -388,6 +404,7 @@ Namespace Player
             Private _proc As New SYNCPROC(Sub(h, channel, data, user)
                                               IsFreed = True
                                           End Sub)
+            Private _Hproc As Integer
 
             Sub New(handle As Integer)
                 _Handle = handle
@@ -408,26 +425,49 @@ Namespace Player
                 If handle <> 0 Then
                     _StreamInfo = Bass.BASS_ChannelGetInfo(handle)?.ToString
                 End If
-                Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_FREE, 0, _proc, IntPtr.Zero)
+                _Hproc = Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_FREE, 0, _proc, IntPtr.Zero)
                 OnPropertyChanged(NameOf(Me.Handle))
                 OnPropertyChanged(NameOf(Metadata))
                 OnPropertyChanged(NameOf(ControlHandle))
                 OnPropertyChanged(NameOf(StreamInfo))
             End Sub
-        End Class
 
+            Sub FreeHandle()
+                If Bass.BASS_ChannelRemoveSync(Handle, _Hproc) Then _Hproc = 0
+            End Sub
+        End Class
         Public Enum AudioQuality
             LQ '<=128kbps
             SQ '192/256kbps
             HQ '320kbps
             UHQ '>320kbps
         End Enum
+
+        Public Enum PlayState
+            Unknown
+            Playing
+            Paused
+            Transitioning
+            Stopped
+            Stalled
+        End Enum
 #End Region
 #Region "IStartupItem Impl."
         Public Sub OnPropertyChanged(<Runtime.CompilerServices.CallerMemberName> Optional CallerName As String = Nothing)
+            Select Case CallerName
+                Case NameOf(IsPlaying)
+                    If _IsPlaying_OldValue = IsPlaying Then Return
+                Case NameOf(IsPaused)
+                    If _IsPaused_OldValue = IsPaused Then Return
+                Case NameOf(IsStopped)
+                    If _IsStopped_OldValue = IsStopped Then Return
+                Case NameOf(IsStalled)
+                    If _IsStalled_OldValue = IsStalled Then Return
+            End Select
             RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(CallerName))
             Select Case CallerName
                 Case NameOf(IsPlaying)
+                    _IsPlaying_OldValue = IsPlaying
                     If IsPlaying Then
                         If Level IsNot Nothing Then Level.IsActive = True
                         If IsPreviewing Then
@@ -437,37 +477,63 @@ Namespace Player
                                      Do While IsPlaying
                                          OnPropertyChanged(NameOf(Position))
                                          OnPropertyChanged(NameOf(PositionString))
+                                         OnPropertyChanged(NameOf(TimeLeftString))
                                          Await Task.Delay(1000)
                                      Loop
                                  End Function)
                         VideoEffect?.OnPlayerResumed()
+                        _ProxiedVideoEffect?.OnPlayerResumed()
+                        If IsVideoEffectPowerSaving Then
+                            VideoEffect?.OnPowerSavingResume()
+                            _ProxiedVideoEffect.OnPowerSavingResume()
+                        End If
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Playing : GetSMTC().DisplayUpdater.Update()
+                        RaiseEvent PlaystateChanged(Me)
                     End If
                 Case NameOf(IsPaused)
+                    _IsPaused_OldValue = IsPaused
                     If IsPaused Then
                         If Level IsNot Nothing Then Level.IsActive = False
                         VideoEffect?.OnPlayerPaused()
+                        _ProxiedVideoEffect?.OnPlayerPaused()
+                        If IsVideoEffectPowerSaving Then
+                            VideoEffect?.OnPowerSavingPause()
+                            _ProxiedVideoEffect.OnPowerSavingResume()
+                        End If
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Paused : GetSMTC().DisplayUpdater.Update()
+                        RaiseEvent PlaystateChanged(Me)
                     End If
                 Case NameOf(IsStopped)
+                    _IsStopped_OldValue = IsStopped
                     If IsStopped Then
                         If Level IsNot Nothing Then Level.IsActive = False
                         VideoEffect?.OnPlayerPaused()
+                        _ProxiedVideoEffect?.OnPlayerPaused()
+                        If IsVideoEffectPowerSaving Then
+                            VideoEffect?.OnPowerSavingPause()
+                        End If
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Stopped : GetSMTC().DisplayUpdater.Update()
+                        RaiseEvent PlaystateChanged(Me)
                     End If
                 Case NameOf(IsStalled)
+                    _IsStalled_OldValue = IsStalled
                     If IsStalled Then
                         If Level IsNot Nothing Then Level.IsActive = False
                         VideoEffect?.OnPlayerPaused()
+                        _ProxiedVideoEffect?.OnPlayerPaused()
+                        If IsVideoEffectPowerSaving Then
+                            VideoEffect?.OnPowerSavingPause()
+                        End If
                         OnPropertyChanged(NameOf(TaskbarState))
                         OnPropertyChanged(NameOf(TaskbarOverlay))
                         If IsUsingSMTC Then GetSMTC().PlaybackStatus = MediaPlaybackStatus.Closed : GetSMTC().DisplayUpdater.Update()
+                        RaiseEvent PlaystateChanged(Me)
                     End If
                 Case NameOf(Position)
                     OnPropertyChanged(NameOf(TaskbarProgress))
@@ -482,6 +548,7 @@ Namespace Player
 
         Sub Init() Implements IStartupItem.Init
             Utilities.DebugMode.Instance.Log(Of Player)("Initializing BASS...")
+            Utilities.SharedProperties.Instance?.ItemsConfiguration.Add(Configuration)
             Configuration.SetStatus("Initializing...", 0)
             Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_DEV_DEFAULT, 1) 'So BASS output will follow active device.
             Dim outdevices = Bass.BASS_GetDeviceInfos
@@ -493,22 +560,31 @@ Namespace Player
             _Output = Bass.BASS_GetDevice
             OnPropertyChanged(NameOf(Output))
             OnIsInitializedChanged(IsInit)
-            If SharedProperties.Instance.IsLogging Then
-                If IsInit Then Utilities.DebugMode.Instance.Log(Of Player)("Done initializing player.") Else Utilities.DebugMode.Instance.Log(Of Player)("An error occured at player initialization, " & Bass.BASS_ErrorGetCode.ToString)
-            End If
+            Utilities.DebugMode.Instance.Log(Of Player)("Hooking App Handlers...")
+            AddHandler SharedProperties.Instance.App_Activated, AddressOf App_Activated
+            AddHandler SharedProperties.Instance.App_Deactivated, AddressOf App_Deactivated
             If IsInit Then Configuration.SetStatus("All Good", 100) Else Configuration.SetError(True, New Exception("An error occured at initialization level. " & Bass.BASS_ErrorGetCode.ToString))
         End Sub
 
+        Sub Free()
+            [Stop]()
+            DisposeSMTC()
+            'Bass.BASS_Free()
+        End Sub
 #End Region
 #Region "Events"
-        Event IsInitializedChanged()
-        Event MediaEnded(ByRef IsHandled As Boolean)
+        Public Event IsInitializedChanged()
+        Public Event MediaEnded(ByRef IsHandled As Boolean)
         ''' <summary>
         ''' Occures when <see cref="Stream"/> is changed
         ''' </summary>
-        Event MediaLoaded(OldValue As Integer, NewValue As Integer)
-        Event PositionChanged(newPosition As Integer)
-        Event MetadataChanged()
+        Public Event MediaLoaded(OldValue As Integer, NewValue As Integer)
+        Public Event PositionChanged(newPosition As Double)
+        Public Event MetadataChanged()
+        Public Event PlaystateChanged(sender As Player)
+        Public Event DownloadFinished(ByVal data As IO.MemoryStream)
+        Public Event PreviewStarted()
+        Public Event PreviewEnded()
         <NonSerialized> Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
 #End Region
 #Region "Properties"
@@ -543,11 +619,12 @@ Namespace Player
                     OnPropertyChanged()
                     Return
                 End If
+                Bass.BASS_Free()
                 Dim IsInit = Bass.BASS_Init(value, SampleRate, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero)
                 Dim errcode = Bass.BASS_ErrorGetCode
                 If errcode = BASSError.BASS_OK OrElse errcode = BASSError.BASS_ERROR_ALREADY Then _Output = value 'Bass.BASS_GetDevice
                 OnPropertyChanged()
-                OnIsInitializedChanged(IsInit)
+                OnIsInitializedChanged(IsInit OrElse (errcode = BASSError.BASS_OK OrElse errcode = BASSError.BASS_ERROR_ALREADY))
                 If (IsInit OrElse errcode = BASSError.BASS_ERROR_ALREADY) AndAlso Stream <> 0 Then
                     If Not Bass.BASS_ChannelSetDevice(Stream, value) Then
                         Configuration.SetError(True, New InvalidOperationException(Bass.BASS_ErrorGetCode.ToString))
@@ -579,6 +656,17 @@ Namespace Player
             End Get
         End Property
 
+        <NonSerialized> Private _StreamInfo As BASS_CHANNELINFO
+        Property StreamInfo As BASS_CHANNELINFO
+            Get
+                Return _StreamInfo
+            End Get
+            Set(value As BASS_CHANNELINFO)
+                _StreamInfo = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
         Private _StreamQuality As AudioQuality
         Property StreamQuality As AudioQuality
             Get
@@ -597,6 +685,9 @@ Namespace Player
             End Get
             Set(value As Integer)
                 _Bitrate = value
+                If StreamMetadata IsNot Nothing AndAlso StreamMetadata.Path = Path Then 'match
+                    StreamMetadata.Bitrate = value
+                End If
                 OnPropertyChanged()
             End Set
         End Property
@@ -610,42 +701,80 @@ Namespace Player
 
         Property AutoPlay As Boolean = True
 
+        Private _IsPlaying_OldValue As Boolean
         ReadOnly Property IsPlaying As Boolean
             Get
                 Return (Bass.BASS_ChannelIsActive(Stream) = BASSActive.BASS_ACTIVE_PLAYING)
             End Get
         End Property
 
+        Private _IsPaused_OldValue As Boolean
         ReadOnly Property IsPaused As Boolean
             Get
                 Return (Bass.BASS_ChannelIsActive(Stream) = BASSActive.BASS_ACTIVE_PAUSED)
             End Get
         End Property
 
+        Private _IsStalled_OldValue As Boolean
         ReadOnly Property IsStalled As Boolean
             Get
                 Return (Bass.BASS_ChannelIsActive(Stream) = BASSActive.BASS_ACTIVE_STALLED)
             End Get
         End Property
 
+        Private _IsStopped_OldValue As Boolean
         ReadOnly Property IsStopped As Boolean
             Get
                 Return (Bass.BASS_ChannelIsActive(Stream) = BASSActive.BASS_ACTIVE_STOPPED)
             End Get
         End Property
 
+        <NonSerialized> Private _SuspendPositionUpdate As Boolean = False
+        ''' <summary>
+        ''' Locks stream position sync, meaning <see cref="Position"/> will no longer updates <see cref="Stream"/>
+        ''' </summary>
+        ''' <returns></returns>
+        Property SuspendPositionUpdate As Boolean
+            Get
+                Return _SuspendPositionUpdate
+            End Get
+            Set(value As Boolean)
+                _SuspendPositionUpdate = value
+                'If Not value Then
+                '    Position = _Position
+                'End If
+                OnPropertyChanged()
+            End Set
+        End Property
+
+
+        ''' <summary>
+        ''' Used when <see cref="SuspendPositionUpdate"/> is true
+        ''' </summary>
+        Private _Position As Double = 0
         ''' <summary>
         ''' Stream's position in seconds
         ''' </summary>
         ''' <returns></returns>
         Property Position As Double
             Get
-                Return Bass.BASS_ChannelBytes2Seconds(Stream, Bass.BASS_ChannelGetPosition(Stream, BASSMode.BASS_POS_BYTE))
+                If SuspendPositionUpdate Then
+                    Return _Position
+                Else
+                    _Position = Bass.BASS_ChannelBytes2Seconds(Stream, Bass.BASS_ChannelGetPosition(Stream, BASSMode.BASS_POS_BYTE))
+                    Return If(_Position = -1, 0, _Position)
+                End If
             End Get
             Set(value As Double)
-                If Stream = 0 Then Return
-                If Bass.BASS_ChannelSetPosition(Stream, value) Then
-                    RaiseEvent PositionChanged(value)
+                If SuspendPositionUpdate Then
+                    _Position = value
+                    OnPropertyChanged()
+                Else
+                    If Stream = 0 Then Return
+                    If Bass.BASS_ChannelSetPosition(Stream, value) Then
+                        _Position = value
+                        RaiseEvent PositionChanged(value)
+                    End If
                 End If
             End Set
         End Property
@@ -750,7 +879,7 @@ Namespace Player
             End Get
         End Property
 
-        Private _Level As New PeakLevels()
+        Private _Level As PeakLevels
         Property Level As PeakLevels
             Get
                 Return _Level
@@ -826,9 +955,20 @@ Namespace Player
             End Set
         End Property
 
+        Private _AutoNextOnError As Boolean = True
+        Property AutoNextOnError As Boolean
+            Get
+                Return _AutoNextOnError
+            End Get
+            Set(value As Boolean)
+                _AutoNextOnError = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
         Private _Path As String
         ''' <summary>
-        ''' Leave for player use,Use <see cref="LoadSong(Metadata)"/> or <see cref="LoadSong(String, Boolean)"/> instead of setting path in here.
+        ''' Leave for the player to manage, Only for get, Use <see cref="LoadSong(Metadata, String(), Boolean)"/> or <see cref="LoadSong(String, Boolean,Boolean,Boolean)"/> instead of setting path in here.
         ''' </summary>
         ''' <returns></returns>
         Property Path As String
@@ -841,6 +981,10 @@ Namespace Player
             End Set
         End Property
 
+        ''' <summary>
+        ''' Length in seconds
+        ''' </summary>
+        ''' <returns></returns>
         ReadOnly Property Length As Double
             Get
                 Return Bass.BASS_ChannelBytes2Seconds(Stream, Bass.BASS_ChannelGetLength(Stream, BASSMode.BASS_POS_BYTE))
@@ -857,20 +1001,30 @@ Namespace Player
                 If _Profile IsNot Nothing Then _Profile.Dispose()
                 value.Parent = Me
                 _Profile = value
-                For Each fx In value
-                    fx.HStream = Stream
-                    fx.Apply()
-                Next
+                If Stream <> 0 Then
+                    For Each fx In value
+                        If Not fx.IsEnabled Then Continue For
+                        fx.HStream = Stream
+                        fx.Apply()
+                    Next
+                End If
                 OnPropertyChanged()
             End Set
         End Property
 
-        Private _VideoEffect As VideoEffects.VideoEffect
-        Property VideoEffect As VideoEffects.VideoEffect
+        <NonSerialized> Private _ProxiedVideoEffect As VFX.VideoEffects.VideoEffect
+        ReadOnly Property ProxiedVideoEffect As VFX.VideoEffects.VideoEffect
+            Get
+                Return _ProxiedVideoEffect
+            End Get
+        End Property
+
+        <NonSerialized> Private _VideoEffect As VFX.VideoEffects.VideoEffect
+        Property VideoEffect As VFX.VideoEffects.VideoEffect
             Get
                 Return _VideoEffect
             End Get
-            Set(value As VideoEffects.VideoEffect)
+            Set(value As VFX.VideoEffects.VideoEffect)
                 If _VideoEffect IsNot Nothing Then
                     _VideoEffect.Stop()
                 End If
@@ -878,6 +1032,7 @@ Namespace Player
                 If _VideoEffect IsNot Nothing Then
                     _VideoEffect.Stream = Stream
                     _VideoEffect.Metadata = StreamMetadata
+                    If IsPlaying Then _VideoEffect.OnPlayerResumed()
                 End If
                 OnPropertyChanged()
             End Set
@@ -905,7 +1060,7 @@ Namespace Player
             End Set
         End Property
 
-        Private _RemoteTagsReading As Boolean
+        Private _RemoteTagsReading As Boolean = True 'Enabled by default
         Property RemoteTagsReading As Boolean
             Get
                 Return _RemoteTagsReading
@@ -1000,11 +1155,87 @@ Namespace Player
             End Set
         End Property
 
+        Private _IsVideoEffectPowerSaving As Boolean = False
+        Property IsVideoEffectPowerSaving As Boolean
+            Get
+                Return _IsVideoEffectPowerSaving
+            End Get
+            Set(value As Boolean)
+                _IsVideoEffectPowerSaving = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        <NonSerialized> Private _IsTransitioning As Boolean = False
+        Property IsTransitioning As Boolean
+            Get
+                Return _IsTransitioning
+            End Get
+            Set(value As Boolean)
+                _IsTransitioning = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _IsNormalizingStream As Boolean = False
+        Property IsNormalizingStream As Boolean
+            Get
+                Return _IsNormalizingStream
+            End Get
+            Set(value As Boolean)
+                _IsNormalizingStream = value
+                If value Then
+                    Normalize()
+                Else
+                    If _HNormalizeDPSProc <> 0 Then
+                        Bass.BASS_ChannelRemoveDSP(Stream, _HNormalizeDPSProc)
+                        _HNormalizeDPSProc = 0
+                    End If
+                    _IsNormalizationActive = False
+                    _IsNormalizationActiveReason = ""
+                    OnPropertyChanged(NameOf(IsNormalizationActive))
+                    OnPropertyChanged(NameOf(IsNormalizationActiveReason))
+                End If
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        <NonSerialized> Private _IsNormalizationActive As Boolean
+        ''' <summary>
+        ''' Indicates the normalization status on the current stream, if set to false check <see cref="IsNormalizationActiveReason"/> to get the error
+        ''' </summary>
+        ''' <returns></returns>
+        ReadOnly Property IsNormalizationActive As Boolean
+            Get
+                Return _IsNormalizationActive
+            End Get
+        End Property
+
+        <NonSerialized> Private _IsNormalizationActiveReason As String
+        ''' <summary>
+        ''' If <see cref="IsNormalizationActive"/> is set to false, gets the error associated with it
+        ''' </summary>
+        ''' <returns></returns>
+        ReadOnly Property IsNormalizationActiveReason As String
+            Get
+                Return _IsNormalizationActiveReason
+            End Get
+        End Property
+
+        ReadOnly Property TimeLeftString As String
+            Get
+                If StreamMetadata IsNot Nothing Then
+                    Dim LengthTS = TimeSpan.FromSeconds(Position - StreamMetadata.Length)
+                    Return $"-{If(LengthTS.Minutes * -1 < 10, 0, "")}{LengthTS.Minutes * -1}:{If(LengthTS.Seconds * -1 < 10, 0, "")}{LengthTS.Seconds * -1}"
+                End If
+                Return "--:--"
+            End Get
+        End Property
 
         ReadOnly Property ModuleStatus(name As String) As Boolean
             Get
                 Dim _module = Modules.FirstOrDefault(Function(k) k.Name = name)
-                Return If(_module Is Nothing, False, _module.IsEnabled)
+                Return _module IsNot Nothing AndAlso _module.IsEnabled
             End Get
         End Property
 
@@ -1014,20 +1245,225 @@ Namespace Player
             End Get
         End Property
 
-        Private _DownloadFinished As Boolean
-        Property DownloadFinished As Boolean
+        ''' <summary>
+        ''' Gets or Sets the player state
+        ''' </summary>
+        ''' <remarks>
+        ''' Only supports <see cref="PlayState.Playing"/>, <see cref="PlayState.Paused"/> and <see cref="PlayState.Stopped"/> when setting.
+        ''' </remarks>
+        ''' <returns></returns>
+        Property State As PlayState
             Get
-                Return _DownloadFinished
+                Return If(IsPlaying, PlayState.Playing,
+                    If(IsPaused, PlayState.Paused,
+                    If(IsStopped, PlayState.Stopped,
+                    If(IsStalled, PlayState.Stalled,
+                    If(IsTransitioning, PlayState.Transitioning, PlayState.Unknown)))))
             End Get
-            Set(value As Boolean)
-                _DownloadFinished = value
+            Set(value As PlayState)
+                Select Case value
+                    Case PlayState.Playing
+                        Play()
+                        OnPropertyChanged()
+                    Case PlayState.Paused
+                        Pause()
+                        OnPropertyChanged()
+                    Case PlayState.Stopped
+                        [Stop]()
+                        OnPropertyChanged()
+                End Select
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Total incoming file size bytes
+        ''' </summary>
+        ''' <returns></returns>
+        ReadOnly Property DownloadLength As Long
+            Get
+                Return Bass.BASS_StreamGetFilePosition(Stream, BASSStreamFilePosition.BASS_FILEPOS_END)
+            End Get
+        End Property
+
+        <NonSerialized> Private _DownloadPercentage As Integer
+        ''' <summary>
+        ''' Current download percentage (%)
+        ''' </summary>
+        ''' <returns></returns>
+        Property DownloadPercentage As Integer
+            Get
+                Return _DownloadPercentage
+            End Get
+            Set(value As Integer)
+                _DownloadPercentage = value
                 OnPropertyChanged()
             End Set
         End Property
 
+        Private _IsDownloadFinished As Boolean
+        Property IsDownloadFinished As Boolean
+            Get
+                Return _IsDownloadFinished
+            End Get
+            Set(value As Boolean)
+                _IsDownloadFinished = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _IsDownloading As Boolean
+        Property IsDownloading As Boolean
+            Get
+                Return _IsDownloading
+            End Get
+            Set(value As Boolean)
+                _IsDownloading = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkTimeout As Integer
+            Get
+                Return Bass.BASS_GetConfig(BASSConfig.BASS_CONFIG_NET_TIMEOUT)
+            End Get
+            Set(value As Integer)
+                Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_NET_TIMEOUT, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkBuffer As Integer
+            Get
+                Return Bass.BASS_GetConfig(BASSConfig.BASS_CONFIG_NET_BUFFER)
+            End Get
+            Set(value As Integer)
+                Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_NET_TIMEOUT, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkAgent As String
+            Get
+                Return Bass.BASS_GetConfigString(BASSConfig.BASS_CONFIG_NET_AGENT)
+            End Get
+            Set(value As String)
+                Bass.BASS_SetConfigString(BASSConfig.BASS_CONFIG_NET_TIMEOUT, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkProxy As String
+            Get
+                Return Bass.BASS_GetConfigString(BASSConfig.BASS_CONFIG_NET_PROXY)
+            End Get
+            Set(value As String)
+                Bass.BASS_SetConfigString(BASSConfig.BASS_CONFIG_NET_PROXY, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkPassiveFTP As Boolean
+            Get
+                Return Bass.BASS_GetConfigBool(BASSConfig.BASS_CONFIG_NET_PASSIVE)
+            End Get
+            Set(value As Boolean)
+                Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_NET_PASSIVE, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkForwardSeek As Integer
+            Get
+                Return Bass.BASS_GetConfig(BASSConfig.BASS_CONFIG_NET_SEEK)
+            End Get
+            Set(value As Integer)
+                Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_NET_SEEK, value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Property NetworkSpeedLimitRate As Integer
+            Get
+                Return Bass.BASS_GetConfig(CType(72, BASSConfig))
+            End Get
+            Set(value As Integer)
+                Bass.BASS_SetConfig(CType(72, BASSConfig), value)
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _NetworkSpeedLimit As Boolean = False
+        Property NetworkSpeedLimit As Boolean
+            Get
+                Return _NetworkSpeedLimit
+            End Get
+            Set(value As Boolean)
+                _NetworkSpeedLimit = value
+                OnPropertyChanged()
+                If value Then
+                    OnPropertyChanged(NameOf(NetworkBuffer))
+                    OnPropertyChanged(NameOf(NetworkSpeedLimitRate))
+                End If
+            End Set
+        End Property
+
+        Private _SavePosition As Boolean
+        ''' <summary>
+        ''' Wheter or not to save position in <see cref="SaveSettings()"/>
+        ''' </summary>
+        ''' <returns></returns>
+        Property SavePosition As Boolean
+            Get
+                Return _SavePosition
+            End Get
+            Set(value As Boolean)
+                _SavePosition = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _SaveState As Boolean
+        ''' <summary>
+        ''' Wheter or not to save state in <see cref="SaveSettings()"/>
+        ''' </summary>
+        ''' <returns></returns>
+        Property SaveState As Boolean
+            Get
+                Return _SaveState
+            End Get
+            Set(value As Boolean)
+                _SaveState = value
+                OnPropertyChanged()
+            End Set
+        End Property
+
+        Private _SilenceCueInPos As KeyValuePair(Of Integer, Double)
+        ''' <summary>
+        ''' Used to block <see cref="AutoNextOnError"/> if too many errors
+        ''' </summary>
+        Private _ConsecutiveErrorCount As Integer = 0
+
         <NonSerialized> Private _EndSyncProcHandle As Integer = 0
         <NonSerialized> Private _EndSyncProc As New SYNCPROC(Sub(h, c, d, u)
-                                                                 If IsLooping Then Return
+                                                                 If IsLooping Then 'suspend media ended
+                                                                     Application.Current.Dispatcher.Invoke(Sub()
+                                                                                                               If IO.File.Exists(Path) Then
+#Disable Warning
+                                                                                                                   SharedProperties.Instance.Library.IncreasePlaycountAsync(Path, 1)
+#Enable Warning
+                                                                                                               Else
+                                                                                                                   If StreamMetadata IsNot Nothing Then StreamMetadata.PlayCount += 1
+                                                                                                               End If
+                                                                                                           End Sub)
+                                                                     If Not IsNothing(_SilenceCueInPos) AndAlso _SilenceCueInPos.Key = Stream Then
+                                                                         Position = _SilenceCueInPos.Value
+                                                                         RaiseEvent PositionChanged(Position)
+                                                                         Return
+                                                                     Else
+                                                                         RaiseEvent PositionChanged(0)
+                                                                         Return
+                                                                     End If
+                                                                 End If
                                                                  Application.Current.Dispatcher.Invoke(Sub()
                                                                                                            If OnMediaEnded() Then Return
                                                                                                            Playlist?.Next()
@@ -1036,6 +1472,7 @@ Namespace Player
 
         <NonSerialized> Private _CrossfadeProcHandle As Integer = 0
         <NonSerialized> Private _CrossfadeSyncProc As New SYNCPROC(Sub(h, c, d, u)
+                                                                       If (Bass.BASS_ChannelFlags(c, BASSFlag.BASS_DEFAULT, BASSFlag.BASS_DEFAULT) And BASSFlag.BASS_SAMPLE_LOOP) = BASSFlag.BASS_SAMPLE_LOOP Then Return
                                                                        'c = stream
                                                                        Bass.BASS_ChannelSlideAttribute(c, BASSAttribute.BASS_ATTRIB_VOL, 0, CrossfadeDuration)
                                                                        Application.Current.Dispatcher.Invoke(Sub()
@@ -1065,15 +1502,17 @@ Namespace Player
         Private _data() As Byte ' local data buffer        
         Private _datastream As IO.MemoryStream 'total local data buffer ,tag-related
         Private _filename As String
-        Private _stopdownproc As Boolean = False
+        Private _stopdownproc As Boolean = False 'explicitly suspend the code inside the downloadproc
         Private _alreadyfoundtags As Boolean = False
 
         Private _HTTPDOWNLOADPROC As New DOWNLOADPROC(Sub(buffer As IntPtr, length As Integer, user As IntPtr)
                                                           If _stopdownproc Then Return
                                                           'If RemoteTagsReading AndAlso StreamMetadata.Location = Metadata.FileLocation.Remote Then
                                                           If buffer = IntPtr.Zero Then
-                                                              ' finished downloading                                                             
-                                                              DownloadFinished = True
+                                                              ' finished downloading
+                                                              IsDownloading = False
+                                                              IsDownloadFinished = True
+                                                              RaiseEvent DownloadFinished(_datastream)
                                                           Else
                                                               ' increase the data buffer as needed
                                                               If _data Is Nothing OrElse _data.Length < length Then
@@ -1086,22 +1525,23 @@ Namespace Player
                                                               If _datastream Is Nothing Then
                                                                   _datastream = New IO.MemoryStream()
                                                               End If
-                                                              Dim XData = New Byte(length) {}
-                                                              ' copy from unmanaged to managed memory
-                                                              Runtime.InteropServices.Marshal.Copy(buffer, XData, 0, length)
-                                                              _datastream.Write(XData, 0, XData.Length)
-                                                              If _alreadyfoundtags Then Return
+                                                              _datastream.Write(_data, 0, length)
+                                                              DownloadPercentage = CInt((Bass.BASS_StreamGetFilePosition(Stream, BASSStreamFilePosition.BASS_FILEPOS_DOWNLOAD) * CLng(100)) / If(DownloadLength = 0, 1, CLng(DownloadLength))) '_datastream.Length
+                                                              IsDownloading = True
+                                                              If _alreadyfoundtags OrElse StreamMetadata?.BlockDOWNLOADPROC Then Return
                                                               Try
-                                                                  Dim Tag = TagLib.File.Create(New FileBytesAbstraction("output" & IO.Path.GetExtension(StreamMetadata.Path), _datastream?.ToArray))
+                                                                  Dim Tag = TagLib.File.Create(New FileBytesAbstraction("output" & IO.Path.GetExtension(StreamMetadata.Path), _datastream)) '_datastream?.ToArray))
                                                                   If Tag.Tag.Title <> "" Then
-                                                                      'TODO remove to implement cache dump or prompt to keep cache since it may cause memory problems                                                                      
-                                                                      If Not _alreadyfoundtags Then StreamMetadata.LoadFromTFile(Tag, True)
+                                                                      StreamMetadata.LoadFromTFile(Tag, True)
                                                                   End If
                                                               Catch
                                                               End Try
                                                           End If
                                                           'End If
                                                       End Sub)
+#End Region
+#Region "Constants"
+        Const ConsecutiveErrorThreshold As Integer = 5
 #End Region
 #Region "Raisers"
         Private Sub OnIsInitializedChanged(value As Boolean)
@@ -1120,6 +1560,7 @@ Namespace Player
         End Function
 
         Protected Overridable Sub OnMediaLoaded(OldValue As Integer, NewValue As Integer)
+            IsTransitioning = False
             RaiseEvent MediaLoaded(OldValue, NewValue)
         End Sub
 
@@ -1133,11 +1574,9 @@ Namespace Player
             If _suppressautohttpclean Then
                 _suppressautohttpclean = False
             Else
-                _data = Nothing
-                _datastream = Nothing
-                DownloadFinished = False
+                OnHttpClean()
             End If
-            'General cleaning
+            'General cleaning            
             If _EndSyncProcHandle <> 0 Then
                 If Bass.BASS_ChannelRemoveSync(Stream, _EndSyncProcHandle) Then _EndSyncProcHandle = 0
             End If
@@ -1147,11 +1586,13 @@ Namespace Player
             If _SilencSkipProcHandle <> 0 Then
                 If Bass.BASS_ChannelRemoveSync(Stream, _SilencSkipProcHandle) Then _SilencSkipProcHandle = 0
             End If
+            _SilenceCueInPos = Nothing
             ABLoop?.RevokeHandle()
             ABLoop = Nothing
 
             Dim OldStream = Stream
             _Stream = New BassStream(value)
+            StreamInfo = Bass.BASS_ChannelGetInfo(value)
             Dim Bitrate As Single
             If Bass.BASS_ChannelGetAttribute(Stream, BASSAttribute.BASS_ATTRIB_BITRATE, Bitrate) Then
                 Bitrate = Math.Floor(Bitrate)
@@ -1171,10 +1612,14 @@ Namespace Player
             OnMediaLoaded(OldStream, Stream)
 
             If Streams?.FirstOrDefault(Function(k) k.Handle = Stream) Is Nothing Then
+                If AutoStop Then
+                    ChannelStream.FreeHandle()
+                    ChannelStream.IsFreed = True
+                End If
                 Streams.Insert(0, ChannelStream)
             End If
 
-            'Applying settings
+            'Applying settings 
             If _Stream.Handle <> 0 Then
                 _EndSyncProcHandle = Bass.BASS_ChannelSetSync(_Stream.Handle, BASSSync.BASS_SYNC_END, 0, _EndSyncProc, IntPtr.Zero)
                 Bass.BASS_ChannelSetDevice(_Stream.Handle, Output)
@@ -1182,10 +1627,11 @@ Namespace Player
             'Silence Skip
             Dim cueInPos As Double
             Dim cueOutPos As Double
-            If IsSkippingSilence Then
+            If IsSkippingSilence AndAlso Position = 0 Then
                 If Un4seen.Bass.Utils.DetectCuePoints(Path, 10, cueInPos, cueOutPos, -25, -42, 0) Then
                     If Not IsCrossfading Then _SilencSkipProcHandle = Bass.BASS_ChannelSetSync(Stream, BASSSync.BASS_SYNC_POS, Bass.BASS_ChannelSeconds2Bytes(Stream, cueOutPos), _EndSyncProc, IntPtr.Zero)
                     Position = cueInPos
+                    _SilenceCueInPos = New KeyValuePair(Of Integer, Double)(Stream, cueInPos)
                 Else
                     Utilities.DebugMode.Instance.Log(Of Player)("Unable to detect cue points. " & Bass.BASS_ErrorGetCode.ToString)
                 End If
@@ -1196,6 +1642,14 @@ Namespace Player
                 End If
                 _CrossfadeProcHandle = Bass.BASS_ChannelSetSync(Stream, BASSSync.BASS_SYNC_POS, Bass.BASS_ChannelSeconds2Bytes(Stream, If(IsSkippingSilence AndAlso cueOutPos <> 0, cueOutPos, Length) - (CrossfadeDuration / 1000)), _CrossfadeSyncProc, IntPtr.Zero)
             End If
+            If IsNormalizingStream Then
+                Normalize()
+            Else
+                _IsNormalizationActive = False
+                _IsNormalizationActiveReason = ""
+                OnPropertyChanged(NameOf(IsNormalizationActive))
+                OnPropertyChanged(NameOf(IsNormalizationActiveReason))
+            End If
             If _IsLooping Then
                 IsLooping = True
             Else
@@ -1203,11 +1657,13 @@ Namespace Player
             End If
             If IsMuted Then Volume = 0 Else If Not IsCrossfading Then Volume = _RawVolume
 
-            If Level Is Nothing Then Level = New PeakLevels
-            Level.Stream = Stream
+            If Level IsNot Nothing Then Level.Stream = Stream
 
             If VideoEffect IsNot Nothing Then
                 VideoEffect.Stream = Stream
+            End If
+            If _ProxiedVideoEffect IsNot Nothing Then
+                _ProxiedVideoEffect.Stream = Stream
             End If
 
             'Notify UI
@@ -1223,20 +1679,30 @@ Namespace Player
             OnPropertyChanged(NameOf(IsPlayingFromPlaylist))
         End Sub
 
+        ''' <summary>
+        ''' Expected to be called after <see cref="OnStreamChanged(Integer)"/> or called to serve the metadata of the current <see cref="Stream"/>
+        ''' </summary>
+        ''' <remarks>
+        ''' The use of this method to supply metadata that doesn't match the current <see cref="Stream"/>/<see cref="PreviewControlHandle"/> may lead to unexpected behaviour.
+        ''' </remarks>
+        ''' <param name="value">The metadata corresponding to <see cref="Stream"/> or <see cref="PreviewControlHandle"/> if <see cref="IsPreviewing"/> is True</param>
+        ''' <param name="Force">Skips checking if the supplied <paramref name="value"/> matches <see cref="StreamMetadata"/></param>
+        ''' <param name="SkipMemoryFreeing">Keeps the current <see cref="StreamMetadata"/> Covers</param>
         Public Async Sub OnMetadataChanged(value As Metadata, Optional Force As Boolean = False, Optional SkipMemoryFreeing As Boolean = False)
             If Not Force AndAlso value Is StreamMetadata Then Return
             If PreviewControlHandle IsNot Nothing AndAlso PreviewControlHandle.Tag IsNot Nothing AndAlso TypeOf PreviewControlHandle.Tag Is Metadata Then
                 TryCast(PreviewControlHandle.Tag, Metadata).FreeCovers()
                 PreviewControlHandle.Tag = Nothing
             End If
-            If Not SkipMemoryFreeing Then StreamMetadata?.FreeCovers() : If StreamMetadata IsNot Nothing Then StreamMetadata.IsInUse = False
-            _Metadata = value : _Metadata.IsInUse = True
+            If Not SkipMemoryFreeing Then StreamMetadata?.FreeCovers() : If StreamMetadata IsNot Nothing Then StreamMetadata.CleanableConfiguration.Unlock()
+            _Metadata = value : _Metadata.CleanableConfiguration.Lock()
             If value.Length = 0 Then value.Length = Bass.BASS_ChannelBytes2Seconds(Stream, Bass.BASS_ChannelGetLength(Stream, BASSMode.BASS_POS_BYTE))
             If value Is Nothing Then
                 If _SMTC IsNot Nothing Then _SMTC.IsEnabled = False
                 Return
             Else
                 If _SMTC IsNot Nothing Then _SMTC.IsEnabled = True
+                If String.IsNullOrEmpty(value.Title) Then value.Title = IO.Path.GetFileNameWithoutExtension(StreamInfo.filename)
             End If
             _Metadata.EnsureCovers()
             ''If _Metadata.HasCover AndAlso _Metadata.Covers Is Nothing Then
@@ -1296,19 +1762,45 @@ Namespace Player
                 DpAdp.Update()
             End If
 #Disable Warning
-            SharedProperties.Instance.Library?.IncreasePlaycountAsync(value.Path, 1)
+            If value.Location = Metadata.FileLocation.Local Then
+                SharedProperties.Instance.Library?.IncreasePlaycountAsync(value.Path, 1)
+            Else
+                value.PlayCount += 1
+            End If
 #Enable Warning
-
             If VideoEffect IsNot Nothing Then
                 VideoEffect.Metadata = value
+            End If
+            If _ProxiedVideoEffect IsNot Nothing Then
+                _ProxiedVideoEffect.Metadata = value
             End If
 
             OnPropertyChanged(NameOf(StreamMetadata))
             RaiseEvent MetadataChanged()
         End Sub
+        Private Sub OnHttpClean()
+            _data = Nothing
+            _datastream = Nothing
+            IsDownloadFinished = False
+            IsDownloading = False
+        End Sub
+        Public Sub OnThemeChanged()
+            VideoEffect?.OnThemeChanged()
+            _ProxiedVideoEffect?.OnThemeChanged()
+        End Sub
 
+        Public Sub OnIsPlayingFromPlaylistChanged()
+            OnPropertyChanged(NameOf(IsPlayingFromPlaylist))
+        End Sub
 #End Region
 #Region "Handlers"
+        'TODO **BETA** Drop for now, it needs cache management
+        Private Sub Me_DownloadFinished(ByVal data As IO.MemoryStream) Handles Me.DownloadFinished
+            If Me.StreamMetadata.Location = Metadata.FileLocation.Remote Then 'i know if downloadfinished is raised metadata is remote          
+                Dim cMeta = CachedMetadata.FromRemoteMetadata(Me.StreamMetadata, data.ToArray)
+                Utilities.SharedProperties.Instance.RemoteLibrary.AddItem(cMeta, cMeta.UID)
+            End If
+        End Sub
 
         Private Sub _SMTC_AutoRepeatModeChangeRequested(sender As SystemMediaTransportControls, args As AutoRepeatModeChangeRequestedEventArgs) Handles _SMTC.AutoRepeatModeChangeRequested
             Application.Current.Dispatcher.Invoke(Sub()
@@ -1342,7 +1834,7 @@ Namespace Player
                                                           Case SystemMediaTransportControlsButton.Rewind
                                                               Position -= 10
                                                           Case SystemMediaTransportControlsButton.Stop
-                                                              [Stop]()
+                                                              [Stop](IsDownloading)
                                                       End Select
                                                   End Sub)
         End Sub
@@ -1355,18 +1847,53 @@ Namespace Player
             Application.Current.Dispatcher.Invoke(Sub() Playlist.IsShuffling = args.RequestedShuffleEnabled)
         End Sub
 
+        Private Sub App_Activated()
+            If IsVideoEffectPowerSaving Then
+                VideoEffect?.OnPowerSavingResume()
+                _ProxiedVideoEffect?.OnPowerSavingResume()
+            End If
+        End Sub
+
+        Private Sub App_Deactivated()
+            If IsVideoEffectPowerSaving Then
+                VideoEffect?.OnPowerSavingPause()
+                _ProxiedVideoEffect?.OnPowerSavingPause()
+            End If
+        End Sub
+
 #End Region
 #Region "Navigation"
         Async Sub LoadSong(Path As String, Optional CreateOnly As Boolean = False, Optional IsRemote As Boolean = False, Optional BlockDOWNLOADPROC As Boolean = False)
-            Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Path:=" & Path & "...")
+            Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Path:=" & Path & ", CreateOnly:=" & CreateOnly & ", IsRemote:=" & IsRemote & "BlockDOWNLOADPROC:=" & BlockDOWNLOADPROC & "...")
+            If _NextCallHandler IsNot Nothing Then
+                Utilities.DebugMode.Instance.Log(Of Player)("A custom handler was found, redirecting..., Path:=" & Path & ", CreateOnly:=" & CreateOnly & ", IsRemote:=" & IsRemote & "BlockDOWNLOADPROC:=" & BlockDOWNLOADPROC & "...")
+                _NextCallHandler.Invoke(New Metadata() With {.Location = If(IsRemote, Metadata.FileLocation.Remote, Metadata.FileLocation.Local), .Path = Path, .BlockDOWNLOADPROC = BlockDOWNLOADPROC})
+                _NextCallHandler = Nothing
+            End If
+            If IsRemote Then
+                _stopdownproc = False
+            End If
             IsLoadingStream = True
             '            Dim nStream = Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
             Dim nStream As Integer = 0
-            Await Task.Run(Async Function()
-                               nStream = If(Not IsRemote,
-                                Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
-                                Bass.BASS_StreamCreateURL(Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
-                           End Function)
+            Await Task.Run(Sub()
+                               'nStream = If(Not IsRemote,
+                               ' Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
+                               ' Bass.BASS_StreamCreateURL(Path, 0,
+                               '                           If(NetworkSpeedLimit, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE Or BASSFlag.BASS_STREAM_RESTRATE, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
+                               '                           If(BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
+                               If Not IsRemote Then
+                                   nStream = Bass.BASS_StreamCreateFile(Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
+                               Else
+                                   Dim mdata = QuickBeat.Player.Metadata.FromCache(Path)
+                                   If mdata Is Nothing Then
+                                       nStream = Bass.BASS_StreamCreateURL(Path, 0, If(NetworkSpeedLimit, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE Or BASSFlag.BASS_STREAM_RESTRATE, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
+                                                                           If(RemoteTagsReading, If(BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), Nothing), IntPtr.Zero)
+                                   Else
+                                       nStream = mdata.CreateStream
+                                   End If
+                               End If
+                           End Sub)
             IsLoadingStream = False
             If CreateOnly Then
                 OnStreamChanged(nStream)
@@ -1377,44 +1904,83 @@ Namespace Player
                     PreviewControlHandle?.Stop()
                 End If
                 Me.Path = Path
-                If AutoStop Then Me.Stop()
+                If AutoStop Then Me.Stop(Not IsRemote)
                 OnStreamChanged(nStream)
-                OnMetadataChanged(Metadata.FromFile(Path))
+                OnMetadataChanged(If(IsRemote, New Metadata() With {.Title = IO.Path.GetFileNameWithoutExtension(Path), .Location = Metadata.FileLocation.Remote}, Metadata.FromFile(Path)))
+                If StreamMetadata.Bitrate = 0 Then StreamMetadata.Bitrate = Bitrate
+                If StreamMetadata.Channels = 0 Then StreamMetadata.Channels = StreamInfo.chans
                 If AutoPlay Then Play()
                 'Utilities.SharedProperties.Instance.Library?.IncreasePlaycount(Path, 1)
             Else
-                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {Path},{Bass.BASS_ErrorGetCode.ToString}")
-                [Next]()
+                Dim err = Bass.BASS_ErrorGetCode.ToString
+                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {If(IsRemote, "Remote", "Local")}/{Path}, {err}")
+                Configuration.SetStatus("Error: " & err.ToString, 0, 2500)
+                If AutoNextOnError AndAlso _ConsecutiveErrorCount < ConsecutiveErrorThreshold Then
+                    [Next]()
+                Else
+                    Configuration.SetStatus("Auto-Next locked due to multiple errors.", 0, 3000, "All Good", 100)
+                    _ConsecutiveErrorCount += 1
+                End If
             End If
         End Sub
 
-        Async Function LoadSong(Metadata As Metadata) As Task
+        ''' <summary>
+        ''' Loads a <see cref="Metadata"/>
+        ''' </summary>
+        ''' <param name="Metadata"><see cref="Metadata"/> instance to load</param>
+        ''' <param name="HTTPHeaders">ustom HTTP request headers to be sent to the server; each header should be terminated with a carriage return and line feed ("\r\n").</param>
+        ''' <returns></returns>
+        Async Function LoadSong(Metadata As Metadata, Optional HTTPHeaders As String() = Nothing, Optional SkipAutoPlay As Boolean = False) As Task(Of Boolean)
+            If Metadata Is Nothing Then Return False
             Utilities.DebugMode.Instance.Log(Of Player)("Attempting to load song, Metadata:=" & Metadata.ToString)
+            If _NextCallHandler IsNot Nothing Then
+                Utilities.DebugMode.Instance.Log(Of Player)("A custom handler was found, redirecting..., Metadata:=" & Metadata.ToString)
+                _NextCallHandler.Invoke(Metadata)
+                _NextCallHandler = Nothing
+            End If
             If Metadata.Location = Metadata.FileLocation.Remote Then
                 _stopdownproc = False
                 If RemoteTagsReading Then
-                    If StreamMetadata IsNot Nothing Then StreamMetadata.IsInUse = False
-                    Metadata.IsInUse = True
-                    _Metadata = Metadata
+                    'Repetitive code, required to block the memory manager from clearing the remote tags
+                    If StreamMetadata IsNot Nothing Then StreamMetadata.CleanableConfiguration.Unlock() : Metadata.CleanableConfiguration.Lock() : _Metadata = Metadata
                     _alreadyfoundtags = False
                 End If
-                _data = Nothing
-                _datastream = Nothing
-                DownloadFinished = False
+                _suppressautohttpclean = True 'Because OnStreamChanged is called after HTTPDownloadProc (StreamCreateURL)
+                OnHttpClean()
             End If
             IsLoadingStream = True
             Dim nStream As Integer = 0
             Await Task.Run(Async Function()
-                               nStream = If(Metadata.Location = Metadata.FileLocation.Local,
-                                Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
-                                Bass.BASS_StreamCreateURL(Await Metadata.GetActivePath, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
+                               If Metadata.Location = Metadata.FileLocation.Local Then
+                                   nStream = Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
+                               ElseIf Metadata.Location = Metadata.FileLocation.Remote Then
+                                   Dim mdata = QuickBeat.Player.Metadata.FromCache(Metadata.OriginalPath)
+                                   If mdata Is Nothing Then
+                                       Dim detURL = Await Metadata.GetActivePath
+                                       If HTTPHeaders IsNot Nothing Then
+                                           For Each header In HTTPHeaders
+                                               detURL &= vbCrLf & header
+                                           Next
+                                       End If
+                                       nStream = Bass.BASS_StreamCreateURL(detURL, 0, If(NetworkSpeedLimit, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE Or BASSFlag.BASS_STREAM_RESTRATE, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE), If(RemoteTagsReading, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), Nothing), IntPtr.Zero)
+                                   Else
+                                       nStream = mdata.CreateStream
+                                       Metadata = mdata
+                                   End If
+                               ElseIf Metadata.Location = Metadata.FileLocation.Cached Then
+                                   nStream = TryCast(Metadata, CachedMetadata)?.CreateStream
+                               ElseIf Metadata.Location = Metadata.FileLocation.Internal Then
+                                   nStream = If(TryCast(Metadata, InternalMetadata)?.CreateStream,
+                               If(TryCast(Metadata, CachedMetadata)?.CreateStream,
+                               0))
+                               End If
                            End Function)
             IsLoadingStream = False
             If nStream <> 0 Then
                 'If IsPreviewing Then
                 '    PreviewControlHandle?.Stop()
                 'End If
-                If AutoStop Then Me.Stop()
+                If AutoStop Then Me.Stop(Metadata.Location <> Metadata.FileLocation.Remote)
                 Path = Metadata.Path
                 OnStreamChanged(nStream)
                 If Metadata.Location = Metadata.FileLocation.Remote AndAlso RemoteTagsReading Then
@@ -1423,52 +1989,92 @@ Namespace Player
                 Else
                     OnMetadataChanged(Metadata)
                 End If
-                If AutoPlay Then Play()
+                If Metadata.Bitrate = 0 Then Metadata.Bitrate = Bitrate
+                If Metadata.Channels = 0 Then Metadata.Channels = StreamInfo.chans
+                If Not SkipAutoPlay AndAlso AutoPlay Then Play()
+                _ConsecutiveErrorCount = 0
+                Return True
                 'Utilities.SharedProperties.Instance.Library?.IncreasePlaycount(Metadata.Path, 1)
             Else
-                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {Metadata.Location.ToString}/{Metadata.Path}, {Bass.BASS_ErrorGetCode.ToString}")
-                [Next]()
+                Dim err = Bass.BASS_ErrorGetCode.ToString
+                Utilities.DebugMode.Instance.Log(Of Player)($"Error while creating stream: {Metadata.Location}/{Metadata.Path}, {err}")
+                Configuration.SetStatus("Error: " & err.ToString, 0, 2500)
+                If AutoNextOnError AndAlso _ConsecutiveErrorCount < ConsecutiveErrorThreshold Then
+                    [Next]()
+                Else
+                    Configuration.SetStatus("Auto-Next locked due to multiple errors.", 0, 3000, "All Good", 100)
+                    _ConsecutiveErrorCount += 1
+                End If
+                Return False
             End If
         End Function
 
-        Async Sub Preview(Metadata As Metadata)
+        Async Sub Preview(Metadata As Metadata, Optional HTTPHeaders As String() = Nothing)
             If Metadata Is Nothing Then Return
             Utilities.DebugMode.Instance.Log(Of Player)("Attempting to preview song, Metadata:=" & Metadata.ToString)
             IsLoadingStream = True
+            If IsPreviewing AndAlso PreviewControlHandle IsNot Nothing Then
+                Bass.BASS_StreamFree(PreviewControlHandle.Handle)
+            End If
             Dim nStream As Integer = 0
-            Await Task.Run(Sub()
-                               nStream = If(Metadata.Location = Metadata.FileLocation.Local,
-                                Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE),
-                                Bass.BASS_StreamCreateURL(Metadata.Path, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), IntPtr.Zero))
-                           End Sub)
+            Await Task.Run(Async Function()
+                               If Metadata.Location = Metadata.FileLocation.Local Then
+                                   nStream = Bass.BASS_StreamCreateFile(Metadata.Path, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE)
+                               ElseIf Metadata.Location = Metadata.FileLocation.Remote Then
+                                   Dim mdata = QuickBeat.Player.Metadata.FromCache(Metadata.OriginalPath)
+                                   If mdata Is Nothing Then
+                                       Dim detURL = Await Metadata.GetActivePath
+                                       If HTTPHeaders IsNot Nothing Then
+                                           For Each header In HTTPHeaders
+                                               detURL &= vbCrLf & header
+                                           Next
+                                       End If
+                                       nStream = Bass.BASS_StreamCreateURL(detURL, 0, If(NetworkSpeedLimit, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE Or BASSFlag.BASS_STREAM_RESTRATE, BASSFlag.BASS_SAMPLE_FLOAT Or BASSFlag.BASS_STREAM_AUTOFREE), If(RemoteTagsReading, If(Metadata.BlockDOWNLOADPROC, Nothing, _HTTPDOWNLOADPROC), Nothing), IntPtr.Zero)
+                                   Else
+                                       nStream = mdata.CreateStream
+                                       Metadata = mdata
+                                   End If
+                               ElseIf Metadata.Location = Metadata.FileLocation.Cached Then
+                                   nStream = TryCast(Metadata, CachedMetadata)?.CreateStream
+                               ElseIf Metadata.Location = Metadata.FileLocation.Internal Then
+                                   nStream = If(TryCast(Metadata, InternalMetadata)?.CreateStream,
+                                            If(TryCast(Metadata, CachedMetadata)?.CreateStream,
+                                            0))
+                               End If
+                           End Function)
             IsLoadingStream = False
             If nStream <> 0 Then
-                Bass.BASS_ChannelSetAttribute(nStream, BASSAttribute.BASS_ATTRIB_VOL, 0)
-                Bass.BASS_ChannelSlideAttribute(nStream, BASSAttribute.BASS_ATTRIB_VOL, _Volume / 100, 1000)
+                If Not IsMuted AndAlso Volume > 0 Then
+                    Bass.BASS_ChannelSetAttribute(nStream, BASSAttribute.BASS_ATTRIB_VOL, 0)
+                    Bass.BASS_ChannelSlideAttribute(nStream, BASSAttribute.BASS_ATTRIB_VOL, _Volume / 100, 1000)
+                End If
                 If IsPreviewing Then
                     PreviewControlHandle?.Stop()
                 End If
-                Dim SCH As New StreamControlHandle(nStream)
-                SCH.Tag = New Tuple(Of Integer, Metadata)(Stream, StreamMetadata)
+                RaiseEvent PreviewStarted()
+                Dim SCH As New StreamControlHandle(nStream) With {
+                    .Tag = New Tuple(Of Integer, Metadata)(Stream, StreamMetadata)
+                }
                 If SCH.Length >= 90 Then SCH.Position = SCH.Length / 4
                 AddHandler SCH.OnStop, Sub(sender)
-                                           _Metadata.IsInUse = False
+                                           _Metadata.CleanableConfiguration.Unlock()
                                            If TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item2 IsNot Nothing Then
                                                _Metadata = TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item2
-                                               _Metadata.IsInUse = True
+                                               _Metadata.CleanableConfiguration.Lock()
                                                _Metadata.EnsureCovers()
                                            End If
                                            OnPropertyChanged(NameOf(StreamMetadata))
                                            IsPreviewing = False
                                            PreviewControlHandle = Nothing
                                            Bass.BASS_StreamFree(SCH.Handle)
+                                           RaiseEvent PreviewEnded()
                                            OnStreamChanged(TryCast(sender.Tag, Tuple(Of Integer, Metadata)).Item1)
                                        End Sub
                 'IsPreviewing = True
                 If IsPlaying Then Pause()
                 PreviewControlHandle = SCH
                 'SCH.Play()
-                Metadata.IsInUse = True
+                Metadata.CleanableConfiguration.Lock()
                 _Metadata = Metadata
                 Metadata.EnsureCovers()
                 OnPropertyChanged(NameOf(StreamMetadata))
@@ -1477,6 +2083,7 @@ Namespace Player
                 IsPreviewing = True
             Else
                 IsPreviewing = False
+                RaiseEvent PreviewEnded()
             End If
         End Sub
 
@@ -1498,16 +2105,29 @@ Namespace Player
             OnPropertyChanged(NameOf(TaskbarState))
         End Sub
 
-        Sub [Stop]()
+        Sub PlayPause()
+            If IsPlaying Then
+                Pause()
+            Else
+                Play()
+            End If
+        End Sub
+
+        Sub [Stop](Optional StopDownProc As Boolean = True)
             If IsPreviewing Then
                 PreviewControlHandle.Stop()
             Else
-                Try
-                    Bass.BASS_ChannelStop(Stream)
-                Catch ex As Exception
-                    Utilities.DebugMode.Instance.Log(Of Player)(ex.ToString)
-                End Try
+                If StopDownProc Then
+                    _stopdownproc = True
+                    If Not Bass.BASS_StreamFree(Stream) Then
+                        Utilities.DebugMode.Instance.Log(Of Player)("Couldn't Free Remote Stream: " & ErrorGetCode())
+                    Else
+                        Utilities.DebugMode.Instance.Log(Of Player)("Freed Stream as Per Masters Policy")
+                    End If
+                End If
+                Bass.BASS_ChannelStop(Stream)
             End If
+            'Path = Nothing
             OnPropertyChanged(NameOf(IsPlaying))
             OnPropertyChanged(NameOf(IsPaused))
             OnPropertyChanged(NameOf(IsStalled))
@@ -1523,8 +2143,156 @@ Namespace Player
             PreviousCommand.Execute(Playlist)
         End Sub
 
+        ''' <summary>
+        ''' Animates the channel volume to a level.
+        ''' </summary>
+        ''' <param name="toValue">The target level, 0->100</param>
+        ''' <param name="duration">The duration in milliseconds</param>
+        Sub SlideVolume(toValue As Double, duration As Integer)
+            Bass.BASS_ChannelSlideAttribute(Stream, BASSAttribute.BASS_ATTRIB_VOL, toValue / 100, duration)
+        End Sub
 #End Region
 #Region "Methods"
+        Private _NormalizePeak As Single
+        Private _NormalizeDSPProc As DSPPROC ' make it global, so that the GC can not remove it
+        Private _HNormalizeDPSProc As Integer
+        Public Sub Normalize()
+            If Stream = 0 Then Return
+            If _HNormalizeDPSProc <> 0 Then
+                Bass.BASS_ChannelRemoveDSP(Stream, _HNormalizeDPSProc)
+                _HNormalizeDPSProc = 0
+            End If
+            If StreamMetadata Is Nothing OrElse StreamMetadata?.Location = Metadata.FileLocation.Remote Then
+                _IsNormalizationActive = False
+                _IsNormalizationActiveReason = "Unknown Metadata or Remote Location"
+                OnPropertyChanged(NameOf(IsNormalizationActive))
+                OnPropertyChanged(NameOf(IsNormalizationActiveReason))
+            End If
+            Dim fPeak As Single = 0F
+            _NormalizePeak = Utils.GetNormalizationGain(Path, 10, -1, -1, fPeak)
+            If _NormalizePeak = 1 Then
+                _IsNormalizationActive = False
+                _IsNormalizationActiveReason = "Current Stream Doesn't Need Leveling"
+                OnPropertyChanged(NameOf(IsNormalizationActive))
+                OnPropertyChanged(NameOf(IsNormalizationActiveReason))
+                Return
+            End If
+            ' set a DSP user callback method
+            _NormalizeDSPProc = New DSPPROC(AddressOf MyDSPGain)
+            ' set the user DSP callback
+            _HNormalizeDPSProc = Bass.BASS_ChannelSetDSP(Stream, _NormalizeDSPProc, IntPtr.Zero, 0)
+            If _HNormalizeDPSProc <> 0 Then
+                _IsNormalizationActive = True
+                _IsNormalizationActiveReason = ""
+            Else
+                _IsNormalizationActive = False
+                _IsNormalizationActiveReason = Bass.BASS_ErrorGetCode.ToString
+            End If
+            OnPropertyChanged(NameOf(IsNormalizationActive))
+            OnPropertyChanged(NameOf(IsNormalizationActiveReason))
+        End Sub
+
+        ' this is the actual processing method
+        Private Sub MyDSPGain(handle As Integer, channel As Integer, buffer As IntPtr, length As Integer, user As IntPtr)
+            ' the global variable _NormalizePeak contains the amplification value in dB!
+            If _NormalizePeak = 0F OrElse length = 0 OrElse buffer = IntPtr.Zero Then
+                Return
+            End If
+            ' number of bytes in 32-bit floats, since length is in bytes
+            Dim l4 As Integer = length / 4
+            Dim data(l4 - 1) As Single
+            ' copy from managed to unmanaged memory
+            Marshal.Copy(buffer, data, 0, l4)
+            ' apply gain, assumeing using 32-bit floats (no clipping here ;-)
+            Dim a As Integer
+            For a = 0 To l4 - 1
+                data(a) = data(a) * _NormalizePeak
+            Next a
+            ' copy back from unmanaged to managed memory
+            Marshal.Copy(data, 0, buffer, l4)
+        End Sub
+        Private Function GetPeak(ByVal channel As Integer) As Integer
+            Dim a As Integer
+            Dim c As Integer
+            Dim peak As Integer = 0
+            Dim buf(49999) As Short
+            Bass.BASS_ChannelSetPosition(channel, 0) ' make sure to start from the start
+            Do While Bass.BASS_ChannelIsActive(channel) ' not reached the end yet
+                c = Bass.BASS_ChannelGetData(channel, buf, 50000) ' decode some data
+                a = 0
+                Do While a < c \ 2 ' scan the data for the peak
+                    If peak < Math.Abs(buf(a)) Then
+                        peak = Math.Abs(buf(a)) ' new highest peak
+                    End If
+                    a += 1
+                Loop
+            Loop
+            If peak > 32767 Then
+                peak = 32767
+            End If
+            Return peak
+        End Function
+        Public Sub SetProxyVideoEffect(vfx As VFX.VideoEffects.VideoEffect)
+            If _ProxiedVideoEffect IsNot Nothing Then
+                _ProxiedVideoEffect.Stop()
+            End If
+            _ProxiedVideoEffect = vfx
+            If _ProxiedVideoEffect IsNot Nothing Then
+                _ProxiedVideoEffect.Stream = Stream
+                If StreamMetadata IsNot Nothing Then _ProxiedVideoEffect.Metadata = StreamMetadata
+                _ProxiedVideoEffect.Start()
+                If IsPlaying Then _ProxiedVideoEffect.OnPlayerResumed()
+            End If
+        End Sub
+        Public Sub DisableProxyVideoEffect(vfx As VFX.VideoEffects.VideoEffect)
+            If _ProxiedVideoEffect Is vfx Then
+                _ProxiedVideoEffect.Stop()
+                _ProxiedVideoEffect = Nothing
+            End If
+        End Sub
+
+        Private _NextCallHandler As Action(Of Metadata)
+        ''' <summary>
+        ''' Sends a copy of the parameter from <see cref="LoadSong(Metadata, String(), Boolean)"/> or <see cref="LoadSong(String, Boolean, Boolean, Boolean)"/> and redirects it to a custom handler       
+        ''' </summary>
+        ''' <remarks>
+        ''' Setting a handler will overwrite the existing one.
+        ''' The call will still be handled by this <see cref="Player"/> instance
+        ''' </remarks>
+        ''' <param name="handler"></param>
+        Public Sub CaptureNextPlayCall(handler As Action(Of Metadata))
+            _NextCallHandler = handler
+        End Sub
+        ''' <summary>
+        ''' Suspend video effects rendering
+        ''' </summary>
+        Public Sub PauseVideoEffects()
+            VideoEffect?.OnPowerSavingPause()
+            _ProxiedVideoEffect?.OnPowerSavingPause()
+        End Sub
+        ''' <summary>
+        ''' Resume video effects rendering
+        ''' </summary>
+        ''' <remarks>
+        ''' Works only if paused by <see cref="PauseVideoEffects()"/>
+        ''' </remarks>
+        Public Sub ResumeVideoEffects()
+            VideoEffect?.OnPowerSavingResume()
+            _ProxiedVideoEffect?.OnPowerSavingResume()
+        End Sub
+        Public Async Sub DumpDownloadedData(filepath As String)
+            Using fs As New IO.FileStream(filepath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read)
+                Await fs.WriteAsync(_datastream?.ToArray, 0, _datastream.Length)
+            End Using
+        End Sub
+
+        Public Function DumpDownloadedStream() As IO.MemoryStream
+            Return New IO.MemoryStream(_datastream?.ToArray)
+        End Function
+
+        Public Function ErrorGetCode() As String
+            Return Bass.BASS_ErrorGetCode.ToString
+        End Function
         Sub DisposeSMTC()
             _UWPPlayer.Dispose()
             _UWPPlayer = Nothing
@@ -1606,6 +2374,20 @@ Namespace Player
             Pl.RefreshItemsIndex()
             _Playlist = Pl
             OnPropertyChanged(NameOf(Playlist))
+            OnPropertyChanged(NameOf(IsPlayingFromPlaylist))
+        End Sub
+
+        Sub LoadPlaylist(Dump As String)
+            Dim pl As New Playlist
+            pl.Load(Dump)
+            pl.Cover = New BitmapImage(New Uri("\Resources\MusicRecord.png", UriKind.Relative))
+            _Playlist.Clear()
+            pl.Parent = Me
+            pl.EnsureQueueNotifier()
+            pl.RefreshItemsIndex()
+            _Playlist = pl
+            OnPropertyChanged(NameOf(Playlist))
+            OnPropertyChanged(NameOf(IsPlayingFromPlaylist))
         End Sub
 
         Sub LoadPlaylist(playlist As Playlist)
@@ -1618,6 +2400,7 @@ Namespace Player
             playlist.RefreshItemsIndex()
             _Playlist = playlist
             OnPropertyChanged(NameOf(Me.Playlist))
+            OnPropertyChanged(NameOf(IsPlayingFromPlaylist))
             Me.Playlist.Index = 0
         End Sub
 
@@ -1633,11 +2416,12 @@ Namespace Player
             Me.Playlist.Index = 0
         End Sub
 
-        Function SavePlaylist() As IO.MemoryStream
-            Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            Dim PlMem As New IO.MemoryStream
-            BinF.Serialize(PlMem, Playlist)
-            Return PlMem
+        Function SavePlaylist() As String
+            'Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            'Dim PlMem As New IO.MemoryStream
+            'BinF.Serialize(PlMem, Playlist)
+            'Return PlMem
+            Return Playlist.Save
         End Function
 
         Async Sub LoadSettings(data As String)
@@ -1645,6 +2429,7 @@ Namespace Player
             Dim SH As New SettingsHelper()
             SH.Load(data)
             If SH.ContainsKey("AutoStop") Then AutoStop = SH.GetItem("AutoStop")
+            If SH.ContainsKey("AutoNextOnError") Then AutoNextOnError = SH.GetItem("AutoNextOnError")
             If SH.ContainsKey("CrossfadeDuration") Then CrossfadeDuration = SH.GetItem("CrossfadeDuration")
             If SH.ContainsKey("IsCrossfading") Then IsCrossfading = SH.GetItem("IsCrossfading")
             If SH.ContainsKey("IsFadingAudio") Then IsFadingAudio = SH.GetItem("IsFadingAudio")
@@ -1654,34 +2439,67 @@ Namespace Player
             If SH.ContainsKey("IsUsingSMTCCopyFromFile") Then IsUsingSMTCCopyFromFile = SH.GetItem("IsUsingSMTCCopyFromFile")
             If SH.ContainsKey("IsUsingSMTC") Then IsUsingSMTC = SH.GetItem("IsUsingSMTC")
             If SH.ContainsKey("RemoteTagsReading") Then RemoteTagsReading = SH.GetItem("RemoteTagsReading")
-            Dim MD64 = SH.GetItem("Metadata")
-            If Not String.IsNullOrEmpty(MD64) Then
-                Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                Try
-                    Dim Meta = BinF.Deserialize(New IO.MemoryStream(Convert.FromBase64String(MD64)))
-                    '_Metadata = Meta
-                    'Meta.EnsureCovers()                    
-                    'OnPropertyChanged(NameOf(StreamMetadata))                                        
-                    LoadSong(Await CType(Meta, Metadata).GetActivePath, True, If(CType(Meta, Metadata).Location = Metadata.FileLocation.Local, False, True), CType(Meta, Metadata).BlockDOWNLOADPROC)
-                    OnMetadataChanged(Meta)
-                Catch ex As Exception
-                    Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Metadata.Exception:=" & ex.Message)
-                End Try
-            End If
-            'Must come before EffectsProfile because some effects depends on modules
+            If SH.ContainsKey("IsNormalizingStream") Then IsNormalizingStream = SH.GetItem("IsNormalizingStream")
+            If SH.ContainsKey("IsVideoEffectPowerSaving") Then IsVideoEffectPowerSaving = SH.GetItem("IsVideoEffectPowerSaving")
+            'Dim MD64 = SH.GetItem("Metadata")
+            'If Not String.IsNullOrEmpty(MD64) Then
+            '    Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            '    Try
+            '        Dim Meta = BinF.Deserialize(New IO.MemoryStream(Convert.FromBase64String(MD64)))
+            '        '_Metadata = Meta
+            '        'Meta.EnsureCovers()                    
+            '        'OnPropertyChanged(NameOf(StreamMetadata))                                        
+            '        LoadSong(Await CType(Meta, Metadata).GetActivePath, True, If(CType(Meta, Metadata).Location = Metadata.FileLocation.Local, False, True), CType(Meta, Metadata).BlockDOWNLOADPROC)
+            '        OnMetadataChanged(Meta)
+            '    Catch ex As Exception
+            '        Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Metadata.Exception:=" & ex.Message)
+            '    End Try
+            'End If
+            'Must come before Metadata & EffectsProfile because some effects/songs depends on modules
             If SH.ContainsSection("Modules") Then
                 For Each item In SH.GetSection("Modules")
                     Try
-                        If Modules.FirstOrDefault(Function(k) k.GetType.Equals(Type.GetType(item.Value))) IsNot Nothing Then Continue For
-                        Dim emodule = TryCast(Activator.CreateInstance(Type.GetType(item.Value)), EngineModule)
+                        If Modules.FirstOrDefault(Function(k) k.GetType.Equals(Type.GetType(item.Value.Split("|").FirstOrDefault))) IsNot Nothing Then Continue For
+                        Dim emodule = TryCast(Activator.CreateInstance(Type.GetType(item.Value.Split("|").FirstOrDefault)), EngineModule)
                         If emodule IsNot Nothing Then
                             Modules.Add(emodule)
+                            If item.Value.Contains("|") Then
+                                Dim sInfo = item.Value.Split("|").LastOrDefault
+                                emodule.SavedInfo = sInfo
+                            End If
                             emodule.Init()
                         End If
                     Catch ex As Exception
                         Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading modules.Exception:=" & ex.Message)
                     End Try
                 Next
+            End If
+            If SH.ContainsKey("Path") Then Path = SH.GetItem("Path") 'Must come before metadata because MainWindow.Initialized depends on it
+            If SH.ContainsKey("Metadata") Then
+                'Dim Meta = Metadata.FromUID(SH.GetItem("Metadata"))
+                Dim sUID = SH.GetItem("Metadata").Split(";")
+                Dim meta As Metadata = Nothing
+                Select Case sUID.FirstOrDefault
+                    Case 0 '"Local"
+                        meta = Metadata.FromUID(sUID.LastOrDefault)
+                    Case 1 '"Remote"
+                        If Utilities.SharedProperties.Instance.RemoteLibrary.ContainsID(sUID.LastOrDefault) Then
+                            meta = CachedMetadata.FromCache(sUID.LastOrDefault, True)
+                        Else
+                            meta = New Metadata With {.Location = Metadata.FileLocation.Remote, .Path = sUID.LastOrDefault, .OriginalPath = sUID.LastOrDefault}
+                        End If
+                    Case 4 '"Cached"
+                        meta = CachedMetadata.FromCache(sUID.LastOrDefault, True)
+                    Case 3 '"Internal"
+                        meta = New InternalMetadata(sUID.LastOrDefault)
+                End Select
+                If meta IsNot Nothing Then
+                    'LoadSong(Await Meta.GetActivePath, True, If(CType(Meta, Metadata).Location = Metadata.FileLocation.Local, False, True), CType(Meta, Metadata).BlockDOWNLOADPROC)
+#Disable Warning
+                    Await LoadSong(meta, SkipAutoPlay:=True)
+#Enable Warning
+                    'OnMetadataChanged(Meta)
+                End If
             End If
             Dim PF64 = SH.GetItem("EffectsProfile")
             If Not String.IsNullOrEmpty(PF64) Then
@@ -1693,14 +2511,16 @@ Namespace Player
                     Utilities.DebugMode.Instance.Log(Of Player)("An error occured while loading Profile.Exception:=" & ex.Message)
                 End Try
             End If
-            If SH.ContainsKey("Path") Then Path = SH.GetItem("Path")
             If SH.ContainsKey("Volume") Then Volume = SH.GetItem("Volume")
             If SH.ContainsKey("TrueVolume") Then TrueVolume = SH.GetItem("TrueVolume")
+            If SH.ContainsKey("Position") Then SavePosition = True : Position = SH.GetItem("Position")
+            If SH.ContainsKey("State") Then SaveState = True : State = SH.GetItem("State")
         End Sub
 
         Function SaveSettings() As String
             Dim SH As New SettingsHelper
             SH.AddItem("AutoStop", AutoStop)
+            SH.AddItem("AutoNextOnError", AutoNextOnError)
             SH.AddItem("CrossfadeDuration", CrossfadeDuration)
             SH.AddItem("IsCrossfading", IsCrossfading)
             SH.AddItem("IsFadingAudio", IsFadingAudio)
@@ -1710,15 +2530,18 @@ Namespace Player
             SH.AddItem("IsUsingSMTC", IsUsingSMTC)
             SH.AddItem("IsUsingSMTCCopyFromFile", IsUsingSMTCCopyFromFile)
             SH.AddItem("RemoteTagsReading", RemoteTagsReading)
+            SH.AddItem("IsNormalizingStream", IsNormalizingStream)
+            SH.AddItem("IsVideoEffectPowerSaving", IsVideoEffectPowerSaving)
             Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            Dim MD64Mem As New IO.MemoryStream()
-            Try
-                BinF.Serialize(MD64Mem, StreamMetadata)
-            Catch ex As Exception
-                Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Metadata.Exception:=" & ex.Message)
-            End Try
-            Dim MD64 = If(MD64Mem.Length > 0, Convert.ToBase64String(MD64Mem.ToArray), Nothing)
-            If Not String.IsNullOrEmpty(MD64) Then SH.AddItem("Metadata", MD64)
+            'Dim MD64Mem As New IO.MemoryStream()
+            'Try
+            '    BinF.Serialize(MD64Mem, StreamMetadata)
+            'Catch ex As Exception
+            '    Utilities.DebugMode.Instance.Log(Of Player)("An error occured while saving Metadata.Exception:=" & ex.Message)
+            'End Try
+            'Dim MD64 = If(MD64Mem.Length > 0, Convert.ToBase64String(MD64Mem.ToArray), Nothing)
+            'If Not String.IsNullOrEmpty(MD64) Then SH.AddItem("Metadata", MD64)
+            If StreamMetadata IsNot Nothing Then SH.AddItem("Metadata", StreamMetadata.Location & ";" & StreamMetadata.UID)
             Dim PF64Mem As New IO.MemoryStream()
             Try
                 For Each fx In EffectsProfile
@@ -1734,17 +2557,48 @@ Namespace Player
             SH.AddItem("Path", Path)
             SH.AddItem("Volume", Volume)
             SH.AddItem("TrueVolume", TrueVolume)
+            If SavePosition Then SH.AddItem("SavePosition", True) : SH.AddItem("Position", Position)
+            If SaveState Then SH.AddItem("SaveState", True) : SH.AddItem("State", CInt(State))
             If Modules.Count > 0 Then
                 SH.StartSection("Modules")
                 For i As Integer = 0 To Modules.Count - 1
-                    SH.AddItem($"Module{i}", Modules(i).GetType.AssemblyQualifiedName)
+                    SH.AddItem($"Module{i}", Modules(i).GetType.AssemblyQualifiedName & If(String.IsNullOrWhiteSpace(Modules(i).SavedInfo), "", "|" & Modules(i).SavedInfo))
                 Next
                 SH.EndSection()
             End If
             Return SH.Dump
         End Function
 
+        ''' <summary>
+        ''' To be called after <see cref="Init()"/> and optionally before <see cref="LoadSettings(String)"/>
+        ''' </summary>
+        ''' <param name="data"><see cref="SaveConfigSettings()"/> return value</param>
+        Public Sub LoadConfigSettings(data As String)
+            If String.IsNullOrEmpty(data) Then Return
+            Dim SH As New SettingsHelper()
+            SH.Load(data)
+            If SH.ContainsKey("NetworkTimeout") Then NetworkTimeout = SH.GetItem("NetworkTimeout")
+            If SH.ContainsKey("NetworkBuffer") Then NetworkBuffer = SH.GetItem("NetworkBuffer")
+            If SH.ContainsKey("NetworkAgent") Then NetworkAgent = SH.GetItem("NetworkAgent")
+            If SH.ContainsKey("NetworkProxy") Then NetworkProxy = SH.GetItem("NetworkProxy")
+            If SH.ContainsKey("NetworkPassiveFTP") Then NetworkPassiveFTP = SH.GetItem("NetworkPassiveFTP")
+            If SH.ContainsKey("NetworkForwardSeek") Then NetworkForwardSeek = SH.GetItem("NetworkForwardSeek")
+            If SH.ContainsKey("NetworkSpeedLimitRate") Then NetworkSpeedLimitRate = SH.GetItem("NetworkSpeedLimitRate")
+            If SH.ContainsKey("NetworkSpeedLimit") Then NetworkSpeedLimit = SH.GetItem("NetworkSpeedLimit")
+        End Sub
 
+        Public Function SaveConfigSettings() As String
+            Dim SH As New SettingsHelper
+            SH.AddItem("NetworkTimeout", NetworkTimeout)
+            SH.AddItem("NetworkBuffer", NetworkBuffer)
+            SH.AddItem("NetworkAgent", NetworkAgent)
+            SH.AddItem("NetworkProxy", NetworkProxy)
+            SH.AddItem("NetworkPassiveFTP", NetworkPassiveFTP)
+            SH.AddItem("NetworkForwardSeek", NetworkForwardSeek)
+            SH.AddItem("NetworkSpeedLimitRate", NetworkSpeedLimitRate)
+            SH.AddItem("NetworkSpeedLimit", NetworkSpeedLimit)
+            Return SH.Dump
+        End Function
         ''' <summary>
         ''' Gets <paramref name="Bands"/> data (0.0 -> 1.0) from the current stream.
         ''' </summary>
@@ -1825,9 +2679,9 @@ Namespace Player
                 End If
                 bandlevel(x) = (CByte(Math.Truncate(y)))
             Next x
-
             Return bandlevel
         End Function
+
 #End Region
 #Region "WPF Support"
         <NonSerialized> Private _PlayCommand As New WPF.Commands.PlayCommand
@@ -1998,12 +2852,6 @@ Namespace Player
                 Return _ConfigEngineModuleCommand
             End Get
         End Property
-        <NonSerialized> Private _ShowMetadataInfoCommand As New WPF.Commands.ShowMetadataInfoCommand
-        ReadOnly Property ShowMetadataInfoCommand As WPF.Commands.ShowMetadataInfoCommand
-            Get
-                Return _ShowMetadataInfoCommand
-            End Get
-        End Property
         <NonSerialized> Private _SavePlaylistCommand As New WPF.Commands.SavePlaylistCommand
         ReadOnly Property SavePlaylistCommand As WPF.Commands.SavePlaylistCommand
             Get
@@ -2020,6 +2868,12 @@ Namespace Player
         ReadOnly Property RefreshMetadataCoverCommand As WPF.Commands.RefreshMetadataCoverCommand
             Get
                 Return _RefreshMetadataCoverCommand
+            End Get
+        End Property
+        <NonSerialized> Private _RefreshMetadataTagsCommand As New WPF.Commands.RefreshMetadataTagsCommand
+        ReadOnly Property RefreshMetadataTagsCommand As WPF.Commands.RefreshMetadataTagsCommand
+            Get
+                Return _RefreshMetadataTagsCommand
             End Get
         End Property
         <NonSerialized> Private _AddToPlaylistFromPickerCommand As New WPF.Commands.AddToPlaylistFromPickerCommand()
@@ -2086,6 +2940,12 @@ Namespace Player
         ReadOnly Property AddGroupToPlaylistCommand As WPF.Commands.AddGroupToPlaylistCommand
             Get
                 Return _AddGroupToPlaylistCommand
+            End Get
+        End Property
+        <NonSerialized> Private _DumpDownloadedDataCommand As New WPF.Commands.DumpDownloadedDataCommand(Me)
+        ReadOnly Property DumpDownloadedDataCommand As WPF.Commands.DumpDownloadedDataCommand
+            Get
+                Return _DumpDownloadedDataCommand
             End Get
         End Property
         ReadOnly Property TaskbarState As Shell.TaskbarItemProgressState

@@ -2,6 +2,7 @@
 Imports System.Diagnostics.Tracing
 Imports System.Runtime.CompilerServices
 Imports System.Threading
+Imports System.Web.UI.WebControls.WebParts
 Imports QuickBeat.Classes
 Imports QuickBeat.Hotkeys.WPF.Commands
 Imports QuickBeat.Interfaces
@@ -165,9 +166,24 @@ Namespace Hotkeys
             WIN_APPCOMMAND_MEDIA_REWIND = 50
             WIN_APPCOMMAND_MEDIA_CHANNEL_UP = 51
             WIN_APPCOMMAND_MEDIA_CHANNEL_DOWN = 52
+            APP_ACTIVATE = 100
+            APP_PLAYPAUSE
+            APP_NEXT
+            APP_PREVIOUS
+            APP_VOLUMEUP
+            APP_VOLUMEDOWN
+            APP_VOLUMEMUTE
+            APP_FASTFORWARD
+            APP_REWIND
+            APP_LIBRARY_PLAYALL
+            APP_TTS_CURRENT
+            APP_TTS_NEXT
+            APP_TTS_PREVIOUS
         End Enum
 #End Region
 #Region "Properties"
+        Private _StopLookingForHwnd As Boolean = False
+
         <NonSerialized> Private _Hwnd As IntPtr
         ReadOnly Property Hwnd As IntPtr
             Get
@@ -201,7 +217,63 @@ Namespace Hotkeys
         Protected Function WndProc(hwnd As IntPtr, msg As Integer, wParam As IntPtr, lParam As IntPtr, ByRef handled As Boolean) As IntPtr
             'wParam = Hotkey.ID
             If msg = Utilities.CommonFunctions.WM_HOTKEY_MSG_ID Then
-                DispatchMessage(wParam)
+                Select Case CType(wParam, Messages)
+                    Case Messages.APP_ACTIVATE
+                        SharedProperties.Instance.ActivateApp()
+                    Case Messages.APP_FASTFORWARD
+                        SharedProperties.Instance.Player?.FFCommand.Execute(SharedProperties.Instance.Player.Stream)
+                    Case Messages.APP_LIBRARY_PLAYALL
+                        Dim PL = SharedProperties.Instance.Library?.ToPlaylist()
+                        If PL IsNot Nothing Then
+                            PL.Name = "Library"
+                            PL.Category = "Playlist"
+                            PL.Description = "All Your Music"
+                            SharedProperties.Instance.Player?.LoadPlaylist(PL)
+                        End If
+                    Case Messages.APP_NEXT
+                        SharedProperties.Instance.Player?.Next()
+                    Case Messages.APP_PLAYPAUSE
+                        SharedProperties.Instance.Player?.PlayPauseCommand.Execute(SharedProperties.Instance.Player.Stream)
+                    Case Messages.APP_PREVIOUS
+                        SharedProperties.Instance.Player?.Previous()
+                    Case Messages.APP_REWIND
+                        SharedProperties.Instance.Player?.RWCommand.Execute(SharedProperties.Instance.Player.Stream)
+                    Case Messages.APP_TTS_CURRENT
+                        Dim PB As New Speech.Synthesis.PromptBuilder()
+                        PB.StartSentence()
+                        PB.AppendText("Now Playing.", Speech.Synthesis.PromptEmphasis.Reduced)
+                        PB.AppendText(SharedProperties.Instance.Player?.StreamMetadata?.Title, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.AppendText("By")
+                        PB.AppendText(SharedProperties.Instance.Player?.StreamMetadata?.DefaultArtist, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.EndSentence()
+                        TTS_PlayerSlideVolume(SharedProperties.Instance.Player, PB)
+                    Case Messages.APP_TTS_NEXT
+                        Dim PB As New Speech.Synthesis.PromptBuilder()
+                        PB.StartSentence()
+                        PB.AppendText("Coming Next.", Speech.Synthesis.PromptEmphasis.Reduced)
+                        PB.AppendText(SharedProperties.Instance.Player?.Playlist?.NextItem?.Title, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.AppendText("By")
+                        PB.AppendText(SharedProperties.Instance.Player?.Playlist?.NextItem?.DefaultArtist, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.EndSentence()
+                        TTS_PlayerSlideVolume(SharedProperties.Instance.Player, PB)
+                    Case Messages.APP_TTS_PREVIOUS
+                        Dim PB As New Speech.Synthesis.PromptBuilder()
+                        PB.StartSentence()
+                        PB.AppendText("Previously.", Speech.Synthesis.PromptEmphasis.Reduced)
+                        PB.AppendText(SharedProperties.Instance.Player?.Playlist?.PreviousItem?.Title, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.AppendText("By")
+                        PB.AppendText(SharedProperties.Instance.Player?.Playlist?.PreviousItem?.DefaultArtist, Speech.Synthesis.PromptEmphasis.Strong)
+                        PB.EndSentence()
+                        TTS_PlayerSlideVolume(SharedProperties.Instance.Player, PB)
+                    Case Messages.APP_VOLUMEDOWN
+                        SharedProperties.Instance.Player.Volume -= 2
+                    Case Messages.APP_VOLUMEMUTE
+                        SharedProperties.Instance.Player.IsMuted = True
+                    Case Messages.APP_VOLUMEUP
+                        SharedProperties.Instance.Player.Volume += 2
+                    Case Else
+                        DispatchMessage(wParam)
+                End Select
                 handled = True
             End If
             Return IntPtr.Zero
@@ -316,7 +388,7 @@ Namespace Hotkeys
             If Hwnd = IntPtr.Zero Then
                 Configuration.SetError(True, New Exception("Waiting for an available window..."))
                 Application.Current.Dispatcher.InvokeAsync(Async Function()
-                                                               Do While Hwnd = IntPtr.Zero
+                                                               Do While Not _StopLookingForHwnd AndAlso Hwnd = IntPtr.Zero
                                                                    If Application.Current.MainWindow IsNot Nothing Then
                                                                        Dim helper As New Interop.WindowInteropHelper(Application.Current.MainWindow)
                                                                        _Hwnd = helper.EnsureHandle
@@ -391,6 +463,41 @@ Namespace Hotkeys
             OldHk = Nothing
             Return Hk
         End Function
+
+        Async Sub LoadFrom(Data As IO.MemoryStream)
+            Dim BinF As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            Dim OldHk As HotkeyManager = CType(BinF.Deserialize(Data), HotkeyManager)
+            Dim i = 0 'Timeout
+            Init()
+            Do While Not Configuration.IsLoaded
+                Await Task.Delay(100)
+                i += 1
+                If i = 50 Then 'Timeout after 5 seconds
+                    _StopLookingForHwnd = True
+                    Exit Do
+                End If
+            Loop
+            If i = 50 OrElse _StopLookingForHwnd = True Then
+                Configuration.SetError(True, New TimeoutException("Timed out, couldn't find a proper window handle."))
+                Return
+            End If
+            For Each hotkey In OldHk
+                Add(hotkey)
+            Next
+            OldHk.Clear()
+            OldHk = Nothing
+        End Sub
+#End Region
+#Region "Helpers"
+        Public Async Sub TTS_PlayerSlideVolume(ref As Player.Player, Prompt As Speech.Synthesis.PromptBuilder)
+            If SharedProperties.Instance.TTSE?.State = Speech.Synthesis.SynthesizerState.Speaking Then Return
+            Dim _oldValue = ref.Volume
+            If ref.Volume > 1 Then ref.SlideVolume(1, 100)
+            Await Task.Run(Sub()
+                               SharedProperties.Instance.TTSE?.Speak(Prompt)
+                               ref.SlideVolume(_oldValue, 500)
+                           End Sub)
+        End Sub
 #End Region
 #Region "WPF"
         <NonSerialized> Public ReadOnly _AddCommand As New AddHotkeyCommand(Me)

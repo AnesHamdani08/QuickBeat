@@ -10,6 +10,12 @@ Namespace Classes
             WriteStream = stream
         End Sub
 
+        Public Sub New(ByVal name As String, ByVal stream As IO.Stream)
+            Me.Name = name
+            ReadStream = stream
+            WriteStream = stream
+        End Sub
+
         Public Sub New(ByVal name As String, ByVal data As IO.MemoryStream)
             Me.Name = name
             Dim stream = New MemoryStream

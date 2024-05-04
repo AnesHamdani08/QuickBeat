@@ -19,7 +19,8 @@ Namespace SubtitlesParser.Classes.Parsers
 			{SubtitlesFormat.SubStationAlphaFormat, New SsaParser()},
 			{SubtitlesFormat.TtmlFormat, New TtmlParser()},
 			{SubtitlesFormat.WebVttFormat, New VttParser()},
-			{SubtitlesFormat.YoutubeXmlFormat, New YtXmlFormatParser()}
+			{SubtitlesFormat.YoutubeXmlFormat, New YtXmlFormatParser()},
+			{SubtitlesFormat.LRCFormat, New LRCParser()}
 		}
 
 
@@ -29,7 +30,20 @@ Namespace SubtitlesParser.Classes.Parsers
 		End Sub
 
 
-		' Methods -------------------------------------------------------------------------
+		' Methods -------------------------------------------------------------------------		
+		''' <summary>
+		''' Parses the lyrics based on file extension
+		''' </summary>
+		''' <param name="path">Subtitles file path</param>
+		''' <param name="stream">Stream containing the file data</param>
+		''' <returns>
+		''' Nothing if failed
+		''' </returns>
+		Public Function ParseStream(path As String, stream As Stream) As List(Of SubtitleItem)
+			Dim parser = _subFormatToParser.FirstOrDefault(Function(k) k.Key.Extension = "\" & IO.Path.GetExtension(path))
+			If parser.Key Is Nothing Then Return Nothing
+			Return parser.Value.ParseStream(stream, Encoding.UTF8)
+		End Function
 
 		''' <summary>
 		''' Gets the most likely format of the subtitle file based on its filename.

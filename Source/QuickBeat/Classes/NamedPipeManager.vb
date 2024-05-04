@@ -77,19 +77,20 @@ Namespace Classes
         End Sub
 
         Public Sub Init() Implements IStartupItem.Init
+            Utilities.SharedProperties.Instance?.ItemsConfiguration.Add(Configuration)
             Configuration.SetStatus("Set-up, Waiting for start signal...", 75)
         End Sub
 
         Public Sub StartServer()
             PipeThread = New Thread(Async Sub(pipeName)
                                         IsRunning = True
+                                        Dim ErrorCount As Integer = 0
                                         While True
                                             Try
                                                 Dim text As String
                                                 Using server = New NamedPipeServerStream(TryCast(pipeName, String), ServerPipeDirection, MaxServerInstances)
                                                     Configuration.SetStatus("Started, All Good", 100)
                                                     Await server.WaitForConnectionAsync(PipeThreadCT.Token)
-
                                                     Using reader As StreamReader = New StreamReader(server)
                                                         text = reader.ReadToEnd()
                                                     End Using
@@ -99,12 +100,14 @@ Namespace Classes
                                                 OnReceiveString(text)
                                                 If IsRunning = False Then Exit While
                                             Catch ex As Exception
-                                                Configuration.SetError(True, ex)
+                                                Configuration.SetError(False, ex)
                                                 Configuration.Status = "X_X"
                                                 RaiseEvent OnException(ex)
-                                                Exit While
+                                                If ErrorCount >= 10 Then Exit While
+                                                ErrorCount += 1
                                             End Try
                                         End While
+                                        Configuration.IsErrored = True
                                         Configuration.SetStatus("Server not running.", 50)
                                     End Sub)
             PipeThread.Name = NamedPipeName
@@ -119,6 +122,7 @@ Namespace Classes
 
         Public Sub StopServer()
             IsRunning = False
+            PipeThreadCT?.Cancel()
             Write(EXIT_STRING)
             Thread.Sleep(30)
         End Sub

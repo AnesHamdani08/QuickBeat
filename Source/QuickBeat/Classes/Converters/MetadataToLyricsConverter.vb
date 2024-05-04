@@ -8,10 +8,10 @@ Namespace Converters
                 With CType(value, Player.Metadata)
                     If Not IO.File.Exists(.Path) Then Return Nothing
                     Try
-                        Dim tag = TagLib.File.Create(.Path, TagLib.ReadStyle.None Or TagLib.ReadStyle.PictureLazy)
+                        Dim tag = Utilities.SharedProperties.Instance.RequestTags(.Path, TagLib.ReadStyle.None Or TagLib.ReadStyle.PictureLazy)
                         Return tag.Tag.Lyrics
-                    Catch ex As Exception
-
+                    Catch
+                        'TODO just don't forget about this
                     End Try
                 End With
             End If

@@ -1,0 +1,43 @@
+﻿<!--
+Requires:
+AUDIO_TITLE;AUDIO_ARTIST;AUDIO_ALBUM;AUDIO_LENGTH;AUDIO_PLAYCOUNT;AUDIO_GENRE;AUDIO_YEAR;AUDIO_SRC;IMG_SRC;LEFT_TOP_TEXT;LEFT_BOTTOM_TEXT
+-->
+<div style="font-family: Tahoma, Arial, Verdana, sans-serif;">
+      <div class="card">
+        <div class="additional">
+          <div class="user-card">
+            <img style="filter: blur(8px); -webkit-filter: blur(8px);height: 200%;" src="IMG_SRC" />
+            <div class="level center"> LEFT_TOP_TEXT </div>
+            <div class="points center"> LEFT_BOTTOM_TEXT </div>
+            <img width="110" height="110" class="center" style="border-radius: 50%;" src="IMG_SRC" />
+          </div>
+          <div class="more-info">
+            <h1>AUDIO_TITLE</h1>
+            <div class="coords">
+              <span>Genres</span>
+              <span>AUDIO_GENRE</span>
+            </div>
+            <div class="coords">
+              <span>Year</span>
+              <span>AUDIO_YEAR</span>
+            </div>
+            <a class="coords" style="display: inline;float: right;" href="AUDIO_SRC">▶</a>
+            <div class="stats">
+              <div>
+                <div class="title">Length</div>
+                <div class="value">AUDIO_LENGTH</div>
+              </div>
+              <div>
+                <div class="title">Play Count</div>
+                <div class="value">AUDIO_PLAYCOUNT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="general">
+          <h1>AUDIO_TITLE</h1>
+          <p>By AUDIO_ARTIST, From AUDIO_ALBUM</p>
+          <span class="more">Hover for more</span>
+        </div>
+      </div>
+    </div>

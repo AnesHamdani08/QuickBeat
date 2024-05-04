@@ -1,5 +1,7 @@
 ﻿Imports System.Web
 Imports QuickBeat.Interfaces
+Imports QuickBeat.Utilities
+
 Namespace Youtube
     <Serializable>
     Public Class YoutubeDLMediaProvider
@@ -21,11 +23,11 @@ Namespace Youtube
             Dim yt As Youtube.YoutubeDL = If(Utilities.SharedProperties.Instance.YoutubeDL, New Youtube.YoutubeDL(My.Settings.APP_YOUTUBEDL_PATH))
             Dim vid = Await yt.GetVideo(Token)
             If vid IsNot Nothing Then
-                Return vid.DirectURL
+                Return vid.URL
             End If
             Return ""
         End Function
-
+#Disable Warning
         Public Async Function FetchThumbnail() As Task(Of ImageSource) Implements IMediaProvider.FetchThumbnail
             If Not Utilities.SharedProperties.Instance.IsInternetConnected Then Return Nothing
             Dim uri As New Uri(Token)
@@ -38,15 +40,12 @@ Namespace Youtube
             End If
             Dim URL = $"http://img.youtube.com/vi/{videoId}/mqdefault.jpg"
             Try
-                Dim thumb As New BitmapImage
-                thumb.BeginInit()
-                thumb.UriSource = New Uri(URL, UriKind.Absolute)
-                thumb.EndInit()
-                Return thumb
+                Return New Uri(URL, UriKind.Absolute).ToBitmapSource
             Catch ex As Exception
                 Utilities.DebugMode.Instance.Log(Of YoutubeDLMediaProvider)(ex.ToString)
                 Return Nothing
             End Try
         End Function
+#Enable Warning
     End Class
 End Namespace

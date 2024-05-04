@@ -27,11 +27,14 @@ Namespace Player
 #Disable Warning
                 If AutoPlay Then Parent.LoadSong(Item(value))
 #Enable Warning
+                _QueueIndex = -1 'Because QueueIndex setter has a range protection (must be > 0 and < Queue Count)
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(QueueIndex)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Index)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(ActualIndex)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(CurrentItem)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(NextItem)))
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(PreviousItem)))
+                'Parent?.OnIsPlayingFromPlaylistChanged()
             End Set
         End Property
 
@@ -111,7 +114,7 @@ Namespace Player
 
         Private _AutoPlay As Boolean = True
         ''' <summary>
-        ''' Wheter or not to invoke <see cref="Player.LoadSong(Metadata)"/> when <see cref="Index"/> or <see cref="QueueIndex"/> are changed.
+        ''' Wheter or not to invoke <see cref="Player.LoadSong(Metadata, String(), Boolean)"/> when <see cref="Index"/> or <see cref="QueueIndex"/> are changed.
         ''' </summary>
         ''' <returns></returns>
         Property AutoPlay As Boolean
@@ -154,7 +157,7 @@ Namespace Player
             End Set
         End Property
 
-        Private _SongAddBehaviour As AddBehaviour
+        Private _SongAddBehaviour As AddBehaviour = AddBehaviour.Last
         Property SongAddBehaviour As AddBehaviour
             Get
                 Return _SongAddBehaviour
@@ -162,6 +165,47 @@ Namespace Player
             Set(value As AddBehaviour)
                 _SongAddBehaviour = value
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(SongAddBehaviour)))
+            End Set
+        End Property
+
+
+        <NonSerialized> Private _Cover As ImageSource
+        Property Cover As ImageSource
+            Get
+                Return _Cover
+            End Get
+            Set(value As ImageSource)
+                _Cover = value
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Cover)))
+            End Set
+        End Property
+
+        Private _AllowDuplicates As Boolean = True
+        Property AllowDuplicates As Boolean
+            Get
+                Return _AllowDuplicates
+            End Get
+            Set(value As Boolean)
+                _AllowDuplicates = value
+                If Not value Then
+                    Dim dList As New List(Of Metadata)
+                    Dim cItem = CurrentItem
+                    Dim i = 0
+                    Dim l = Me.Distinct
+                    Do
+                        Dim meta = Me(i)
+                        If dList.Contains(meta) Then
+                            Me.Remove(meta)
+                        Else
+                            dList.Add(meta)
+                            i += 1
+                        End If
+                        If i >= Count Then Exit Do
+                    Loop
+                    If IsShuffling Then _ShuffledIndexList.Clear() : Shuffle()
+                    Index = Me.IndexOf(cItem)
+                End If
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(AllowDuplicates)))
             End Set
         End Property
 
@@ -183,15 +227,15 @@ Namespace Player
             End Get
         End Property
 
-        Private _Queue As New ObjectModel.ObservableCollection(Of Metadata)
+        <NonSerialized> Private _Queue As New ObjectModel.ObservableCollection(Of Metadata)
         ReadOnly Property Queue As ObjectModel.ObservableCollection(Of Metadata)
             Get
                 Return _Queue
             End Get
         End Property
 
-        Private _QueueIndexSkipNext As Boolean = False
-        Private _QueueIndex As Integer = -1
+        <NonSerialized> Private _QueueIndexSkipNext As Boolean = False
+        <NonSerialized> Private _QueueIndex As Integer = -1
         Property QueueIndex As Integer
             Get
                 Return _QueueIndex
@@ -221,17 +265,6 @@ Namespace Player
 #Enable Warning
                 End If
                 OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(QueueIndex)))
-            End Set
-        End Property
-
-        <NonSerialized> Private _Cover As ImageSource
-        Property Cover As ImageSource
-            Get
-                Return _Cover
-            End Get
-            Set(value As ImageSource)
-                _Cover = value
-                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Cover)))
             End Set
         End Property
 
@@ -282,10 +315,16 @@ Namespace Player
         ''' </summary>
         ''' <param name="item"></param>
         ''' <returns>
-        ''' If successful returns the new item index, else returns -1
+        ''' If successful returns the new item index
+        ''' If fails returns -1
+        ''' If duplicate found returns the duplicated item index        
         ''' </returns>
+        ''' <remarks>
+        ''' To get if this functions found a duplicate check the returned index vs. <see cref="Count"/> - 1 if <see cref="SongAddBehaviour"/> = Last, Otherwise check vs. 0
+        ''' </remarks>
         Overloads Function Add(item As Metadata) As Integer
             If item Is Nothing Then Return -1
+            If Not AllowDuplicates AndAlso Me.Contains(item) Then Return Me.IndexOf(item)
             item.Index = Count 'Doesn't matter if AddBehaviour is set to first or last, insert will refresh the indexes            
             If SongAddBehaviour = AddBehaviour.Last Then MyBase.Add(item) Else Insert(0, item)
             If IsShuffling Then
@@ -297,6 +336,11 @@ Namespace Player
                 TotalDuration += item.LengthTS
             End If
             OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(HasItems)))
+            If Parent IsNot Nothing AndAlso Parent.Path = item.Path Then 'sync with parent
+                _Index = item.Index
+                OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(Index)))
+                Parent.OnIsPlayingFromPlaylistChanged()
+            End If
             Return item.Index
         End Function
 
@@ -304,6 +348,16 @@ Namespace Player
             If item Is Nothing Then Return
             MyBase.Insert(index, item)
             RefreshItemsIndex()
+        End Sub
+
+        Sub Swap(index As Integer, item As Metadata)
+            If item Is Nothing OrElse index < 0 OrElse index > Count Then Return
+            item.Index = index
+            MyBase.RemoveAt(index)
+            MyBase.Insert(index, item)
+            OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(CurrentItem)))
+            OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(NextItem)))
+            OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(PreviousItem)))
         End Sub
 
         Overloads Function Remove(item As Metadata) As Boolean
@@ -356,6 +410,7 @@ Namespace Player
             If Count = 0 AndAlso Queue.Count = 0 Then Return Nothing
             If Queue.Count > 0 Then
                 If UpdateParent Then
+                    If Parent IsNot Nothing Then Parent.IsTransitioning = True
                     If QueueIndex = -1 Then
                         QueueIndex = 0
                     Else
@@ -378,6 +433,7 @@ Namespace Player
                 _QueueIndex = -1
             End If
             If UpdateParent Then
+                If Parent IsNot Nothing Then Parent.IsTransitioning = True
                 Index = If(IsShuffling, NextShuffle(), If(Index + 1 = Count, If(IsLooping, 0, -1), Index + 1))
             Else
                 If Update Then
@@ -397,6 +453,7 @@ Namespace Player
             If Queue.Count > 0 Then _QueueIndex = -1
             If Count = 0 Then Return Nothing
             If UpdateParent Then
+                If Parent IsNot Nothing Then Parent.IsTransitioning = True
                 Dim DeterminedValue = If(IsShuffling, PreviousShuffle(), If(Index = 0, If(IsLooping, Count - 1, -1), Index - 1))
                 Index = DeterminedValue
             Else
@@ -455,6 +512,7 @@ Namespace Player
 
         Private Sub Playlist_CollectionChanged(sender As Object, e As NotifyCollectionChangedEventArgs) Handles Me.CollectionChanged
             OnPropertyChanged(New ComponentModel.PropertyChangedEventArgs(NameOf(HasItems)))
+            'Parent?.OnIsPlayingFromPlaylistChanged()
         End Sub
 
         ''' <summary>
@@ -471,6 +529,68 @@ Namespace Player
             Next
             Return cpl
         End Function
+
+#Region "Serialization"
+        Public Function Save() As String
+            Dim ini As New Utilities.SettingsHelper
+            ini.AddItem("Index", Index)
+            ini.AddItem("Name", Name)
+            ini.AddItem("Description", Description)
+            ini.AddItem("AllowDuplicates", AllowDuplicates)
+            ini.AddItem("AutoPlay", AutoPlay)
+            ini.AddItem("Category", Category)
+            ini.AddItem("IsLooping", IsLooping)
+            ini.AddItem("IsShuffling", IsShuffling)
+            ini.AddItem("SongAddBehaviour", SongAddBehaviour)
+            ini.AddItem("TotalDuration", TotalDuration.TotalMilliseconds)
+            ini.AddItem("ShuffledIndexList", String.Join(";", _ShuffledIndexList))
+            ini.AddItem("ShuffleIndexListIndex", _ShuffleIndexListIndex)
+            ini.StartSection("Data")
+            For Each meta In Me
+                ini.AddItem("UID", meta.Location & ";" & meta.UID)
+            Next
+            ini.EndSection()
+            Return ini.Dump
+        End Function
+
+        Public Sub Load(dump As String)
+            Dim ini As New Utilities.SettingsHelper
+            ini.Load(dump)
+            If ini.ContainsKey("Index") Then _Index = ini.GetItem("Index")
+            If ini.ContainsKey("Name") Then Name = ini.GetItem("Name")
+            If ini.ContainsKey("Description") Then Description = ini.GetItem("Description")
+            If ini.ContainsKey("AllowDuplicates") Then AllowDuplicates = CBool(ini.GetItem("AllowDuplicates"))
+            If ini.ContainsKey("AutoPlay") Then AutoPlay = CBool(ini.GetItem("AutoPlay"))
+            If ini.ContainsKey("Category") Then Category = ini.GetItem("Category")
+            If ini.ContainsKey("IsLooping") Then IsLooping = CBool(ini.GetItem("IsLooping"))
+            If ini.ContainsKey("IsShuffling") Then IsShuffling = CBool(ini.GetItem("IsShuffling"))
+            If ini.ContainsKey("SongAddBehaviour") Then SongAddBehaviour = CInt(ini.GetItem("SongAddBehaviour"))
+            If ini.ContainsKey("TotalDuration") Then TotalDuration = TimeSpan.FromMilliseconds(ini.GetItem("TotalDuration"))
+            If IsShuffling AndAlso ini.ContainsKey("ShuffledIndexList") AndAlso Not String.IsNullOrEmpty(ini.GetItem("ShuffledIndexList")) Then _ShuffledIndexList = ini.GetItem("ShuffledIndexList").Split(";").Select(Of Integer)(Function(k) CInt(k)).ToList
+            If IsShuffling AndAlso ini.ContainsKey("ShuffleIndexListIndex") Then _ShuffleIndexListIndex = CInt(ini.GetItem("ShuffleIndexListIndex"))
+            If ini.ContainsSection("Data") Then
+                For Each uid In ini.GetSection("Data")
+                    Dim sUID = uid.Value.Split(";")
+                    Dim meta As Metadata = Nothing
+                    Select Case sUID.FirstOrDefault
+                        Case 0 '"Local"
+                            meta = Metadata.FromUID(sUID.LastOrDefault)
+                        Case 1 '"Remote"
+                            If Utilities.SharedProperties.Instance.RemoteLibrary.ContainsID(sUID.LastOrDefault) Then
+                                meta = CachedMetadata.FromCache(sUID.LastOrDefault, True)
+                            Else
+                                meta = New Metadata With {.Location = Metadata.FileLocation.Remote, .Path = sUID.LastOrDefault, .OriginalPath = sUID.LastOrDefault}
+                            End If
+                        Case 4 '"Cached"
+                            meta = CachedMetadata.FromCache(sUID.LastOrDefault, True)
+                        Case 3 '"Internal"
+                            meta = New InternalMetadata(sUID.LastOrDefault)
+                    End Select
+                    If meta IsNot Nothing Then MyBase.Add(meta)
+                Next
+            End If
+        End Sub
+#End Region
     End Class
 End Namespace
 Namespace Converters

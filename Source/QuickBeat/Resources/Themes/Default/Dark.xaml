@@ -8,6 +8,7 @@
             BackgroundColor="Transparent"
             ThirdlyRegionBrush="Transparent"
             ThirdlyRegionColor="Transparent"
+            VioletBrush="Transparent"
             />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

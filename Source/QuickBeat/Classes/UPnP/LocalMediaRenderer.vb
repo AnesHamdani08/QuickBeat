@@ -35,7 +35,7 @@
                         cdObj.Resource.FirstOrDefault(Function(k) UPnP.UPnPProvider.TryGetMimeTypeFromDLNAProtocole(k.protocolInfo) = "video/mp4"),
                     cdObj.Resource.FirstOrDefault(Function(k) UPnP.UPnPProvider.TryGetMimeTypeFromDLNAProtocole(k.protocolInfo) = "audio/mpeg"))
                     If cdObjRes IsNot Nothing Then
-                        Dim Meta As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .Path = cdObjRes.URI.ToString, .OriginalPath = cdObjRes.URI.ToString, .Title = cdObj.Title, .Album = cdObj.Album, .Artists = New String() {cdObj.Artist}, .Genres = New String() {cdObj.Genre}, .Length = TimeSpan.Parse(cdObjRes.duration).TotalSeconds}
+                        Dim Meta As New Player.Metadata() With {.Location = Player.Metadata.FileLocation.Remote, .Path = CurrentURI, .OriginalPath = cdObjRes.URI.ToString, .Title = cdObj.Title, .Album = cdObj.Album, .Artists = New String() {cdObj.Artist}, .Genres = New String() {cdObj.Genre}, .Length = TimeSpan.Parse(cdObjRes.duration).TotalSeconds} 'path was: cdObjRes.URI.ToString
                         Await Utilities.SharedProperties.Instance.Player?.LoadSong(Meta)
                     End If
                 End If
