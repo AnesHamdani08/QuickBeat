@@ -56,7 +56,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
-      <HintPath>..\..\AUDX\AUDX\bin\Debug\Bass.Net.dll</HintPath>
+      <HintPath>..\packages\Bass.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="DiscordRPC, Version=1.2.1.24, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DiscordRichPresence.1.2.1.24\lib\net45\DiscordRPC.dll</HintPath>
     </Reference>
     <Reference Include="E.Deezer, Version=4.2.2.548, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\E.Deezer.4.2.2\lib\net45\E.Deezer.dll</HintPath>
@@ -66,6 +69,12 @@
     </Reference>
     <Reference Include="HandyControl, Version=3.4.0.0, Culture=neutral, PublicKeyToken=45be8712787a1e5b, processorArchitecture=MSIL">
       <HintPath>..\packages\HandyControls.3.4.5\lib\net48\HandyControl.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Lucene.Net, Version=3.0.3.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lucene.Net.3.0.3\lib\NET40\Lucene.Net.dll</HintPath>
     </Reference>
     <Reference Include="MetaBrainz.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=be12cbb629c03021, processorArchitecture=MSIL">
       <HintPath>..\packages\MetaBrainz.Common.1.0.0\lib\net48\MetaBrainz.Common.dll</HintPath>
@@ -82,13 +91,25 @@
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core, Version=1.0.2210.55, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.2210.55\lib\net45\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms, Version=1.0.2210.55, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.2210.55\lib\net45\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Wpf, Version=1.0.2210.55, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.2210.55\lib\net45\Microsoft.Web.WebView2.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Drawing.Common, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -139,6 +160,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Speech" />
     <Reference Include="System.Text.Encodings.Web, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Encodings.Web.6.0.0\lib\net461\System.Text.Encodings.Web.dll</HintPath>
     </Reference>
@@ -161,16 +183,14 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="TagLibSharp">
-      <HintPath>..\..\AUDX\packages\TagLibSharp.2.2.0\lib\net45\TagLibSharp.dll</HintPath>
+    <Reference Include="TagLibSharp, Version=2.3.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
+      <HintPath>..\packages\TagLibSharp.2.3.0\lib\net462\TagLibSharp.dll</HintPath>
     </Reference>
     <Reference Include="UIAutomationProvider" />
     <Reference Include="Windows">
-      <HintPath>..\..\AUDX\AUDX\bin\Debug\Windows.winmd</HintPath>
+      <HintPath>..\packages\Windows.winmd</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
@@ -178,23 +198,29 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Classes\API.vb" />
+    <Compile Include="Classes\Audio.vb" />
     <Compile Include="Classes\Commands.vb" />
     <Compile Include="Classes\CommonFunctions.vb" />
     <Compile Include="Classes\Converters\BooleanToApplicationThemeConverter.vb" />
     <Compile Include="Classes\Converters\BooleanToNotBooleanConverter.vb" />
     <Compile Include="Classes\Converters\BooleanToVisibilityPlusConverter.vb" />
+    <Compile Include="Classes\Converters\CollectionCountToVisibilityConverter.vb" />
     <Compile Include="Classes\Converters\ColorToBrushConverter.vb" />
+    <Compile Include="Classes\Converters\DoubleSubtractToTimeLeftConverter.vb" />
     <Compile Include="Classes\Converters\DoubleToVisibilityConverter.vb" />
+    <Compile Include="Classes\Converters\FileSizeBytesToStringConverter.vb" />
     <Compile Include="Classes\Converters\GenericMultiValueConverter.vb" />
     <Compile Include="Classes\Converters\ImageSourceToAverageColorConverter.vb" />
     <Compile Include="Classes\Converters\MultiLineStringToMultiLineNumberConverter.vb" />
     <Compile Include="Classes\Converters\NullToVisibilityConverter.vb" />
+    <Compile Include="Classes\Converters\StringToFanartImageConverter.vb" />
+    <Compile Include="Classes\Converters\StringToNumericConverter.vb" />
     <Compile Include="Classes\Converters\NumericToRoundedNumericConverter.vb" />
     <Compile Include="Classes\Converters\PlaylistToDefaultImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\MetadataToLyricsConverter.vb" />
     <Compile Include="Classes\Converters\NullStringToVisibilityConverter.vb" />
     <Compile Include="Classes\Converters\MetadataToFanartImageConverter.vb" />
-    <Compile Include="Classes\Converters\StringToFanartImageConverter.vb" />
     <Compile Include="Classes\Converters\TagLibPictureToImageSource.vb" />
     <Compile Include="Classes\Converters\TextToImageSourceConverter.vb" />
     <Compile Include="Classes\Converters\ThemeTypeToColorPalleteConverter.vb" />
@@ -203,12 +229,21 @@
     <Compile Include="Classes\Converters\VisibilityToBooleanConverter.vb" />
     <Compile Include="Classes\DebugMode.vb" />
     <Compile Include="Classes\DeezerProvider.vb" />
+    <Compile Include="Classes\DiscordCache.vb" />
     <Compile Include="Classes\FanArtProvider.vb" />
     <Compile Include="Classes\GenericDebugListener.vb" />
+    <Compile Include="Classes\GithubUpdatesHelper.vb" />
+    <Compile Include="Classes\Media Providers\InternalMediaProvider.vb" />
+    <Compile Include="Classes\Media Providers\CacheMediaProvider.vb" />
+    <Compile Include="Classes\Player\CachedMetadata.vb" />
+    <Compile Include="Classes\Player\InternalMetadata.vb" />
+    <Compile Include="Classes\QBDatabase.vb" />
+    <Compile Include="Classes\Searcher.vb" />
     <Compile Include="Classes\M3UFile.vb" />
     <Compile Include="Classes\Media Providers\DeezerMediaProvider.vb" />
     <Compile Include="Classes\Media Providers\IOMediaProvider.vb" />
     <Compile Include="Classes\Media Providers\YoutubeDLMediaProvider.vb" />
+    <Compile Include="Classes\OverrideProperties.vb" />
     <Compile Include="Classes\Player\EngineModule.vb" />
     <Compile Include="Classes\GlobalHotkey.vb" />
     <Compile Include="Classes\HotkeyManager.vb" />
@@ -240,6 +275,7 @@
     <Compile Include="Classes\SleepTimer.vb" />
     <Compile Include="Classes\StartupItemConfiguration.vb" />
     <Compile Include="Classes\Subtitle Parser\Parsers\ISubtitlesParser.vb" />
+    <Compile Include="Classes\Subtitle Parser\Parsers\LRCParser.vb" />
     <Compile Include="Classes\Subtitle Parser\Parsers\MicroDvdParser.vb" />
     <Compile Include="Classes\Subtitle Parser\Parsers\SrtParser.vb" />
     <Compile Include="Classes\Subtitle Parser\Parsers\SsaParser.vb" />
@@ -258,19 +294,27 @@
     <Compile Include="Classes\Subtitle Parser\Writers\SsaWriter.vb" />
     <Compile Include="Classes\Lists\SyncedObservableCollection.vb" />
     <Compile Include="Classes\Themes.vb" />
+    <Compile Include="Classes\UPnP\HTTPFileServer.vb" />
     <Compile Include="Classes\UPnP\LocalMediaRenderer.vb" />
     <Compile Include="Classes\UPnP\MediaRenderer.vb" />
     <Compile Include="Classes\UPnP\MediaServer.vb" />
+    <Compile Include="Classes\UPnP\QuickLink.vb" />
     <Compile Include="Classes\UPnP\UPnPInfo.vb" />
     <Compile Include="Classes\UPnP\UPnPItem.vb" />
     <Compile Include="Classes\UPnP\UPnPProvider.vb" />
     <Compile Include="Classes\YoutubeDL.vb" />
+    <Compile Include="Controls\ClickProgressBar.vb" />
     <Compile Include="Controls\ClickTextBlock.vb" />
     <Compile Include="Controls\DragDropListBox.vb" />
+    <Compile Include="Controls\ExpandableImage.vb" />
     <Compile Include="Controls\GeoImage.vb" />
     <Compile Include="Controls\Hotkey.xaml.vb">
       <DependentUpon>Hotkey.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\RandomizeGrid.xaml.vb">
+      <DependentUpon>RandomizeGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\RunningTextBlock.vb" />
     <Compile Include="Controls\ValueSlider.vb" />
     <Compile Include="Interfaces\IMediaProvider.vb" />
     <Compile Include="Windows\Dialogs\InputBox.xaml.vb">
@@ -281,6 +325,9 @@
     </Compile>
     <Compile Include="Windows\Dialogs\TagPictureDialog.xaml.vb">
       <DependentUpon>TagPictureDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\Dialogs\MetadataPicker.xaml.vb">
+      <DependentUpon>MetadataPicker.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\Dialogs\VideoEffectPicker.xaml.vb">
       <DependentUpon>VideoEffectPicker.xaml</DependentUpon>
@@ -293,6 +340,12 @@
     </Compile>
     <Compile Include="Windows\Dialogs\PlaylistPicker.xaml.vb">
       <DependentUpon>PlaylistPicker.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\ActiveControlPopup.xaml.vb">
+      <DependentUpon>ActiveControlPopup.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\NotificationPopUp.xaml.vb">
+      <DependentUpon>NotificationPopUp.xaml</DependentUpon>
     </Compile>
     <Page Include="Classes\QScript\DeveloperConsole.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -307,6 +360,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\Hotkey.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\RandomizeGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -335,7 +392,23 @@
     </Page>
     <Page Include="Resources\Glitter.xaml">
       <SubType>Designer</SubType>
+      <Generator>XamlIntelliSenseFileGenerator</Generator>
+    </Page>
+    <Page Include="Resources\Themes\Debug\Dark.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Debug\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Elegance\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Resources\Themes\Elegance\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Themes\Marine\Dark.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -350,14 +423,6 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Themes\Aqua\Light.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Resources\Themes\Dynamic\Dark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Resources\Themes\Dynamic\Light.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -393,6 +458,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Windows\Dialogs\MetadataPicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Windows\Dialogs\VideoEffectPicker.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -406,6 +475,14 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Windows\Dialogs\PlaylistPicker.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\ActiveControlPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\NotificationPopUp.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -493,6 +570,45 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Logos\CoverArtArchive_logo_no_text.png" />
+    <Resource Include="Resources\Logos\MusicBrainz_logo_no_text.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Logos\fanarttv_logo.png" />
+    <Resource Include="Resources\Logos\icons8_logo.png" />
+    <Resource Include="Resources\Logos\lucenenet_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Neffex - Fight Back.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\TableStyle.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\PlayPage.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\EmptyPage.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\MusicRecordIcon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\EmptyTablePage.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\AudioCard.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\AudioCardStyle.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\AudioCardBody.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Classes\UPnP\HTML\LandingPage.html" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <Import Project="..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets" Condition="Exists('..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -501,6 +617,8 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Runtime.WindowsRuntime.4.7.0\build\net451\System.Runtime.WindowsRuntime.targets'))" />
     <Error Condition="!Exists('..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Web.WebView2.1.0.2210.55\build\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Web.WebView2.1.0.2210.55\build\Microsoft.Web.WebView2.targets'))" />
   </Target>
   <Import Project="..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets" Condition="Exists('..\packages\System.Text.Json.6.0.0\build\System.Text.Json.targets')" />
+  <Import Project="..\packages\Microsoft.Web.WebView2.1.0.2210.55\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.2210.55\build\Microsoft.Web.WebView2.targets')" />
 </Project>
