@@ -1,12 +1,8 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
-- Added "Add To Library" in Current Media Context Menu
-- Added "Edit Path" to Songs in Library
-- Fixed Previewing Multiple Times Consecutively Crashes the App
-- Added "Open In App" for LAN Music Sharing
-- When in Preview Mode, Clicking the "Add"(Plus Icon) Button No Longer Reloads the Current Media
+- Added LRCLIB Integration
 # 📝 Todos
-- Maybe Make GitHub Docs
+- Complete GitHub Docs
 - Add Audio Effect Attirbute: Control
 - Add Session to Webserver (Cookies or Server Side, You Choose)
 - Redesign Audio Effect Selection in Settings
