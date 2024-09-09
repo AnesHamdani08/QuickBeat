@@ -1,6 +1,6 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
-- Added LRCLIB Integration
+- Restored YoutubeDL Support
 # 📝 Todos
 - Complete GitHub Docs
 - Add Audio Effect Attirbute: Control
