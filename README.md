@@ -1,3 +1,4 @@
+Check Upcoming Features [Here](UPCOMING_FEATURES.md)
 # 💿QuickBeat
 Audio player and manager, plays all common media files alongside many more via plugins.
 # 🧰Features
