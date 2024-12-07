@@ -1,5 +1,11 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- Added Artist Gallery(Fanart.tv Browser), Access It From The Right Sidebar Or From The View Menu
+- Added A New Status Indicator: BPM(Located Next To Duration/Length Indicator)
+- Added A New Metadata Attribute: BPM
+- Fixed An Issue When Closing The Main App Window While Having Developer Console Previously Enabled
+- Fixed An `IndexOutOfRangeException` In Playlist Next/Previous Methods
+- Fixed Audio Output Not Changing Manually
 - New Plugin Framework
 - Added Group By None: This Shows All Tracks Like Previous Versions
 - Group View Now Shows Group Category Under The Group's Title
