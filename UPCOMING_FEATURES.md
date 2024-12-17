@@ -1,5 +1,10 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- Added Browse By: Artist,Album to LAN Music Sharing
+- Added A New Frequency Audio Effect Preset: Midnightcore
+- Improved InfoTip Functionality and Fixed Some Bugs
+- Loop One Is Now Disabled Everytime A Song Changes
+- Updated Directory Fetcher to Check for Permissions
 - Added Artist Gallery(Fanart.tv Browser), Access It From The Right Sidebar Or From The View Menu
 - Added A New Status Indicator: BPM(Located Next To Duration/Length Indicator)
 - Added A New Metadata Attribute: BPM
