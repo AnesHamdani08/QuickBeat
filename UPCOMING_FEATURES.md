@@ -2,6 +2,7 @@
 # 💠 Upcoming Changelog
 # 📝 Changelog:
 - General Bug Fixes
+- Discord RPC Buttons and Timestamps Are Back
 - Home Tab’s Slideshow Background Can Be Viewed in the Image Viewer Now (Double Click Them)
 - Updated Library Scan Command With a Multithreaded Variant
 - Updated Library Rebuild Command With a Multithreaded Variant, Now Rebuilding a ~1500 Song Library Takes About 5 Seconds
