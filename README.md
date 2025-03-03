@@ -9,6 +9,7 @@ Audio player and manager, plays all common media files alongside many more via p
 - Audio Stream Auto-Free & Memory Manager: Low Resources Usage
 - Remote Files Cache & Playback: Never Miss a Beat Even Offline!
 - Play Files from Your Favourite Websites (Read Disclaimer)
+- Powerful Plugin Framework
 - Pattern Navigation (Download to find out :D)
 - Smart Link Referesh for Remote Files
 - UPnP/DLNA Servers Support
@@ -42,6 +43,7 @@ Audio player and manager, plays all common media files alongside many more via p
     - Artist
     - Album
 - Ultra Fast Search with Deep Integration and High Accuracy (Based on Lucene.NET)
+- Hyperfast Library Building And Scanning Process
 - Powerful Script Engine for Your Custom Routines
 - Sleep Timer
 - Color Presets
