@@ -1,5 +1,27 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- Added A New Mini Player That Shows When Opening a Media From Windows Explorer While The App is Not Started, This Way You Can Preview Songs Faster
+- Updated Discord Integration to Show "Listening" instead of "Playing" and Correctly Show Position and Length of the Current Media
+- Updated Dependencies to latest versions
+- Winamp Audio Effects Plugins Now Show The Correct Short Name
+- Fixed Some Bugs Related to Tags Processing
+- New Unified UI Background that Span across Left,Bottom and Right Sidebar
+- Added a Toggle to Show/Hide the Progress Bar in the Reactive SeekBar
+- Changing Playlist Order Mode(Sequential,Random) Now Updates Next/Previous Item In The Right Sidebar
+- Fixed a Bug with Lists that supports drag/drop operations
+- Startup Time Improvment
+- New Home Screen Redesign
+- Added Search History
+- Changed the icons of previous/next buttons on the main window
+- Window title now shows the current playing song or current tab name
+- Changed the design of the window title bar
+- Updated Plugin Identification system
+- Added Gradient option to reactive seekbar
+- Added 2 New Styles to reactive seekbar
+- Reactive Seekbar now show the whole spectrum instead of current media position
+- Current Media Artist Now Shows All Artists Instead of the First Artist
+- Plugins that doesn't have an icon will now display a stock icon
+- Fixed a bug with file associations manager
 # 📝 Changelog:
 - General Bug Fixes
 - Discord RPC Buttons and Timestamps Are Back
