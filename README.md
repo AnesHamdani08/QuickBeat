@@ -69,21 +69,34 @@ Audio player and manager, plays all common media files alongside many more via p
 - TaskBar JumpList Integration: Quickly Load and Control your Music
 - Discord Integration: Display Your Music on the Fly With Support for Album Cover!
 - Automatic File Association
-- Reactive Seekbar!
+- Powerful Plugin Framework to Shape the App to Your Needs
 - Smart Library Recovery System
+- Mini Player Mode
+- Floating Desktop Lyrics For Your Karaoke Needs!
 
 # 📸Screenshots
 *May vary on newer versions*
-*Updated for QuickBeat - Ascent (1.6.0.0)*
-![Home Elegance Theme Dark 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/96d2428b-2c0e-4c97-bdef-157c3691dd6c)
-![Home Elegance Theme Light 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/0d4bdb2b-9af7-4a03-b1ed-e76bbcaae10e)
-![Home Aqua Theme Dark 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/31fbb10b-498b-4ab2-af6b-d74cc2d0b683)
-![Group View 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/206b9102-37d9-4d5b-93a2-56bf811bde67)
-![Settings 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/47348862-2b57-4b26-be94-dd06a482a6e8)
-![Search 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/2171054b-cc64-4d7b-ba39-bd065290a49d)
-![LAN Browser 1.6.0.0](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/7b949421-72b4-4ac6-b563-abc005a69ebb)
-![Visualizer](https://github.com/AnesHamdani08/QuickBeat/assets/38377619/f38e03f6-f85b-42da-b08a-fc23301e2b3a)
-![Winamp Plugin Support](https://i.imgur.com/IxYaTnR.png)
-![Winamp Plugin Support 1](https://i.imgur.com/IrxMVw9.png)
+*Updated for QuickBeat - Exceed (2.0.1.0)*
+<img width="1680" height="1010" alt="Home Elegance Theme Dark 2.0.1.0" src="https://github.com/user-attachments/assets/6eddd81a-f42c-4e55-9d40-32230fd98ca4" />
+<img width="1680" height="1010" alt="Default Theme Light 2.0.1.0" src="https://github.com/user-attachments/assets/88a4f42e-5a47-47de-9f56-f4085402b3b0" />
+<img width="1680" height="1010" alt="Aqua Theme Dark 2.0.1.0" src="https://github.com/user-attachments/assets/6a8d1a4e-ea7c-470b-a33c-40915a3aa88a" />
+<img width="1680" height="1010" alt="Group View 2.0.1.0" src="https://github.com/user-attachments/assets/c81ce53e-acc1-46f3-9a74-dcc12cbd014e" />
+<img width="1680" height="1010" alt="Settings 2.0.1.0" src="https://github.com/user-attachments/assets/3917b380-8180-4c9b-b71a-1f47b714f927" />
+<img width="1680" height="1010" alt="Search 2.0.1.0" src="https://github.com/user-attachments/assets/d1e0f360-bf06-4992-9a12-be145c4435ed" />
+<img width="1680" height="1010" alt="LAN Browser, DLNA Controller 2.0.1.0" src="https://github.com/user-attachments/assets/a70777af-b041-43e4-ab73-c781ecd45a03" />
+<img width="1680" height="1010" alt="Visualizer Bars 2.0.1.0" src="https://github.com/user-attachments/assets/48ae7f1b-c93a-4516-9e70-99888aa4cdbe" />
+<img width="1680" height="1010" alt="Visualizer Alchemy 2.0.1.0" src="https://github.com/user-attachments/assets/b7944747-72ef-4202-b164-66b2e8b5dd74" />
+<img width="1680" height="1010" alt="Visualizer Waveform" src="https://github.com/user-attachments/assets/78b3eeb8-721d-4cac-b614-66004b2b1668" />
+<img width="1680" height="1010" alt="Visualizer Fractree" src="https://github.com/user-attachments/assets/41ba5130-394a-4881-a965-6d18428d64a9" />
+<img width="1680" height="1010" alt="Visualizer Rabbit Hole" src="https://github.com/user-attachments/assets/3a09696c-5517-438b-873f-b806e6cdcd7c" />
+<img width="1680" height="1010" alt="winamp Plugin Support deFX" src="https://github.com/user-attachments/assets/c479fb51-88ed-4090-87f8-060ac90e0f35" />
+<img width="1680" height="1010" alt="Winamp Plugin Support Stereo Tool" src="https://github.com/user-attachments/assets/00101f61-ba35-4ffc-8df2-a19d21ba239d" />
+<img width="1680" height="1010" alt="Edge WebView2" src="https://github.com/user-attachments/assets/cad5db6b-08fd-48f3-a863-4b2f431f93f1" />
+<img width="1680" height="1010" alt="Deezer Radio Integration" src="https://github.com/user-attachments/assets/077c2e3f-4aa4-498b-b838-bb1dac8730f8" />
+<img width="1678" height="881" alt="QuickBeat Web Portal 2.0.1.0" src="https://github.com/user-attachments/assets/eb07c756-a7bd-4871-8fcd-3974aa837d38" />
+<img width="1680" height="877" alt="QuickBeat Web Player 2.0.1.0" src="https://github.com/user-attachments/assets/0ddd52b1-6542-424a-bba2-f7191e85e716" />
+<img width="1679" height="874" alt="QuickBeat Web Portal Search 2.0.1.0" src="https://github.com/user-attachments/assets/bebf41b5-52d5-454f-aafe-9261064ec6f8" />
+<img width="1680" height="1010" alt="QuickLink in Action 2.0.1.0" src="https://github.com/user-attachments/assets/bef1b863-c675-44c5-9b4f-10374ee38521" />
+<img width="1149" height="707" alt="Fanart Browser 2.0.1.0" src="https://github.com/user-attachments/assets/1af50e55-357d-4759-954c-f43fd9626295" />
 
-*Wiki will be added soon
+*Wiki will be updated soon*
