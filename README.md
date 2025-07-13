@@ -104,9 +104,15 @@ Audio player and manager, plays all common media files alongside many more via p
 <img width="1680" height="1010" alt="Visualizer Waveform" src="https://github.com/user-attachments/assets/78b3eeb8-721d-4cac-b614-66004b2b1668" />
 <img width="1680" height="1010" alt="Visualizer Fractree" src="https://github.com/user-attachments/assets/41ba5130-394a-4881-a965-6d18428d64a9" />
 <img width="1680" height="1010" alt="Visualizer Rabbit Hole" src="https://github.com/user-attachments/assets/3a09696c-5517-438b-873f-b806e6cdcd7c" />
+
+### ⚡Winamp Plugins Support
 <img width="1680" height="1010" alt="winamp Plugin Support deFX" src="https://github.com/user-attachments/assets/c479fb51-88ed-4090-87f8-060ac90e0f35" />
 <img width="1680" height="1010" alt="Winamp Plugin Support Stereo Tool" src="https://github.com/user-attachments/assets/00101f61-ba35-4ffc-8df2-a19d21ba239d" />
+
+### 🌀Edge WebView2 (Web Browser, Load Online Media Directly on App)
 <img width="1680" height="1010" alt="Edge WebView2" src="https://github.com/user-attachments/assets/cad5db6b-08fd-48f3-a863-4b2f431f93f1" />
+
+### 🔗Deezer Radio Integration
 <img width="1680" height="1010" alt="Deezer Radio Integration" src="https://github.com/user-attachments/assets/077c2e3f-4aa4-498b-b838-bb1dac8730f8" />
 
 ### 🌎QuickBeat Web Portal
