@@ -1,5 +1,9 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- Optimizations and Improvments to Youtube-DL Client
+- Added Default Format Override For Youtube-DL Operations, Hold CTRL After Confirming "Search or "Open" dialogs
+- Fixed Pattern Selection Not Showing While Small Cover Mode Is On
+- Added Floating Lyrics
 - Added A New Mini Player That Shows When Opening a Media From Windows Explorer While The App is Not Started, This Way You Can Preview Songs Faster
 - Updated Discord Integration to Show "Listening" instead of "Playing" and Correctly Show Position and Length of the Current Media
 - Updated Dependencies to latest versions
