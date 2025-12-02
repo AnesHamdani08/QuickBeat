@@ -1,5 +1,28 @@
 # 💿 QuickBeat
 # 💠 Upcoming Changelog
+- New Features For Memory Manager
+- Fixed Bugs With Cached Media Reading
+- Fixed Bugs With Metadata (Media) Embedded Pictures Reading
+- Optimized Lyrics Fetching
+- Fixed a Bug in Input Box UI Where Footer Text is Hidden Behind the Continue Button
+- FTP Server Browsing with Enhanced FTP Playback
+- New Bass Addons Manager With a New Addon (Previously Modules) View in Settings
+- Fixed Internet Connection State Query
+- Web Server Play Page Now Have Artist and Album Quick Shortcuts in the Top Nav Bar
+- Album Cover Over Web Server Now Display the Image as "Inline" rather than "Attachment", This Mean Opening Cover Now Shows Them Directly Instead of Download Dialog
+- Added Year, Codec, View Cover to Web Server File Explorer
+- Changed Web Server URL Format to More Readable Form
+- Fixed Adding Song From Previewing Doesn't Update the Right Sidebar
+- Added Slowcore to Frequency Audio Effect
+- New Settings Page
+- Added Icons To Top Menu
+- Fixed a Bug with QuickLink Not Syncing When Loading a Media Before Exiting Preview Mode
+- Added Radio Brodcast with a built-in engine and support for shoutcast v2 DNAS
+- Added Icons to WebView Context Menu
+- Added Copy Link, Navigate and Exit Buttons to WebView Context Menu
+- Fixed Exit Button in Main Menu and System Tray Menu
+- Changed the Main Menu to be triggered from the QuickBeat Logo
+- Added Couple New Icon to the Main Menu
 - Optimizations and Improvments to Youtube-DL Client
 - Added Default Format Override For Youtube-DL Operations, Hold CTRL After Confirming "Search or "Open" dialogs
 - Fixed Pattern Selection Not Showing While Small Cover Mode Is On
