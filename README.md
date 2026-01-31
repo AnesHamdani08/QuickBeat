@@ -1,3 +1,5 @@
+# ⚠Important note
+The source code has been lost and i'm currently at the point of re-writing the old source code to reach the same or better point than the lost source code, the latest release 1.9.0.0 will stuck around untill all the lost features are re-implemented, sorry for the inconvenience blame cheap SSDs.
 Check Upcoming Features [Here](UPCOMING_FEATURES.md)
 # 💿QuickBeat
 Audio player and manager, plays all common media files alongside many more via plugins.

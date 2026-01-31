@@ -55,7 +55,9 @@ Namespace Utilities
             'Utilities.SharedProperties.Instance.IsLogging = True
             Dim info = My.Application.Info
             Try
-                Console.SetOut(New Utilities.MultiTextWriter.ControlWriter(My.Windows.DeveloperConsole.ConsoleOut_TB, My.Windows.DeveloperConsole.Dispatcher))
+                'Console.SetOut(New Utilities.MultiTextWriter.ControlWriter(My.Windows.DeveloperConsole.ConsoleOut_TB, My.Windows.DeveloperConsole.Dispatcher))
+                'TODO add somemthing to this
+                MsgBox("failed to set out")
             Catch ex As Exception
                 HandyControl.Controls.MessageBox.Error("Failed to set console out." & Environment.NewLine & ex.ToString)
             End Try

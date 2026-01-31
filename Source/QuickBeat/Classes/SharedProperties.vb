@@ -406,7 +406,6 @@ Namespace Utilities
 
         Private WithEvents _Timer As New Forms.Timer With {.Interval = 5000} 'Low freq. timer, used for lazy notifications purposes e.g internet state        
 
-        ReadOnly Property Aqua As New Aqua.Aqua With {.ReferenceBinder = New QScript.KnownReferenceBinder}
         Public ReadOnly Property AllInitialized As Boolean
             Get
                 Return Not ItemsConfiguration.Any(Function(k) k.IsLoaded = False)

@@ -766,7 +766,7 @@ Class MainWindow
         IsBottomControls = My.Settings.APP_VIEW_BOTTOMCONTROLS
         Application.Current.MainWindow = Me
         Version = My.Application.Info.Version.ToString
-        AquaVersion = SharedProperties.Instance.Aqua.Version
+        AquaVersion = "0.0.0.0"
 
         If My.Settings.APP_FIRSTRUN Then
             Dim melo As New Player.InternalMetadata("Resources/Neffex - Fight Back.mp3") With {.PlayCount = 1000000}
@@ -784,13 +784,6 @@ Class MainWindow
 #Enable Warning
         End If
 
-        If Not String.IsNullOrEmpty(My.Settings.AQUA_STARTUP_SCRIPT) Then
-            Try
-                SharedProperties.Instance.Aqua.RunFile(My.Settings.AQUA_STARTUP_SCRIPT)
-            Catch ex As Exception
-                Utilities.DebugMode.Instance.Log(Of MainWindow)(ex.ToString)
-            End Try
-        End If
     End Sub
 
     Private Sub MenuItem_KeyboardNavigation_Click(sender As Object, e As RoutedEventArgs)
@@ -847,7 +840,8 @@ Class MainWindow
                 Me.IsFullScreen = Not Me.IsFullScreen
             Case Key.D
                 If mods = ModifierKeys.Control Then
-                    If DebugMode.Instance.IsEnabled Then My.Windows.DeveloperConsole.Show()
+                    'If DebugMode.Instance.IsEnabled Then My.Windows.DeveloperConsole.Show()
+                    MsgBox("dev console is not available in this version")
                 End If
             Case Key.Space
                 If mods = ModifierKeys.Control Then
@@ -935,13 +929,6 @@ Class MainWindow
 
             My.Settings.Save()
 
-            If Not String.IsNullOrEmpty(My.Settings.AQUA_CLOSING_SCRIPT) Then
-                Try
-                    SharedProperties.Instance.Aqua.RunFile(My.Settings.AQUA_CLOSING_SCRIPT)
-                Catch ex As Exception
-                    Utilities.DebugMode.Instance.Log(Of MainWindow)(ex.ToString)
-                End Try
-            End If
         End If
     End Sub
 
